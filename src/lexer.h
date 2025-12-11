@@ -1,5 +1,5 @@
-#ifndef TOKENIZER_H
-#define TOKENIZER_H
+#ifndef LEXER_H
+#define LEXER_H
 
 #include <malloc.h>
 #include <string.h>
@@ -31,20 +31,29 @@ typedef struct
     size_t     chpos_ref;
 } token_t;
 
+error_t *lexer_err_stk;
+size_t   lexer_err_stk_size;
+size_t __lexer_err_stk_real_size;
+
 token_t *toks;
 size_t   toks_size;
 size_t   __toks_real_size;
 
-void tokenizer_init()
+void lexer_init()
 {
+    lexer_err_stk = (error_t*)malloc(sizeof(error_t) * ERROR_STACK_EXTEND_SIZE);
+    lexer_err_stk_size = 0;
+    __lexer_err_stk_real_size = ERROR_STACK_EXTEND_SIZE;
+
     toks = (token_t*)malloc(sizeof(token_t) * TOKEN_BUFFER_EXTEND_SIZE);
     toks_size = 0;
     __toks_real_size = TOKEN_BUFFER_EXTEND_SIZE;
 }
 
-void tokenizer_delete()
+void lexer_delete()
 {
     free(toks);
+    free(lexer_err_stk_size);
 }
 
 void __toks_size_check(size_t offset)
@@ -57,9 +66,20 @@ void __toks_size_check(size_t offset)
     }
 }
 
-#define push_tok(tok) __toks_size_check(1); toks[toks_size++] = tok
+void __lexer_err_stk_size_check(size_t offset)
+{
+    if (lexer_err_stk_size + offset >= __lexer_err_stk_real_size) {
+        error_t *new_stk = (error_t*)malloc(sizeof(error_T) * (__lexer_err_stk_real_size += offset / ERROR_STACK_EXTEND_SIZE + 1));
+        memcpy(new_stk, lexer_err_stk, sizeof(error_t) * lexer_err_stk_size);
+        free(lexer_err_stk);
+        lexer_err_stk = new_stk;
+    }
+}
 
-void tokenization(const char *text, size_t text_size)
+#define push_tok(tok) __toks_size_check(1); toks[toks_size++] = tok
+#define push_err(err) __lexer_err_stk_size_check(1); lexer_err_stk[lexer_err_stk_size++] = err
+
+void lexing(const char *text, size_t text_size)
 {
     size_t pos = 0;
     size_t line = 0;
@@ -72,9 +92,24 @@ void tokenization(const char *text, size_t text_size)
             line++;
             chpos = 0;
         } else
+        if (text[pos] == '\\') {
+            while (text[pos] != '\\') {
+                if (text[pos] == '\n') {
+                    line++;
+                    chpos = 0;
+                }
+                pos++;
+                chpos++;
+                if (pos >= text_size) {
+                    error_t err = {.msg = "expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};
+                    push_err(err);
+                    continue;
+                }
+            }
+        }
         if (isalpha(text[pos]) || text[pos] == '_') {
             size_t i = 0;
-            while (isalnum(text[pos]) || text[pos] == '_') {
+            while ((isalnum(text[pos]) || text[pos] == '_') && pos < text_size) {
                 buf[i++] = text[pos++];
                 chpos++;
             }
@@ -96,7 +131,7 @@ void tokenization(const char *text, size_t text_size)
         if (isdigit(text[pos])) {
             token_type type = TT_LIT_INT;
             size_t i = 0;
-            while (isdigit(text[pos])) {
+            while (isdigit(text[pos]) && pos < text_size) {
                 buf[i++] = text[pos++];
                 chpos++;
                 if (text[pos] == '.') {
@@ -117,6 +152,12 @@ void tokenization(const char *text, size_t text_size)
             while (text[pos] != '"') {
                 buf[i++] = text[pos++];
                 chpos++;
+
+                if (pos >= text_size || text[pos] == '\n') {
+                    error_t err = {.msg = "expected closing '\"' character fro the string literal", .line_ref = line, .chpos_ref = chpos};
+                    push_err(err);
+                    continue;
+                }
             }
             buf[i] = '\0';
 

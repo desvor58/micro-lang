@@ -1,7 +1,7 @@
 # Stages
 Micro compiling have 4 stage:
 1. [tokenization](#Tokenization)
-2. [lexical analis](#lexacal-analis)
+2. 
 
 # Tokenization
 # Token
