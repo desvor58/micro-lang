@@ -21,8 +21,9 @@ Micro have 7 base types:
 | u16  | uint16_t | 2               | 0                  | 65536              |
 | u32  | uint32_t | 4               | 0                  | 4294967296         |
 | f32  | float    | 4               | 1.175494351 E - 38 | 3.402823466 E + 38 |
+| ptr  | size_t   | 4               | 0                  | 4294967296         |
 
-All pointers have u32 type
+All pointers have ptr type
 
 
 # Variables
