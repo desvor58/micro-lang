@@ -4,9 +4,10 @@ from config import *
 if not os.path.isdir(BUILD_DST):
     os.mkdir(BUILD_DST)
 
-res = os.system(f"{BUILD_COMPILER} {BUILD_COMPILER_FLAGS} -o {BUILD_DST}micro386.exe src/micro386.c")
+for target in BUILD_TARGETS:
+    res = os.system(f"{BUILD_COMPILER} {BUILD_COMPILER_FLAGS} -o {BUILD_DST}{target}.exe src/{target}.c")
 
-if res != 0:
-    print("\033[31mBuilding failed\033[0m")
-else:
-    print("\033[32mBuilding finish successfully\033[0m")
+    if res != 0:
+        print(f"\033[31mBuilding failed  ({target})\033[0m")
+    else:
+        print(f"\033[32mBuilding finish successfully  ({target})\033[0m")

@@ -53,7 +53,7 @@ void lexer_init()
 void lexer_delete()
 {
     free(toks);
-    free(lexer_err_stk_size);
+    free(lexer_err_stk);
 }
 
 void __toks_size_check(size_t offset)
@@ -69,7 +69,7 @@ void __toks_size_check(size_t offset)
 void __lexer_err_stk_size_check(size_t offset)
 {
     if (lexer_err_stk_size + offset >= __lexer_err_stk_real_size) {
-        error_t *new_stk = (error_t*)malloc(sizeof(error_T) * (__lexer_err_stk_real_size += offset / ERROR_STACK_EXTEND_SIZE + 1));
+        error_t *new_stk = (error_t*)malloc(sizeof(error_t) * (__lexer_err_stk_real_size += offset / ERROR_STACK_EXTEND_SIZE + 1));
         memcpy(new_stk, lexer_err_stk, sizeof(error_t) * lexer_err_stk_size);
         free(lexer_err_stk);
         lexer_err_stk = new_stk;
