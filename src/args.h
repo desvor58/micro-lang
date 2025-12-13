@@ -15,8 +15,8 @@ args_t args_parse(int argc, char **argv)
 {
     args_t args = {0};
 
-    for (size_t i = 0; i < argc; i++) {
-        if (argv[i][0] = '-') {
+    for (size_t i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
             if (!strcmp(argv[i], "--output") || !strcmp(argv[i], "-o")) {
                 strcpy(args.outfile, argv[++i]);
             }
@@ -24,6 +24,8 @@ args_t args_parse(int argc, char **argv)
             strcpy(args.inputfile, argv[i]);
         }
     }
+
+    return args;
 }
 
 #endif

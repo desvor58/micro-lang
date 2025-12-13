@@ -21,6 +21,7 @@ typedef enum
     TT_MINUS,
     TT_STAR,
     TT_SLASH,
+    TT_SEMICOLON,
 } token_type;
 
 typedef struct
@@ -93,7 +94,7 @@ void lexing(const char *text, size_t text_size)
             chpos = 0;
         } else
         if (text[pos] == '\\') {
-            while (text[pos] != '\\') {
+            while (text[++pos] != '\\') {
                 if (text[pos] == '\n') {
                     line++;
                     chpos = 0;
@@ -103,11 +104,12 @@ void lexing(const char *text, size_t text_size)
                 if (pos >= text_size) {
                     error_t err = {.msg = "expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};
                     push_err(err);
-                    continue;
+                    goto err_exit;
                 }
             }
         }
         if (isalpha(text[pos]) || text[pos] == '_') {
+            size_t tok_start_chpos = chpos;
             size_t i = 0;
             while ((isalnum(text[pos]) || text[pos] == '_') && pos < text_size) {
                 buf[i++] = text[pos++];
@@ -116,19 +118,22 @@ void lexing(const char *text, size_t text_size)
             buf[i] = '\0';
 
             if (!strcmp(buf, "var")) {
-                token_t tok = {.type = TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = chpos};
+                token_t tok = {.type = TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
                 push_tok(tok);
             } else
             if (!strcmp(buf, "fun")) {
-                token_t tok = {.type = TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = chpos};
+                token_t tok = {.type = TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
                 push_tok(tok);
             } else {
-                token_t tok = {.type = TT_IDENT, .line_ref = line, .chpos_ref = chpos};
+                token_t tok = {.type = TT_IDENT, .line_ref = line, .chpos_ref = tok_start_chpos};
                 strcpy(tok.val, buf);
                 push_tok(tok);
             }
+            pos--;
+            chpos--;
         } else
         if (isdigit(text[pos])) {
+            size_t tok_start_chpos = chpos;
             token_type type = TT_LIT_INT;
             size_t i = 0;
             while (isdigit(text[pos]) && pos < text_size) {
@@ -142,26 +147,28 @@ void lexing(const char *text, size_t text_size)
             }
             buf[i] = '\0';
 
-            token_t tok = {.type = type, .line_ref = line, .chpos_ref = chpos};
+            token_t tok = {.type = type, .line_ref = line, .chpos_ref = tok_start_chpos};
             strcpy(tok.val, buf);
             push_tok(tok);
+            pos--;
         } else
         if (text[pos] == '"') {
+            size_t tok_start_chpos = chpos;
             pos++;
             size_t i = 0;
             while (text[pos] != '"') {
                 buf[i++] = text[pos++];
                 chpos++;
-
-                if (pos >= text_size || text[pos] == '\n') {
+                
+                if (pos >= text_size) {
                     error_t err = {.msg = "expected closing '\"' character fro the string literal", .line_ref = line, .chpos_ref = chpos};
                     push_err(err);
-                    continue;
+                    goto err_exit;
                 }
             }
             buf[i] = '\0';
 
-            token_t tok = {.type = TT_LIT_STR, .line_ref = line, .chpos_ref = chpos};
+            token_t tok = {.type = TT_LIT_STR, .line_ref = line, .chpos_ref = tok_start_chpos};
             strcpy(tok.val, buf);
             push_tok(tok);
         } else
@@ -180,11 +187,16 @@ void lexing(const char *text, size_t text_size)
         if (text[pos] == '/') {
             token_t tok = {.type = TT_SLASH, .val = 0, .line_ref = line, .chpos_ref = chpos};
             push_tok(tok);
+        } else
+        if (text[pos] == ';') {
+            token_t tok = {.type = TT_SEMICOLON, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            push_tok(tok);
         }
         
         pos++;
         chpos++;
     }
+err_exit:
 }
 
 #endif

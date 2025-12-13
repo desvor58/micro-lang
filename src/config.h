@@ -9,5 +9,7 @@
 #define MAX_SYMBOL_SIZE 128
 // max errors and warnigns message size
 #define MAX_ERROR_MESSAGE_SIZE 256
+// size of buffer for reading input file
+#define MAX_INPUT_CODE_SIZE 48 * 1024
 
 #endif
