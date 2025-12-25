@@ -1,5 +1,5 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef MICRO_TYPES_H
+#define MICRO_TYPES_H
 
 #include "config.h"
 
@@ -14,15 +14,15 @@ typedef unsigned long  u64;
 
 typedef struct
 {
-    char msg[MAX_ERROR_MESSAGE_SIZE];
+    char msg[MICRO_MAX_ERROR_MESSAGE_SIZE];
     size_t line_ref;
     size_t chpos_ref;
-} error_t;
+} micro_error_t;
 
 /// @brief put to the buffer 16 bits immediante value from size_t in leatle endiane
 /// @param buf buf with size 2 to put the immVal
 /// @param imm size_t value for put
-void gen16imm_le(u8 *buf, size_t imm)
+void micro_gen16imm_le(u8 *buf, size_t imm)
 {
     buf[0] = (u8)imm;
     buf[1] = (u8)(imm >> 8);
@@ -31,12 +31,32 @@ void gen16imm_le(u8 *buf, size_t imm)
 /// @brief put to the buffer 32 bits immediante value from size_t in leatle endiane
 /// @param buf buf with size 4 to put the immVal
 /// @param imm size_t value for put
-void gen32imm_le(u8 *buf, size_t imm)
+void micro_gen32imm_le(u8 *buf, size_t imm)
 {
     buf[0] = (u8)imm;
     buf[1] = (u8)(imm >> 8);
     buf[2] = (u8)(imm >> 16);
     buf[3] = (u8)(imm >> 24);
+}
+
+/// @brief put to the buffer 16 bits immediante value from size_t in big endiane
+/// @param buf buf with size 2 to put the immVal
+/// @param imm size_t value for put
+void micro_gen16imm_be(u8 *buf, size_t imm)
+{
+    buf[1] = (u8)imm;
+    buf[0] = (u8)(imm >> 8);
+}
+
+/// @brief put to the buffer 32 bits immediante value from size_t in big endiane
+/// @param buf buf with size 4 to put the immVal
+/// @param imm size_t value for put
+void micro_gen32imm_be(u8 *buf, size_t imm)
+{
+    buf[3] = (u8)imm;
+    buf[2] = (u8)(imm >> 8);
+    buf[1] = (u8)(imm >> 16);
+    buf[0] = (u8)(imm >> 24);
 }
 
 #endif

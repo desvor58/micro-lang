@@ -1,5 +1,5 @@
-#ifndef CODEGEN_386_COMMON_H
-#define CODEGEN_386_COMMON_H
+#ifndef MICRO_CODEGEN_386_COMMON_H
+#define MICRO_CODEGEN_386_COMMON_H
 
 #include <malloc.h>
 #include <string.h>
@@ -14,152 +14,154 @@
 #include "../../config.h"
 #include "../../lexer.h"
 
-#define tokislit(tok) (tok.type == TT_LIT_FLOAT || tok.type == TT_LIT_INT || tok.type == TT_LIT_STR)
+#define micro_tokislit(tok) (tok.type == MICRO_TT_LIT_FLOAT || tok.type == MICRO_TT_LIT_INT || tok.type == MICRO_TT_LIT_STR)
 
 typedef enum {
-    MT_NULL = 0,
-    MT_I8,
-    MT_U8,
-    MT_I16,
-    MT_U16,
-    MT_I32,
-    MT_U32,
-    MT_F32,
-    MT_PTR,
-} codegen_368_micro_type;
+    MICRO_MT_NULL = 0,
+    MICRO_MT_I8,
+    MICRO_MT_U8,
+    MICRO_MT_I16,
+    MICRO_MT_U16,
+    MICRO_MT_I32,
+    MICRO_MT_U32,
+    MICRO_MT_F32,
+    MICRO_MT_PTR,
+} micro_codegen_386_micro_type;
 
 // in bytes
-size_t mt_size[] = {
-    [MT_NULL] = 0,
-    [MT_I8]   = 1,
-    [MT_U8]   = 1,
-    [MT_I16]  = 2,
-    [MT_U16]  = 2,
-    [MT_I32]  = 4,
-    [MT_U32]  = 4,
-    [MT_F32]  = 4,
-    [MT_PTR]  = 4
+size_t micro_mt_size[] = {
+    [MICRO_MT_NULL] = 0,
+    [MICRO_MT_I8]   = 1,
+    [MICRO_MT_U8]   = 1,
+    [MICRO_MT_I16]  = 2,
+    [MICRO_MT_U16]  = 2,
+    [MICRO_MT_I32]  = 4,
+    [MICRO_MT_U32]  = 4,
+    [MICRO_MT_F32]  = 4,
+    [MICRO_MT_PTR]  = 4
 };
 
-codegen_368_micro_type str2mt(char *str)
+micro_codegen_386_micro_type micro_str2mt(char *str)
 {
-    if (!strcmp(str, "i8"))  return MT_I8;
-    if (!strcmp(str, "u8"))  return MT_U8;
-    if (!strcmp(str, "i16")) return MT_I16;
-    if (!strcmp(str, "u16")) return MT_U16;
-    if (!strcmp(str, "i32")) return MT_I32;
-    if (!strcmp(str, "u32")) return MT_U32;
-    if (!strcmp(str, "f32")) return MT_F32;
-    if (!strcmp(str, "ptr")) return MT_PTR;
-    return MT_NULL;
+    if (!strcmp(str, "i8"))  return MICRO_MT_I8;
+    if (!strcmp(str, "u8"))  return MICRO_MT_U8;
+    if (!strcmp(str, "i16")) return MICRO_MT_I16;
+    if (!strcmp(str, "u16")) return MICRO_MT_U16;
+    if (!strcmp(str, "i32")) return MICRO_MT_I32;
+    if (!strcmp(str, "u32")) return MICRO_MT_U32;
+    if (!strcmp(str, "f32")) return MICRO_MT_F32;
+    if (!strcmp(str, "ptr")) return MICRO_MT_PTR;
+    return MICRO_MT_NULL;
 }
 
-codegen_368_micro_type lit2mt(token_t lit, codegen_368_micro_type expected)
+micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_micro_type expected)
 {
-    if (!tokislit(lit)) {
-        return MT_NULL;
+    if (!micro_tokislit(lit)) {
+        return MICRO_MT_NULL;
     }
-    if (lit.type == TT_LIT_FLOAT) {
-        if (expected != MT_F32) return MT_NULL;
-        return MT_F32;
+    if (lit.type == MICRO_TT_LIT_FLOAT) {
+        if (expected != MICRO_MT_F32) return MICRO_MT_NULL;
+        return MICRO_MT_F32;
     }
-    if (lit.type == TT_LIT_INT) {
-        if (expected != MT_I8
-         && expected != MT_U8
-         && expected != MT_I16
-         && expected != MT_U16
-         && expected != MT_I32
-         && expected != MT_U32
+    if (lit.type == MICRO_TT_LIT_INT) {
+        if (expected != MICRO_MT_I8
+         && expected != MICRO_MT_U8
+         && expected != MICRO_MT_I16
+         && expected != MICRO_MT_U16
+         && expected != MICRO_MT_I32
+         && expected != MICRO_MT_U32
         ) {
-            return MT_NULL;
+            return MICRO_MT_NULL;
         }
         return expected;
     }
-    if (lit.type == TT_LIT_STR) {
-        if (expected != MT_PTR) return MT_NULL;
-        return MT_PTR;
+    if (lit.type == MICRO_TT_LIT_STR) {
+        if (expected != MICRO_MT_PTR) return MICRO_MT_NULL;
+        return MICRO_MT_PTR;
     }
-    return MT_NULL;
+    return MICRO_MT_NULL;
 }
 
-void imm_from_mt(char *buf, codegen_368_micro_type type, size_t val)
+void imm_from_mt(char *buf, micro_codegen_386_micro_type type, size_t val)
 {
-    if (mt_size[type] == 1) {
+    if (micro_mt_size[type] == 1) {
         buf[0] = val;
     } else
-    if (mt_size[type] == 2) {
-        gen16imm_le(buf, val);
+    if (micro_mt_size[type] == 2) {
+        micro_gen16imm_le(buf, val);
     } else
-    if (mt_size[type] == 4) {
-        gen32imm_le(buf, val);
+    if (micro_mt_size[type] == 4) {
+        micro_gen32imm_le(buf, val);
     }
 }
 
 typedef enum {
-    ST_STACK,
-    ST_DATASEC,
-} codegen_368_storage_type;
+    MICRO_ST_STACK,
+    MICRO_ST_DATASEC,
+} micro_codegen_386_storage_type;
 
 typedef struct {
-    char name[MAX_SYMBOL_SIZE];
-    codegen_368_micro_type type;
-    codegen_368_storage_type storage_type;
+    char name[MICRO_MAX_SYMBOL_SIZE];
+    micro_codegen_386_micro_type type;
+    micro_codegen_386_storage_type storage_type;
     size_t mem_offset;
-} codegen_368_var_info_t;
+} micro_codegen_386_var_info_t;
 
-genhashmap(codegen_368_var_info_t);
+genhashmap(micro_codegen_386_var_info_t);
 
-error_t *codegen_368_err_stk;
-size_t   codegen_368_err_stk_size;
-size_t __codegen_368_err_stk_real_size;
+micro_error_t *micro_codegen_386_err_stk;
+size_t         micro_codegen_386_err_stk_size;
+size_t       __micro_codegen_386_err_stk_real_size;
 
-hashmap_codegen_368_var_info_t_t *codegen_368_vars;
+#define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_lexer_err_stk_size++] = err
 
-string_t *outbuf;
+hashmap_micro_codegen_386_var_info_t_t *micro_codegen_386_vars;
 
-size_t pos = 0;
+string_t *micro_outbuf;
 
-token_t __peek(size_t offset)
+size_t micro_pos = 0;
+
+micro_token_t __micro_peek(size_t offset)
 {
-    if (pos + offset >= toks_size) {
-        return (token_t){.type = TT_NULL};
+    if (micro_pos + offset >= micro_toks_size) {
+        return (micro_token_t){.type = MICRO_TT_NULL};
     }
-    return toks[pos + offset];
+    return micro_toks[micro_pos + offset];
 }
 
-token_t __get(size_t offset)
+micro_token_t __micro_get(size_t offset)
 {
-    if (pos + offset >= toks_size) {
-        return (token_t){.type = TT_NULL};
+    if (micro_pos + offset >= micro_toks_size) {
+        return (micro_token_t){.type = MICRO_TT_NULL};
     }
-    return toks[pos += offset];
+    return micro_toks[micro_pos += offset];
 }
 
-void codegen_368_init()
+void micro_codegen_386_init()
 {
-    codegen_368_err_stk = (error_t*)malloc(sizeof(error_t) * ERROR_STACK_EXTEND_SIZE);
-    codegen_368_err_stk_size = 0;
-    __codegen_368_err_stk_real_size = ERROR_STACK_EXTEND_SIZE;
+    micro_codegen_386_err_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * MICRO_ERROR_STACK_EXTEND_SIZE);
+    micro_codegen_386_err_stk_size = 0;
+    __micro_codegen_386_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
 
-    codegen_368_vars = hashmap_codegen_368_var_info_t_create();
+    micro_codegen_386_vars = hashmap_micro_codegen_386_var_info_t_create();
 
-    outbuf = string_create();
+    micro_outbuf = string_create();
 }
 
-void codegen_368_delete()
+void micro_codegen_386_delete()
 {
-    free(codegen_368_err_stk);
-    hashmap_codegen_368_var_info_t_full_free(codegen_368_vars);
-    string_free(outbuf);
+    free(micro_codegen_386_err_stk);
+    hashmap_micro_codegen_386_var_info_t_full_free(micro_codegen_386_vars);
+    string_free(micro_outbuf);
 }
 
-void __codegen_368_err_stk_size_check(size_t offset)
+void __micro_codegen_386_err_stk_size_check(size_t offset)
 {
-    if (codegen_368_err_stk_size + offset >= __codegen_368_err_stk_real_size) {
-        error_t *new_stk = (error_t*)malloc(sizeof(error_t) * (__codegen_368_err_stk_real_size += offset / ERROR_STACK_EXTEND_SIZE + 1));
-        memcpy(new_stk, codegen_368_err_stk, sizeof(error_t) * codegen_368_err_stk_size);
-        free(codegen_368_err_stk);
-        codegen_368_err_stk = new_stk;
+    if (micro_codegen_386_err_stk_size + offset >= __micro_codegen_386_err_stk_real_size) {
+        micro_error_t *new_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * (__micro_codegen_386_err_stk_real_size += offset / MICRO_ERROR_STACK_EXTEND_SIZE + 1));
+        memcpy(new_stk, micro_codegen_386_err_stk, sizeof(micro_error_t) * micro_codegen_386_err_stk_size);
+        free(micro_codegen_386_err_stk);
+        micro_codegen_386_err_stk = new_stk;
     }
 }
 

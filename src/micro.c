@@ -17,8 +17,9 @@
 
 int main(int argc, char **argv)
 {
-    args_t *args = (args_t*)malloc(sizeof(args_t));
-    *args = args_parse(argc, argv);
+    micro_args_t *args = (micro_args_t*)malloc(sizeof(micro_args_t));
+
+    *args = micro_args_parse(argc, argv);
 
     if (args->inputfile[0] == 0) {
         puts("Error: Expected input file name");
@@ -29,7 +30,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    char *text = (char*)malloc(sizeof(char) * MAX_INPUT_CODE_SIZE);
+    char *text = (char*)malloc(sizeof(char) * MICRO_MAX_INPUT_CODE_SIZE);
     size_t text_size = 0;
 
     FILE *infile = fopen(args->inputfile, "r");
@@ -39,7 +40,7 @@ int main(int argc, char **argv)
     }
     char c = 0;
     while ((c = getc(infile)) != EOF) {
-        if (text_size >= MAX_INPUT_CODE_SIZE) {
+        if (text_size >= MICRO_MAX_INPUT_CODE_SIZE) {
             puts("Error: Input file to large for reading");
             fclose(infile);
             return 1;
@@ -48,50 +49,50 @@ int main(int argc, char **argv)
     }
     fclose(infile);
 
-    lexer_init();
-        lexing(text, text_size);
+    micro_lexer_init();
+        micro_lexing(text, text_size);
 
-        for (size_t i = 0; i < lexer_err_stk_size; i++) {
+        for (size_t i = 0; i < micro_lexer_err_stk_size; i++) {
             printf("Error:%s:%lu:%lu: %s",
                      args->inputfile,
-                     lexer_err_stk[i].line_ref,
-                     lexer_err_stk[i].chpos_ref,
-                     lexer_err_stk[i].msg);
+                     micro_lexer_err_stk[i].line_ref,
+                     micro_lexer_err_stk[i].chpos_ref,
+                     micro_lexer_err_stk[i].msg);
         }
-        if (lexer_err_stk_size) {
+        if (micro_lexer_err_stk_size) {
             return 2;
         }
 
-        if (args->flags & AF_TOKS_PUT) {
-            for (size_t i = 0; i < toks_size; i++) {
+        if (args->flags & MICRO_AF_TOKS_PUT) {
+            for (size_t i = 0; i < micro_toks_size; i++) {
                 printf("%lu. %lu:%lu type:%u, val:%s\n",
                         i,
-                        toks[i].line_ref,
-                        toks[i].chpos_ref,
-                        toks[i].type,
-                        toks[i].val);
+                        micro_toks[i].line_ref,
+                        micro_toks[i].chpos_ref,
+                        micro_toks[i].type,
+                        micro_toks[i].val);
             }
         }
 
-        codegen_368_init();
-            codegen_368();
+        micro_codegen_386_init();
+            micro_codegen_386();
 
-            for (size_t i = 0; i < codegen_368_err_stk_size; i++) {
+            for (size_t i = 0; i < micro_codegen_386_err_stk_size; i++) {
                 printf("Error:%s:%lu:%lu: %s\n",
                         args->inputfile,
-                        codegen_368_err_stk[i].line_ref,
-                        codegen_368_err_stk[i].chpos_ref,
-                        codegen_368_err_stk[i].msg);
+                        micro_codegen_386_err_stk[i].line_ref,
+                        micro_codegen_386_err_stk[i].chpos_ref,
+                        micro_codegen_386_err_stk[i].msg);
             }
-            if (codegen_368_err_stk_size) {
+            if (micro_codegen_386_err_stk_size) {
                 return 2;
             }
 
             FILE *outfile = fopen(args->outfile, "w");
-            fwrite(outbuf->str, sizeof(char), outbuf->size, outfile);
+            fwrite(micro_outbuf->str, sizeof(char), micro_outbuf->size, outfile);
             fclose(outfile);
-        codegen_368_delete();
-    lexer_delete();
+        micro_codegen_386_delete();
+    micro_lexer_delete();
 
     return 0;
 }

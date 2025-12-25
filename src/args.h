@@ -1,23 +1,23 @@
-#ifndef ARGS_H
-#define ARGS_H
+#ifndef MICRO_ARGS_H
+#define MICRO_ARGS_H
 
 #include <string.h>
 #include "config.h"
 
 typedef struct
 {
-    char   inputfile[MAX_SYMBOL_SIZE];
-    char   outfile[MAX_SYMBOL_SIZE];
+    char   inputfile[MICRO_MAX_SYMBOL_SIZE];
+    char   outfile[MICRO_MAX_SYMBOL_SIZE];
     size_t flags;
-} args_t;
+} micro_args_t;
 
 typedef enum {
-    AF_TOKS_PUT = 1 << 0,
-} args_flags;
+    MICRO_AF_TOKS_PUT = 1 << 0,
+} micro_args_flags;
 
-args_t args_parse(int argc, char **argv)
+micro_args_t micro_args_parse(int argc, char **argv)
 {
-    args_t args;
+    micro_args_t args;
     args.inputfile[0] = 0;
     args.outfile[0] = 0;
     args.flags = 0;
@@ -28,7 +28,7 @@ args_t args_parse(int argc, char **argv)
                 strcpy(args.outfile, argv[++i]);
             } else
             if (!strcmp(argv[i], "--toks-put") || !strcmp(argv[i], "-T")) {
-                args.flags |= AF_TOKS_PUT;
+                args.flags |= MICRO_AF_TOKS_PUT;
             }
         } else {
             strcpy(args.inputfile, argv[i]);
