@@ -2,3 +2,5 @@
 *.o
 .vscode/
 test.*
+bin/
+.vscode/

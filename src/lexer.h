@@ -11,6 +11,7 @@
 typedef enum
 {
     TT_NULL,
+    TT_TYPE_NAME,
     TT_IDENT,
     TT_LIT_INT,
     TT_LIT_FLOAT,
@@ -102,7 +103,7 @@ void lexing(const char *text, size_t text_size)
                 pos++;
                 chpos++;
                 if (pos >= text_size) {
-                    error_t err = {.msg = "expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};
+                    error_t err = {.msg = "Expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};
                     push_err(err);
                     goto err_exit;
                 }
@@ -122,7 +123,19 @@ void lexing(const char *text, size_t text_size)
                 push_tok(tok);
             } else
             if (!strcmp(buf, "fun")) {
-                token_t tok = {.type = TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                token_t tok = {.type = TT_KW_FUN, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                push_tok(tok);
+            } else
+            if (!strcmp(buf, "i8")
+             || !strcmp(buf, "u8")
+             || !strcmp(buf, "i16")
+             || !strcmp(buf, "u16")
+             || !strcmp(buf, "i32")
+             || !strcmp(buf, "u32")
+             || !strcmp(buf, "f32")
+             || !strcmp(buf, "ptr")) {
+                token_t tok = {.type = TT_TYPE_NAME, .line_ref = line, .chpos_ref = tok_start_chpos};
+                strcpy(tok.val, buf);
                 push_tok(tok);
             } else {
                 token_t tok = {.type = TT_IDENT, .line_ref = line, .chpos_ref = tok_start_chpos};
@@ -161,7 +174,7 @@ void lexing(const char *text, size_t text_size)
                 chpos++;
                 
                 if (pos >= text_size) {
-                    error_t err = {.msg = "expected closing '\"' character fro the string literal", .line_ref = line, .chpos_ref = chpos};
+                    error_t err = {.msg = "Expected closing '\"' character for the string literal", .line_ref = line, .chpos_ref = chpos};
                     push_err(err);
                     goto err_exit;
                 }

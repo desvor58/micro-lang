@@ -7,7 +7,8 @@ micro [Options] inputfile_name
 | full name                      | short name               | description                                   |
 |--------------------------------|--------------------------|-----------------------------------------------|
 | --outfile \<file>              | -o \<file>               | output file name (if not exist creating file) |
-| --target \<[target](#targets)> | -t \<[target](#targets)> | set target to compiling               |
+| --target \<[target](#targets)> | -t \<[target](#targets)> | set target to compiling                       |
+| --toks-put                     | -T                       | put tokens after [lexical analis](#stages)    |
 
 ## targets
 | target name | description                                     | micro-comp  |
@@ -18,10 +19,10 @@ micro [Options] inputfile_name
 
 # Stages
 Micro compiling have 4 stage:
-1. [lexing](#lexing)
-2. 
+1. [lexical analis](#lexing)
+2. [code-generation and semantic analis](#code-generation-and-semantic-analis)
 
-# Lexing
+# Lexical analis
 ## Token structure
 Token structure contains:
 - [type](#token-types)
@@ -41,15 +42,20 @@ struct Token
 ```
 
 ### Token types
-In micro tokenizer have types:
-- 0 TT_NULL - using no lexic analis stage
-- 1 TT_IDENT - identifires (some_ident, foo, bar)
-- 2 TT_LIT_INT - integer literal (1, 0, -54)
-- 3 TT_LIT_FLOAT - floating literal (1.5, 0.01, -54.825)
-- 4 TT_LIT_STR - string literal ("some str", "Hello, world!")
-- 5 TT_KW_VAR - keyword 'var'
-- 6 TT_KW_FUN - keyword 'fun'
-- 7 TT_PLUS - '+'
-- 8 TT_MINUS - '-'
-- 9 TT_STAR - '*'
-- 10 TT_SLASH - '/'
+| int number | name         | description                                  |
+|------------|--------------|----------------------------------------------|
+| 0          | TT_NULL      | not used on lexical stage                    |
+| 0          | TT_TYPE_NAME | types (i8, u32, ptr, f16)                    |
+| 2          | TT_IDENT     | identifires (some_ident, foo, bar)           |
+| 3          | TT_LIT_INT   | integer literal (1, 0, -54)                  |
+| 4          | TT_LIT_FLOAT | floating literal (1.5, 0.01, -54.825)        |
+| 5          | TT_LIT_STR   | string literal ("some str", "Hello, world!") |
+| 6          | TT_KW_VAR    | keyword 'var'                                |
+| 7          | TT_KW_FUN    | keyword 'fun'                                |
+| 8          | TT_PLUS      | '+'                                          |
+| 9          | TT_MINUS     | '-'                                          |
+| 10         | TT_STAR      | '*'                                          |
+| 11         | TT_SLASH     | '/'                                          |
+
+
+# Code-generation and semantic analis

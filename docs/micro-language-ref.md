@@ -2,7 +2,7 @@
 All code betwen '\' will be ignored
 ```
 \ its a comments line \
-var i32 a = 5;
+var i32 a 5;
 \
 yooooooo
 its a comment!!!
@@ -35,13 +35,13 @@ var <type> <name>;
 ```
 or
 ```
-var <type> <name> = <init value>;
+var <type> <name> <init value>;
 ```
 ---
 Variables alocating on stack. *rsp* register stay on a return address:
 ```
-var i32 a = 5;
-var i8  b = 4;
+var i32 a 5;
+var i8  b 4;
 ```
 ```
 stack:
@@ -54,15 +54,4 @@ stack:
 |    0     | 0xFD
 |    5     | 0xFC
 |    4     | 0xFB  <- b
-```
-
-# Expressions
-due to the minimalizm of micro compiler expressions writes in prefix notation
-For example:
-```
-\ standart notation \
-2 + 5 * 3  \ 17 \
-
-\ prefix notation \
-* 3 + 5 2  \ also 17 \
 ```
