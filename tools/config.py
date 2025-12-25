@@ -6,5 +6,5 @@ BUILD_DST            = "./bin/"  # where to build scc
 BUILD_OUT_EXT        = ".exe" if sys.platform == "win32" else ""
 
 BUILD_TARGETS = [
-    "micro-386"
+    "micro"
 ]
