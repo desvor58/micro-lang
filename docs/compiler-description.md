@@ -32,38 +32,38 @@ Token structure contains:
 
 is C is structure:
 ```C
-struct Token
+struct micro_token_t
 {
-    token_type type;
-    char       val[MAX_SYMBOL_SIZE];
-    size_t     line_ref;
-    size_t     chpos_ref;
+    micro_token_type type;
+    char             val[MAX_SYMBOL_SIZE];
+    size_t           line_ref;
+    size_t           chpos_ref;
 };
 ```
 
 ### Token types
-| int number | name         | description                                  |
-|------------|--------------|----------------------------------------------|
-| 0          | TT_NULL      | not used on lexical stage                    |
-| 0          | TT_TYPE_NAME | types (i8, u32, ptr, f16)                    |
-| 2          | TT_IDENT     | identifires (some_ident, foo, bar)           |
-| 3          | TT_LIT_INT   | integer literal (1, 0, -54)                  |
-| 4          | TT_LIT_FLOAT | floating literal (1.5, 0.01, -54.825)        |
-| 5          | TT_LIT_STR   | string literal ("some str", "Hello, world!") |
-| 6          | TT_KW_VAR    | keyword 'var'                                |
-| 7          | TT_KW_FUN    | keyword 'fun'                                |
-| 8          | TT_KW_SET    | keyword 'set'                                |
-| 9          | TT_KW_IF     | keyword 'if'                                 |
-| 10         | TT_KW_ELSE   | keyword 'else'                               |
-| 11         | TT_KW_WHILE  | keyword 'while'                              |
-| 12         | TT_PLUS      | '+'                                          |
-| 13         | TT_MINUS     | '-'                                          |
-| 14         | TT_STAR      | '*'                                          |
-| 15         | TT_SLASH     | '/'                                          |
-| 16         | TT_DOT       | '.'                                          |
-| 17         | TT_COMA      | ','                                          |
-| 18         | TT_COLON     | ':'                                          |
-| 19         | TT_SEMICOLON | ';'                                          |
+| int number | name               | description                                  |
+|------------|--------------------|----------------------------------------------|
+| 0          | MICRO_TT_NULL      | not used on lexical stage                    |
+| 0          | MICRO_TT_TYPE_NAME | types (i8, u32, ptr, f16)                    |
+| 2          | MICRO_TT_IDENT     | identifires (some_ident, foo, bar)           |
+| 3          | MICRO_TT_LIT_INT   | integer literal (1, 0, -54)                  |
+| 4          | MICRO_TT_LIT_FLOAT | floating literal (1.5, 0.01, -54.825)        |
+| 5          | MICRO_TT_LIT_STR   | string literal ("some str", "Hello, world!") |
+| 6          | MICRO_TT_KW_VAR    | keyword 'var'                                |
+| 7          | MICRO_TT_KW_FUN    | keyword 'fun'                                |
+| 8          | MICRO_TT_KW_SET    | keyword 'set'                                |
+| 9          | MICRO_TT_KW_IF     | keyword 'if'                                 |
+| 10         | MICRO_TT_KW_ELSE   | keyword 'else'                               |
+| 11         | MICRO_TT_KW_WHILE  | keyword 'while'                              |
+| 12         | MICRO_TT_PLUS      | '+'                                          |
+| 13         | MICRO_TT_MINUS     | '-'                                          |
+| 14         | MICRO_TT_STAR      | '*'                                          |
+| 15         | MICRO_TT_SLASH     | '/'                                          |
+| 16         | MICRO_TT_DOT       | '.'                                          |
+| 17         | MICRO_TT_COMA      | ','                                          |
+| 18         | MICRO_TT_COLON     | ':'                                          |
+| 19         | MICRO_TT_SEMICOLON | ';'                                          |
 
 
 # Code-generation and semantic analis
