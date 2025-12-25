@@ -17,7 +17,10 @@ typedef enum {
 
 args_t args_parse(int argc, char **argv)
 {
-    args_t args = {0};
+    args_t args;
+    args.inputfile[0] = 0;
+    args.outfile[0] = 0;
+    args.flags = 0;
 
     for (size_t i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {

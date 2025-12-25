@@ -10,12 +10,12 @@ int main(int argc, char **argv)
     args_t *args = (args_t*)malloc(sizeof(args_t));
     *args = args_parse(argc, argv);
 
-    if (args->inputfile == 0) {
-        printf("Error: Expected input file name");
+    if (args->inputfile[0] == 0) {
+        puts("Error: Expected input file name");
         return 1;
     }
-    if (args->outfile == 0) {
-        printf("Error: Expected output file name");
+    if (args->outfile[0] == 0) {
+        puts("Error: Expected output file name");
         return 1;
     }
 
@@ -24,13 +24,13 @@ int main(int argc, char **argv)
 
     FILE *infile = fopen(args->inputfile, "r");
     if (!infile) {
-        printf("Error: Input file not be opening");
+        puts("Error: Input file not be opening");
         return 1;
     }
     char c = 0;
     while ((c = getc(infile)) != EOF) {
         if (text_size >= MAX_INPUT_CODE_SIZE) {
-            printf("Error: Input file to large for reading");
+            puts("Error: Input file to large for reading");
             fclose(infile);
             return 1;
         }
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
             codegen();
 
             for (size_t i = 0; i < codegen_err_stk_size; i++) {
-                printf("Error:%s:%lu:%lu: %s",
+                printf("Error:%s:%lu:%lu: %s\n",
                         args->inputfile,
                         codegen_err_stk[i].line_ref,
                         codegen_err_stk[i].chpos_ref,
