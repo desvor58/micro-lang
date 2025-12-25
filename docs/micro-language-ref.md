@@ -55,3 +55,9 @@ stack:
 |    5     | 0xFC
 |    4     | 0xFB  <- b
 ```
+
+## Variable change
+To change the value of variable use *set* keyword:
+```
+set <var name> <new value>;
+```

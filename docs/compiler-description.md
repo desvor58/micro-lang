@@ -52,10 +52,18 @@ struct Token
 | 5          | TT_LIT_STR   | string literal ("some str", "Hello, world!") |
 | 6          | TT_KW_VAR    | keyword 'var'                                |
 | 7          | TT_KW_FUN    | keyword 'fun'                                |
-| 8          | TT_PLUS      | '+'                                          |
-| 9          | TT_MINUS     | '-'                                          |
-| 10         | TT_STAR      | '*'                                          |
-| 11         | TT_SLASH     | '/'                                          |
+| 8          | TT_KW_SET    | keyword 'set'                                |
+| 9          | TT_KW_IF     | keyword 'if'                                 |
+| 10         | TT_KW_ELSE   | keyword 'else'                               |
+| 11         | TT_KW_WHILE  | keyword 'while'                              |
+| 12         | TT_PLUS      | '+'                                          |
+| 13         | TT_MINUS     | '-'                                          |
+| 14         | TT_STAR      | '*'                                          |
+| 15         | TT_SLASH     | '/'                                          |
+| 16         | TT_DOT       | '.'                                          |
+| 17         | TT_COMA      | ','                                          |
+| 18         | TT_COLON     | ':'                                          |
+| 19         | TT_SEMICOLON | ';'                                          |
 
 
 # Code-generation and semantic analis

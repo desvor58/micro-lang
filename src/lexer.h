@@ -11,17 +11,28 @@
 typedef enum
 {
     TT_NULL,
+
     TT_TYPE_NAME,
     TT_IDENT,
+
     TT_LIT_INT,
     TT_LIT_FLOAT,
     TT_LIT_STR,
+
     TT_KW_VAR,
     TT_KW_FUN,
+    TT_KW_SET,
+    TT_KW_IF,
+    TT_KW_ELSE,
+    TT_KW_WHILE,
+
     TT_PLUS,
     TT_MINUS,
     TT_STAR,
     TT_SLASH,
+    TT_DOT,
+    TT_COMA,
+    TT_COLON,
     TT_SEMICOLON,
 } token_type;
 
@@ -126,6 +137,22 @@ void lexing(const char *text, size_t text_size)
                 token_t tok = {.type = TT_KW_FUN, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
                 push_tok(tok);
             } else
+            if (!strcmp(buf, "set")) {
+                token_t tok = {.type = TT_KW_SET, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                push_tok(tok);
+            } else
+            if (!strcmp(buf, "if")) {
+                token_t tok = {.type = TT_KW_IF, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                push_tok(tok);
+            } else
+            if (!strcmp(buf, "else")) {
+                token_t tok = {.type = TT_KW_ELSE, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                push_tok(tok);
+            } else
+            if (!strcmp(buf, "while")) {
+                token_t tok = {.type = TT_KW_WHILE, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                push_tok(tok);
+            } else
             if (!strcmp(buf, "i8")
              || !strcmp(buf, "u8")
              || !strcmp(buf, "i16")
@@ -199,6 +226,18 @@ void lexing(const char *text, size_t text_size)
         } else
         if (text[pos] == '/') {
             token_t tok = {.type = TT_SLASH, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            push_tok(tok);
+        } else
+        if (text[pos] == '.') {
+            token_t tok = {.type = TT_DOT, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            push_tok(tok);
+        } else
+        if (text[pos] == ',') {
+            token_t tok = {.type = TT_COMA, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            push_tok(tok);
+        } else
+        if (text[pos] == ':') {
+            token_t tok = {.type = TT_COLON, .val = 0, .line_ref = line, .chpos_ref = chpos};
             push_tok(tok);
         } else
         if (text[pos] == ';') {
