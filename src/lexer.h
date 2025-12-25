@@ -145,11 +145,11 @@ void lexing(const char *text, size_t text_size)
             pos--;
             chpos--;
         } else
-        if (isdigit(text[pos])) {
+        if (isdigit(text[pos]) || (text[pos] == '-' && isdigit(text[pos + 1]))) {
             size_t tok_start_chpos = chpos;
             token_type type = TT_LIT_INT;
             size_t i = 0;
-            while (isdigit(text[pos]) && pos < text_size) {
+            do {
                 buf[i++] = text[pos++];
                 chpos++;
                 if (text[pos] == '.') {
@@ -157,7 +157,7 @@ void lexing(const char *text, size_t text_size)
                     chpos++;
                     type = TT_LIT_FLOAT;
                 }
-            }
+            } while (isdigit(text[pos]) && pos < text_size);
             buf[i] = '\0';
 
             token_t tok = {.type = type, .line_ref = line, .chpos_ref = tok_start_chpos};

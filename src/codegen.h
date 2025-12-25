@@ -3,6 +3,7 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -27,16 +28,17 @@ typedef enum {
     MT_PTR,
 } codegen_micro_type;
 
+// in bytes
 size_t mt_size[] = {
     [MT_NULL] = 0,
-    [MT_I8]   = 8,
-    [MT_U8]   = 8,
-    [MT_I16]  = 16,
-    [MT_U16]  = 16,
-    [MT_I32]  = 32,
-    [MT_U32]  = 32,
-    [MT_F32]  = 32,
-    [MT_PTR]  = 32
+    [MT_I8]   = 1,
+    [MT_U8]   = 1,
+    [MT_I16]  = 2,
+    [MT_U16]  = 2,
+    [MT_I32]  = 4,
+    [MT_U32]  = 4,
+    [MT_F32]  = 4,
+    [MT_PTR]  = 4
 };
 
 codegen_micro_type str2mt(char *str)
@@ -78,6 +80,19 @@ codegen_micro_type lit2mt(token_t lit, codegen_micro_type expected)
         return MT_PTR;
     }
     return MT_NULL;
+}
+
+void imm_from_mt(char *buf, codegen_micro_type type, size_t val)
+{
+    if (mt_size[type] == 1) {
+        buf[0] = val;
+    } else
+    if (mt_size[type] == 2) {
+        gen16imm_le(buf, val);
+    } else
+    if (mt_size[type] == 4) {
+        gen32imm_le(buf, val);
+    }
 }
 
 typedef enum {
@@ -175,16 +190,38 @@ void codegen()
             var_info->storage_type = ST_DATASEC;
             var_info->mem_offset = outbuf->size; // смещение будет такое, как чисто записаных байт в outbuf
 
+            if (error_skip) {
+                while (toks[pos].type != TT_SEMICOLON && pos < toks_size) {
+                    pos++;
+                }
+                continue;
+            }
+
             if (__peek(3).type == TT_SEMICOLON) {
-                for (size_t i = 0; i < mt_size[var_info->type] / 8; i++) {
+                for (size_t i = 0; i < mt_size[var_info->type]; i++) {
                     string_push_back(outbuf, 0);
                 }
                 pos += 3;
                 continue;
             }
-
-            if (tokislit(__peek(4))) {
-                // TODO
+            if (tokislit(__peek(3))) {
+                codegen_micro_type lit_type = lit2mt(__peek(3), var_info->type);
+                if (lit_type == MT_NULL) {
+                    error_t err = {.msg = "Wrong literal type", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
+                    push_err(err);
+                    while (toks[pos].type != TT_SEMICOLON && pos < toks_size) {
+                        pos++;
+                    }
+                    continue;
+                }
+                
+                char *imm_val = (char*)malloc(sizeof(char) * mt_size[lit_type]);
+                imm_from_mt(imm_val, lit_type, strtoull(__peek(3).val, (char**)0, 10));
+                for (size_t i = 0; i < mt_size[lit_type]; i++) {
+                    string_push_back(outbuf, imm_val[i]);
+                }
+                pos += 4;
+                continue;
             }
         }
     }
