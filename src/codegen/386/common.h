@@ -13,8 +13,16 @@
 #include "../../types.h"
 #include "../../config.h"
 #include "../../lexer.h"
+#include "../../asm/asm386.h"
 
-#define micro_tokislit(tok) (tok.type == MICRO_TT_LIT_FLOAT || tok.type == MICRO_TT_LIT_INT || tok.type == MICRO_TT_LIT_STR)
+#define micro_tokislit(tok) (tok.type == MICRO_TT_LIT_FLOAT  \
+                          || tok.type == MICRO_TT_LIT_INT    \
+                          || tok.type == MICRO_TT_LIT_STR)   \
+
+#define micro_tokisop(tok) (tok.type == MICRO_TT_PLUS    \
+                         || tok.type == MICRO_TT_MINUS   \
+                         || tok.type == MICRO_TT_STAR    \
+                         || tok.type == MICRO_TT_SLASH)  \
 
 typedef enum {
     MICRO_MT_NULL = 0,
@@ -82,7 +90,7 @@ micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_m
     return MICRO_MT_NULL;
 }
 
-void imm_from_mt(char *buf, micro_codegen_386_micro_type type, size_t val)
+void micro_imm_from_mt(char *buf, micro_codegen_386_micro_type type, size_t val)
 {
     if (micro_mt_size[type] == 1) {
         buf[0] = val;
@@ -101,10 +109,15 @@ typedef enum {
 } micro_codegen_386_storage_type;
 
 typedef struct {
+    micro_codegen_386_storage_type type;
+    size_t offset;
+    size_t size;
+} micro_codegen_386_storage_info_t;
+
+typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
     micro_codegen_386_micro_type type;
-    micro_codegen_386_storage_type storage_type;
-    size_t mem_offset;
+    micro_codegen_386_storage_info_t storage_info;
 } micro_codegen_386_var_info_t;
 
 genhashmap(micro_codegen_386_var_info_t);
@@ -113,7 +126,7 @@ micro_error_t *micro_codegen_386_err_stk;
 size_t         micro_codegen_386_err_stk_size;
 size_t       __micro_codegen_386_err_stk_real_size;
 
-#define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_lexer_err_stk_size++] = err
+#define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_codegen_386_err_stk_size++] = err
 
 hashmap_micro_codegen_386_var_info_t_t *micro_codegen_386_vars;
 
@@ -163,6 +176,20 @@ void __micro_codegen_386_err_stk_size_check(size_t offset)
         free(micro_codegen_386_err_stk);
         micro_codegen_386_err_stk = new_stk;
     }
+}
+
+micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_micro_type expected)
+{
+    if (micro_tokislit(tok)) {
+        return micro_lit2mt(tok, expected);
+    }
+    if (tok.type == MICRO_TT_IDENT) {
+        micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, tok.val);
+        if (var_info->type == expected) {
+            return expected;
+        }
+    }
+    return MICRO_MT_NULL;
 }
 
 #endif

@@ -10,6 +10,10 @@ void micro_codegen_386()
         // global var
         if (micro_toks[micro_pos].type == MICRO_TT_KW_VAR) {
             micro_codegen_386__static_var();
+        } else
+        // set value
+        if (micro_toks[micro_pos].type == MICRO_TT_KW_SET) {
+            micro_codegen_386__set();
         }
     }
 }

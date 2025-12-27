@@ -28,6 +28,21 @@ All pointers have ptr type
 ## note
 If micro code builds for 16bits target, i32, u32, f32 and ptr type will be have 2 byte size
 
+# Expresions
+Micro lang use prefix notation like this:
+```
++ 5 * 3 2  \ in standart notation: 3 * 2 + 5 \
+* 5 + 3 2  \ in standart notation: 5 * (2 + 3) \
+```
+
+### note
+In this document single literals is a expresion:
+```
++ 5 4 \ expression \
+5 \ also expresion \
+"hello, world" \ expresion \
+```
+
 # Variables
 Variables decl syntax:
 ```
@@ -35,8 +50,9 @@ var <type> <name>;
 ```
 or
 ```
-var <type> <name> <init value>;
+var <type> <name> <init expression>;
 ```
+If *init expression* not set static variable will be initializate as 0
 ---
 Variables alocating on stack. *rsp* register stay on a return address:
 ```
@@ -59,5 +75,5 @@ stack:
 ## Variable change
 To change the value of variable use *set* keyword:
 ```
-set <var name> <new value>;
+set <var name> <new expression>;
 ```
