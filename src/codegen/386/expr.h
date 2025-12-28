@@ -3,126 +3,268 @@
 
 #include "common.h"
 
+int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage_info_t dst)
+{
+    if (dst.type == MICRO_ST_DATASEG) {
+        if (dst.size == 4) {
+            char dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            char src_val[4];
+            micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+
+            char instruction[] = asm_movM32I32(dst_addr, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            char dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            char src_val[2];
+            micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+
+            char instruction[] = asm_movM16I16(dst_addr, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            char dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            char src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+
+            char instruction[] = asm_movM8I8(dst_addr, &src_val);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    } else
+    if (dst.type == MICRO_ST_REG) {
+        if (dst.size == 4) {
+            reg32 dst_reg = dst.offset;
+            char src_val[4];
+            micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            char instruction[] = asm_movR32I32(dst_reg, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            reg32 dst_reg = dst.offset;
+            char src_val[2];
+            micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            char instruction[] = asm_movR16I16(dst_reg, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            reg32 dst_reg = dst.offset;
+            char src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+            char instruction[] = asm_movR8I8(dst_reg, &src_val);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    }
+    return 1;
+
+err_wrong_dst_type_size:
+    micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+    __micro_push_err(err);
+    return 0;
+}
+
+int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_storage_info_t dst)
+{
+    micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, micro_toks[pos].val);
+    if (!var_info) {
+        micro_error_t err = {.msg = "Unknown identifire", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+        __micro_push_err(err);
+        return 0;
+    }
+    if (micro_mt_size[var_info->type] != dst.size) {
+        micro_error_t err = {.msg = "Variable has wrong type for this expression", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+        __micro_push_err(err);
+        return 0;
+    }
+    if (dst.type == MICRO_ST_DATASEG) {
+        if (dst.size == 4) {
+            reg32 acc_reg = REG32_EAX;
+            char addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            char instruction1[] = asm_movR32M32(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            char instruction2[] = asm_movM32R32(addr, acc_reg);
+            push_instruction(instruction2);
+        } else
+        if (dst.size == 2) {
+            reg16 acc_reg = REG16_AX;
+            char addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            char instruction1[] = asm_movR16M16(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            char instruction2[] = asm_movM16R16(addr, acc_reg);
+            push_instruction(instruction2);
+        } else
+        if (dst.size == 1) {
+            reg16 acc_reg = REG8_AL;
+            char addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            char instruction1[] = asm_movR8M8(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            char instruction2[] = asm_movM8R8(addr, acc_reg);
+            push_instruction(instruction2);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    }
+    if (dst.type == MICRO_ST_REG) {
+        if (dst.size == 4) {
+            reg32 dst_reg = dst.offset;
+            char ident_addr[4];
+            micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
+
+            char instruction[] = asm_movR32M32(dst_reg, ident_addr);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            reg16 dst_reg = dst.offset;
+            char ident_addr[4];
+            micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
+
+            char instruction[] = asm_movR16M16(dst_reg, ident_addr);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            reg8 dst_reg = dst.offset;
+            char ident_addr[4];
+            micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
+
+            char instruction[] = asm_movR8M8(dst_reg, ident_addr);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    }
+    return 1;
+
+err_wrong_dst_type_size:
+    micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+    __micro_push_err(err);
+    return 0;
+}
+
+// return the offset to pos where expression has ending
+// + 5 4
+// p     r
+// 5     3
+//
+// 5
+// p r
+// 8 1
 int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t dst)
 {
     if (micro_tokislit(micro_toks[pos])) {
-        if (dst.type == MICRO_ST_DATASEC) {
-            if (dst.size == 4) {
-                char dst_addr[4];
-                micro_gen32imm_le(dst_addr, dst.offset);
-                char src_val[4];
-                micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
-
-                char instruction[] = asm_movM32I32(dst_addr, src_val);
-                for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {
-                    string_push_back(micro_outbuf, instruction[i]);
-                }
-            } else
-            if (dst.size == 2) {
-                char dst_addr[4];
-                micro_gen32imm_le(dst_addr, dst.offset);
-                char src_val[2];
-                micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
-
-                char instruction[] = asm_movM16I16(dst_addr, src_val);
-                for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {
-                    string_push_back(micro_outbuf, instruction[i]);
-                }
-            } else
-            if (dst.size == 1) {
-                char dst_addr[4];
-                micro_gen32imm_le(dst_addr, dst.offset);
-                char src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
-
-                char instruction[] = asm_movM8I8(dst_addr, &src_val);
-                for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {
-                    string_push_back(micro_outbuf, instruction[i]);
-                }
-            } else {
-                micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-                __micro_push_err(err);
-                return 1;
-            }
-        }
-        return 0;
+        return __micro_codegen_386_expr_parse_get_lit(pos, dst);
     }
     if (micro_toks[pos].type == MICRO_TT_IDENT) {
-        micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, micro_toks[pos].val);
-        if (!var_info) {
-            micro_error_t err = {.msg = "Unknown identifire", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-            __micro_push_err(err);
-            return 1;
-        }
-        if (micro_mt_size[var_info->type] != dst.size) {
-            micro_error_t err = {.msg = "Variable has wrong type for this expression", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-            __micro_push_err(err);
-            return 1;
-        }
-        if (dst.type == MICRO_ST_DATASEC) {
-            if (dst.size == 4) {
-                reg32 acc_reg = REG32_EAX;
-                char addr[4];
-                // use as ident addr
-                micro_gen32imm_le(addr, var_info->storage_info.offset);
-
-                char instruction1[] = asm_movR32M32(acc_reg, addr);
-                for (size_t i = 0; i < sizeof(instruction1)/sizeof(*instruction1); i++) {
-                    string_push_back(micro_outbuf, instruction1[i]);
-                }
-                // use as dst addr
-                micro_gen32imm_le(addr, dst.offset);
-
-                char instruction2[] = asm_movM32R32(addr, acc_reg);
-                for (size_t i = 0; i < sizeof(instruction2)/sizeof(*instruction2); i++) {
-                    string_push_back(micro_outbuf, instruction2[i]);
-                }
-            } else
-            if (dst.size == 2) {
-                reg16 acc_reg = REG16_AX;
-                char addr[4];
-                // use as ident addr
-                micro_gen32imm_le(addr, var_info->storage_info.offset);
-
-                char instruction1[] = asm_movR16M16(acc_reg, addr);
-                for (size_t i = 0; i < sizeof(instruction1)/sizeof(*instruction1); i++) {
-                    string_push_back(micro_outbuf, instruction1[i]);
-                }
-                // use as dst addr
-                micro_gen32imm_le(addr, dst.offset);
-
-                char instruction2[] = asm_movM16R16(addr, acc_reg);
-                for (size_t i = 0; i < sizeof(instruction2)/sizeof(*instruction2); i++) {
-                    string_push_back(micro_outbuf, instruction2[i]);
-                }
-            } else
-            if (dst.size == 1) {
-                reg16 acc_reg = REG8_AL;
-                char addr[4];
-                // use as ident addr
-                micro_gen32imm_le(addr, var_info->storage_info.offset);
-
-                char instruction1[] = asm_movR8M8(acc_reg, addr);
-                for (size_t i = 0; i < sizeof(instruction1)/sizeof(*instruction1); i++) {
-                    string_push_back(micro_outbuf, instruction1[i]);
-                }
-                // use as dst addr
-                micro_gen32imm_le(addr, dst.offset);
-
-                char instruction2[] = asm_movM8R8(addr, acc_reg);
-                for (size_t i = 0; i < sizeof(instruction2)/sizeof(*instruction2); i++) {
-                    string_push_back(micro_outbuf, instruction2[i]);
-                }
-            } else {
-                micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-                __micro_push_err(err);
-                return 1;
-            }
-        }
-        return 0;
+        return __micro_codegen_386_expr_parse_get_ident(pos, dst);
     }
     if (micro_tokisop(micro_toks[pos])) {
-        
+        int expr1_end_offset = micro_codegen_386_expr_parse(
+            pos + 1,
+            (micro_codegen_386_storage_info_t) {
+                .type = MICRO_ST_REG,
+                .size = dst.size,
+                .offset = 0
+            }
+        );
+        if (expr1_end_offset == 0) {
+            return 0;
+        }
+        int expr2_end_offset = micro_codegen_386_expr_parse(
+            pos + expr1_end_offset + 1,
+            (micro_codegen_386_storage_info_t) {
+                .type = MICRO_ST_REG,
+                .size = dst.size,
+                .offset = 1
+            }
+        );
+        if (expr2_end_offset == 0) {
+            return 0;
+        }
+        if (micro_toks[pos].type == MICRO_TT_PLUS) {
+            if (dst.size == 4) {
+                char instruction[] = asm_addR32R32(0, 1);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 2) {
+                char instruction[] = asm_addR16R16(0, 1);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 1) {
+                char instruction[] = asm_addR8R8(0, 1);
+                push_instruction(instruction);
+            } else {
+                goto err_wrong_dst_type_size;
+            }
+        } else {
+            micro_error_t err = {.msg = "Unknow operator", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+            __micro_push_err(err);
+            return 0;
+        }
+        if (dst.type == MICRO_ST_DATASEG) {
+            char dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+
+            if (dst.size == 4) {
+                char instruction[] = asm_movM32R32(dst_addr, 0);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 2) {
+                char instruction[] = asm_movM16R16(dst_addr, 0);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 1) {
+                char instruction[] = asm_movM8R8(dst_addr, 0);
+                push_instruction(instruction);
+            } else {
+                goto err_wrong_dst_type_size;
+            }
+        } else
+        if (dst.type == MICRO_ST_REG) {
+            reg32 dst_reg = dst.offset;
+
+            if (dst.size == 4) {
+                char instruction[] = asm_movR32R32(dst_reg, 0);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 2) {
+                char instruction[] = asm_movR16R16(dst_reg, 0);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 1) {
+                char instruction[] = asm_movR16R16(dst_reg, 0);
+                push_instruction(instruction);
+            } else {
+                goto err_wrong_dst_type_size;
+            }
+        }
+        return expr1_end_offset + expr2_end_offset + 1;
     }
+
+err_wrong_dst_type_size:
+    micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+    __micro_push_err(err);
+    return 0;
 }
 
 #endif

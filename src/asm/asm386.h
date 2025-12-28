@@ -32,6 +32,13 @@ typedef enum {
     REG8_BH = 7,
 } reg8;
 
+// move reg 32 to reg 32
+#define asm_movR32R32(reg1, reg2) {       0x8B, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// move reg 16 to reg 16
+#define asm_movR16R16(reg1, reg2) { 0x66, 0x8B, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// move reg 8 to reg 8
+#define asm_movR8R8(reg1, reg2)   {       0x8A, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+
 // move value 32 to mem 32
 #define asm_movM32I32(addr, val) {       0xC7, 0x05, (addr)[0], (addr)[1], (addr)[2], (addr)[3], (val)[0], (val)[1], (val)[2], (val)[3] }
 // move value 16 to mem 16
@@ -52,5 +59,20 @@ typedef enum {
 #define asm_movM16R16(addr, reg) { 0x66, 0x89, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
 // move reg 8 to mem 8
 #define asm_movM8R8(addr, reg)   {       0x88, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+
+// mov value 32 to reg 32
+#define asm_movR32I32(reg, val)  {       0xB8 + reg, (val)[0], (val)[1], (val)[2], (val)[3] }
+// mov value 16 to reg 16
+#define asm_movR16I16(reg, val)  { 0x66, 0xB8 + reg, (val)[0], (val)[1]  }
+// mov value 8 to reg 8
+#define asm_movR8I8(reg, val)    {       0xB0 + reg, (val)[0] }
+
+
+// add reg 32 and other reg 32
+#define asm_addR32R32(reg1, reg2) {       0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// add reg 16 and other reg 16
+#define asm_addR16R16(reg1, reg2) { 0x66, 0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// add reg 8 and other reg 8
+#define asm_addR8R8(reg1, reg2)   {       0x00, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 
 #endif

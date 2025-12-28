@@ -24,7 +24,7 @@ void micro_codegen_386__static_var()
     strcpy(var_info->name, ident_tok.val);
     var_info->type = micro_str2mt(type_tok.val);
     var_info->storage_info.size = micro_mt_size[var_info->type];
-    var_info->storage_info.type = MICRO_ST_DATASEC;
+    var_info->storage_info.type = MICRO_ST_DATASEG;
     var_info->storage_info.offset = micro_outbuf->size; // смещение будет такое, как число записаных байт в outbuf
     hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
 
@@ -38,7 +38,7 @@ void micro_codegen_386__static_var()
     if (micro_tokislit(__micro_peek(3))) {
         micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(3), var_info->type);
         if (__micro_peek(4).type != MICRO_TT_SEMICOLON) {
-            micro_error_t err = {.msg = "Expected `;`", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
+            micro_error_t err = {.msg = "Expected ';'", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
             __micro_push_err(err);
             micro_pos += 3;
             return;
@@ -99,9 +99,13 @@ void micro_codegen_386__set()
         __micro_push_err(err);
         return;
     }
-    int err_expr = micro_codegen_386_expr_parse(micro_pos + 2, var_info->storage_info);
-    if (err_expr) {
+    int expr_end_offset = micro_codegen_386_expr_parse(micro_pos + 2, var_info->storage_info);
+    if (!expr_end_offset) {
         goto err_exit;
+    }
+    if (micro_toks[micro_pos + 2 + expr_end_offset].type != MICRO_TT_SEMICOLON) {
+        micro_error_t err = {.msg = "Expected ';'", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
+        __micro_push_err(err);
     }
     return;
 

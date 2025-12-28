@@ -105,12 +105,16 @@ void micro_imm_from_mt(char *buf, micro_codegen_386_micro_type type, size_t val)
 
 typedef enum {
     MICRO_ST_STACK,
-    MICRO_ST_DATASEC,
+    MICRO_ST_DATASEG,
+    MICRO_ST_REG,
 } micro_codegen_386_storage_type;
 
 typedef struct {
     micro_codegen_386_storage_type type;
-    size_t offset;
+    // if type == MICRO_ST_STACK:    esp + offset
+    // if type == MICRO_ST_DATASEG:  start_of_file + org + offset
+    // if type == MICRO_ST_REGISTER: offset - num of register
+    offset_t offset;
     size_t size;
 } micro_codegen_386_storage_info_t;
 
@@ -191,5 +195,10 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
     }
     return MICRO_MT_NULL;
 }
+
+#define push_instruction(instruction)                                        \
+    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
+        string_push_back(micro_outbuf, instruction[i]);                      \
+    }
 
 #endif
