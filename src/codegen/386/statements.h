@@ -6,27 +6,18 @@
 
 void micro_codegen_386__static_var()
 {
-    int error_skip = 0;
-
     micro_token_t type_tok = __micro_peek(1);
     micro_token_t ident_tok = __micro_peek(2);
 
     if (type_tok.type != MICRO_TT_TYPE_NAME || type_tok.type == MICRO_TT_NULL) {
         micro_error_t err = {.msg = "Expected type name after 'var' keyword", .line_ref = type_tok.line_ref, .chpos_ref = type_tok.chpos_ref};
         __micro_push_err(err);
-        error_skip = 1;
+        goto err_exit;
     }
     if (ident_tok.type != MICRO_TT_IDENT || ident_tok.type == MICRO_TT_NULL) {
         micro_error_t err = {.msg = "Expected identifier after type name", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
         __micro_push_err(err);
-        error_skip = 1;
-    }
-
-    if (error_skip) {
-        while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
-            micro_pos++;
-        }
-        return;
+        goto err_exit;
     }
 
     micro_codegen_386_var_info_t *var_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
@@ -68,6 +59,13 @@ void micro_codegen_386__static_var()
         }
         micro_pos += 4;
     }
+    return;
+
+err_exit:
+    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
+        micro_pos++;
+    }
+    return;
 }
 
 void micro_codegen_386__set()
@@ -80,20 +78,13 @@ void micro_codegen_386__set()
     if (dst_tok.type != MICRO_TT_IDENT || dst_tok.type == MICRO_TT_NULL) {
         micro_error_t err = {.msg = "Expected destination variable name after 'set' keyword", .line_ref = dst_tok.line_ref, .chpos_ref = dst_tok.chpos_ref};
         __micro_push_err(err);
-        error_skip = 1;
+        goto err_exit;
     }
     if (src_tok.type != MICRO_TT_IDENT && !micro_tokislit(src_tok) && !micro_tokisop(src_tok) || src_tok.type == MICRO_TT_NULL) {
         printf("%u\n", src_tok.type);
         micro_error_t err = {.msg = "Expected source expression after destination variable name", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
         __micro_push_err(err);
-        error_skip = 1;
-    }
-
-    if (error_skip) {
-        while (micro_toks[micro_pos].type == MICRO_TT_SEMICOLON && micro_pos != micro_toks_size) {
-            micro_pos++;
-        }
-        return;
+        goto err_exit;
     }
     
     micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, dst_tok.val);
@@ -108,7 +99,17 @@ void micro_codegen_386__set()
         __micro_push_err(err);
         return;
     }
-    micro_codegen_386_expr_parse(micro_pos + 2, var_info->storage_info);
+    int err_expr = micro_codegen_386_expr_parse(micro_pos + 2, var_info->storage_info);
+    if (err_expr) {
+        goto err_exit;
+    }
+    return;
+
+err_exit:
+    while (micro_toks[micro_pos].type == MICRO_TT_SEMICOLON && micro_pos != micro_toks_size) {
+        micro_pos++;
+    }
+    return;
 }
 
 #endif
