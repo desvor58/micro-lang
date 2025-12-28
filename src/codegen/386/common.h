@@ -15,14 +15,14 @@
 #include "../../lexer.h"
 #include "../../asm/asm386.h"
 
-#define micro_tokislit(tok) (tok.type == MICRO_TT_LIT_FLOAT  \
-                          || tok.type == MICRO_TT_LIT_INT    \
-                          || tok.type == MICRO_TT_LIT_STR)   \
+#define micro_tokislit(tok) ((tok).type == MICRO_TT_LIT_FLOAT  \
+                          || (tok).type == MICRO_TT_LIT_INT    \
+                          || (tok).type == MICRO_TT_LIT_STR)   \
 
-#define micro_tokisop(tok) (tok.type == MICRO_TT_PLUS    \
-                         || tok.type == MICRO_TT_MINUS   \
-                         || tok.type == MICRO_TT_STAR    \
-                         || tok.type == MICRO_TT_SLASH)  \
+#define micro_tokisop(tok) ((tok).type == MICRO_TT_PLUS    \
+                         || (tok).type == MICRO_TT_MINUS   \
+                         || (tok).type == MICRO_TT_STAR    \
+                         || (tok).type == MICRO_TT_SLASH)  \
 
 typedef enum {
     MICRO_MT_NULL = 0,
