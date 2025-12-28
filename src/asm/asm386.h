@@ -32,12 +32,27 @@ typedef enum {
     REG8_BH = 7,
 } reg8;
 
+// exchange values
+#define asm_xchgR32R32(reg1, reg2) {       0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
+#define asm_xchgR16R16(reg1, reg2) { 0x66, 0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
+#define asm_xchgR8R8(reg1, reg2)   {       0x86, 0b11000000 | ((reg1) << 3) | (reg2) }
+
+// pushing reg 32 to stack
+#define asm_pushR32(reg) {       0xFF, 0b11110000 | (reg) }
+// pushing reg 16 to stack
+#define asm_pushR16(reg) { 0x66, 0xFF, 0b11110000 | (reg) }
+
+// poping reg 32 to stack
+#define asm_popR32(reg) {       0x58 + (reg) }
+// poping reg 16 to stack
+#define asm_popR16(reg) { 0x66, 0x58 + (reg) }
+
 // move reg 32 to reg 32
-#define asm_movR32R32(reg1, reg2) {       0x8B, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_movR32R32(reg1, reg2) {       0x8B, 0b11000000 | ((reg2) << 3) | (reg1) }
 // move reg 16 to reg 16
-#define asm_movR16R16(reg1, reg2) { 0x66, 0x8B, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_movR16R16(reg1, reg2) { 0x66, 0x8B, 0b11000000 | ((reg2) << 3) | (reg1) }
 // move reg 8 to reg 8
-#define asm_movR8R8(reg1, reg2)   {       0x8A, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_movR8R8(reg1, reg2)   {       0x8A, 0b11000000 | ((reg2) << 3) | (reg1) }
 
 // move value 32 to mem 32
 #define asm_movM32I32(addr, val) {       0xC7, 0x05, (addr)[0], (addr)[1], (addr)[2], (addr)[3], (val)[0], (val)[1], (val)[2], (val)[3] }
@@ -74,5 +89,40 @@ typedef enum {
 #define asm_addR16R16(reg1, reg2) { 0x66, 0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 // add reg 8 and other reg 8
 #define asm_addR8R8(reg1, reg2)   {       0x00, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+
+// sub reg 32 and other reg 32
+#define asm_subR32R32(reg1, reg2) {       0x81, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// sub reg 16 and other reg 16
+#define asm_subR16R16(reg1, reg2) { 0x66, 0x81, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+// sub reg 8 and other reg 8
+#define asm_subR8R8(reg1, reg2)   {       0x80, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+
+// multiply EAX and reg
+#define asm_mulR32(reg) {       0xF7, 0b11100000 | (reg) }
+// multiply AX and reg
+#define asm_mulR16(reg) { 0x66, 0xF7, 0b11100000 | (reg) }
+// multiply AL and reg
+#define asm_mulR8(reg)  {       0xF6, 0b11100000 | (reg) }
+
+// signed multiply reg 32 and reg 32
+#define asm_imulR32R32(reg1, reg2) {       0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
+// signed multiply reg 16 and reg 16
+#define asm_imulR16R16(reg1, reg2) { 0x66, 0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
+// signed multiply reg 8 and reg 8
+#define asm_imulR8R8(reg1, reg2)   {       0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
+
+// division EAX and reg
+#define asm_divR32(reg) {       0xF7, 0b11110000 | (reg) }
+// division AX and reg
+#define asm_divR16(reg) { 0x66, 0xF7, 0b11110000 | (reg) }
+// division AL and reg
+#define asm_divR8(reg)  {       0xF6, 0b11110000 | (reg) }
+
+// division EAX and reg
+#define asm_idivR32(reg) {       0xF7, 0b11111000 | (reg) }
+// division AX and reg
+#define asm_idivR16(reg) { 0x66, 0xF7, 0b11111000 | (reg) }
+// division AL and reg
+#define asm_idivR8(reg)  {       0xF6, 0b11111000 | (reg) }
 
 #endif

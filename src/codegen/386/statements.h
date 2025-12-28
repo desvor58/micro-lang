@@ -26,6 +26,7 @@ void micro_codegen_386__static_var()
     var_info->storage_info.size = micro_mt_size[var_info->type];
     var_info->storage_info.type = MICRO_ST_DATASEG;
     var_info->storage_info.offset = micro_outbuf->size; // смещение будет такое, как число записаных байт в outbuf
+    var_info->storage_info.is_unsigned = micro_mtisunsigned(var_info->type);
     hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
 
     if (__micro_peek(3).type == MICRO_TT_SEMICOLON) {

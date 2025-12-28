@@ -36,6 +36,8 @@ typedef enum {
     MICRO_MT_PTR,
 } micro_codegen_386_micro_type;
 
+#define micro_mtisunsigned(mt) (mt == MICRO_MT_U8 || mt == MICRO_MT_U16 || mt == MICRO_MT_U32 || mt == MICRO_MT_PTR)
+
 // in bytes
 size_t micro_mt_size[] = {
     [MICRO_MT_NULL] = 0,
@@ -116,6 +118,7 @@ typedef struct {
     // if type == MICRO_ST_REGISTER: offset - num of register
     offset_t offset;
     size_t size;
+    int is_unsigned;
 } micro_codegen_386_storage_info_t;
 
 typedef struct {
