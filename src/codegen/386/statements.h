@@ -71,8 +71,6 @@ err_exit:
 
 void micro_codegen_386__set()
 {
-    int error_skip = 0;
-
     micro_token_t dst_tok = __micro_peek(1);
     micro_token_t src_tok = __micro_peek(2);
 
@@ -108,6 +106,80 @@ void micro_codegen_386__set()
         micro_error_t err = {.msg = "Expected ';'", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
         __micro_push_err(err);
     }
+    return;
+
+err_exit:
+    while (micro_toks[micro_pos].type == MICRO_TT_SEMICOLON && micro_pos != micro_toks_size) {
+        micro_pos++;
+    }
+    return;
+}
+
+void micro_codegen_386__fun()
+{
+    micro_token_t tok_ident = __micro_get(1);
+    micro_pos++;
+    if (tok_ident.type != MICRO_TT_IDENT || tok_ident.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected function name after 'fun' keyword", .line_ref = tok_ident.line_ref, .chpos_ref = tok_ident.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
+    micro_codegen_386_fun_info_t *fun_info = (micro_codegen_386_fun_info_t*)malloc(sizeof(micro_codegen_386_fun_info_t));
+    strcpy(fun_info->name, tok_ident.val);
+    fun_info->args = list_micro_codegen_386_var_info_t_create();
+    fun_info->ret_type = MICRO_MT_NULL;
+    fun_info->offset = micro_outbuf->size;
+    
+    if (micro_toks[micro_pos].type == MICRO_TT_KW_RET) {
+        if (micro_toks[++micro_pos].type != MICRO_TT_TYPE_NAME) {
+            micro_error_t err = {.msg = "Expected return type of function after 'ret' keyword",
+                                 .line_ref = micro_toks[micro_pos].line_ref,
+                                 .chpos_ref = micro_toks[micro_pos].chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+        fun_info->ret_type = micro_str2mt(micro_toks[micro_pos].val);
+        micro_pos++;
+    }
+    if (micro_toks[micro_pos].type != MICRO_TT_KW_START) {
+        micro_error_t err = {.msg = "Expected 'start' keyword",
+                             .line_ref = micro_toks[micro_pos].line_ref,
+                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+    while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
+        micro_codegen_386_micro_instruction_parse();
+    }
+    char ret_instruction[] = {0xC3};
+    push_instruction(ret_instruction);
+
+    return;
+
+err_exit:
+    while (micro_toks[micro_pos].type == MICRO_TT_KW_END && micro_pos != micro_toks_size) {
+        micro_pos++;
+    }
+    return;
+}
+
+void micro_codegen_386__call()
+{
+    micro_token_t tok_fun_name = __micro_get(1);
+    micro_pos++;
+    if (tok_fun_name.type != MICRO_TT_IDENT || tok_fun_name.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected called functon name after 'call' keyword",
+                             .line_ref = micro_toks[micro_pos].line_ref,
+                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
+    if (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
+        
+    }
+
     return;
 
 err_exit:

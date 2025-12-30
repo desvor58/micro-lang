@@ -25,6 +25,10 @@ typedef enum
     MICRO_TT_KW_IF,
     MICRO_TT_KW_ELSE,
     MICRO_TT_KW_WHILE,
+    MICRO_TT_KW_START,
+    MICRO_TT_KW_END,
+    MICRO_TT_KW_RET,
+    MICRO_TT_KW_CALL,
 
     MICRO_TT_PLUS,
     MICRO_TT_MINUS,
@@ -151,6 +155,22 @@ void micro_lexing(const char *text, size_t text_size)
             } else
             if (!strcmp(buf, "while")) {
                 micro_token_t tok = {.type = MICRO_TT_KW_WHILE, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                __micro_push_tok(tok);
+            } else
+            if (!strcmp(buf, "start")) {
+                micro_token_t tok = {.type = MICRO_TT_KW_START, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                __micro_push_tok(tok);
+            } else
+            if (!strcmp(buf, "end")) {
+                micro_token_t tok = {.type = MICRO_TT_KW_END, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                __micro_push_tok(tok);
+            } else
+            if (!strcmp(buf, "ret")) {
+                micro_token_t tok = {.type = MICRO_TT_KW_RET, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                __micro_push_tok(tok);
+            } else
+            if (!strcmp(buf, "call")) {
+                micro_token_t tok = {.type = MICRO_TT_KW_CALL, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
                 __micro_push_tok(tok);
             } else
             if (!strcmp(buf, "i8")

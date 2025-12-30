@@ -43,6 +43,9 @@ In this document single literals is a expresion:
 "hello, world" \ expresion \
 ```
 
+## Operators
+Micro support +, -, * and / operators - addition, substruction, multipling, divising
+
 # Variables
 Variables decl syntax:
 ```

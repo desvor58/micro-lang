@@ -129,13 +129,26 @@ typedef struct {
 
 genhashmap(micro_codegen_386_var_info_t);
 
+hashmap_micro_codegen_386_var_info_t_t *micro_codegen_386_vars;
+
+genlist(micro_codegen_386_var_info_t);
+
+typedef struct {
+    char name[MICRO_MAX_SYMBOL_SIZE];
+    micro_codegen_386_micro_type ret_type;
+    list_micro_codegen_386_var_info_t_pair_t *args;
+    size_t offset;
+} micro_codegen_386_fun_info_t;
+
+genhashmap(micro_codegen_386_fun_info_t);
+
+hashmap_micro_codegen_386_fun_info_t_t *micro_codegen_386_funs;
+
 micro_error_t *micro_codegen_386_err_stk;
 size_t         micro_codegen_386_err_stk_size;
 size_t       __micro_codegen_386_err_stk_real_size;
 
 #define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_codegen_386_err_stk_size++] = err
-
-hashmap_micro_codegen_386_var_info_t_t *micro_codegen_386_vars;
 
 string_t *micro_outbuf;
 
@@ -144,7 +157,7 @@ size_t micro_pos = 0;
 micro_token_t __micro_peek(size_t offset)
 {
     if (micro_pos + offset >= micro_toks_size) {
-        return (micro_token_t){.type = MICRO_TT_NULL};
+        return (micro_token_t){.type = MICRO_TT_NULL, .line_ref = micro_toks[micro_pos].line_ref, .chpos_ref = micro_toks[micro_pos].chpos_ref};
     }
     return micro_toks[micro_pos + offset];
 }
@@ -152,9 +165,10 @@ micro_token_t __micro_peek(size_t offset)
 micro_token_t __micro_get(size_t offset)
 {
     if (micro_pos + offset >= micro_toks_size) {
-        return (micro_token_t){.type = MICRO_TT_NULL};
+        return (micro_token_t){.type = MICRO_TT_NULL, .line_ref = micro_toks[micro_pos].line_ref, .chpos_ref = micro_toks[micro_pos].chpos_ref};
     }
-    return micro_toks[micro_pos += offset];
+    micro_pos += offset;
+    return micro_toks[micro_pos];
 }
 
 void micro_codegen_386_init()
@@ -164,6 +178,7 @@ void micro_codegen_386_init()
     __micro_codegen_386_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
 
     micro_codegen_386_vars = hashmap_micro_codegen_386_var_info_t_create();
+    micro_codegen_386_funs = hashmap_micro_codegen_386_fun_info_t_create();
 
     micro_outbuf = string_create();
 }
@@ -172,6 +187,7 @@ void micro_codegen_386_delete()
 {
     free(micro_codegen_386_err_stk);
     hashmap_micro_codegen_386_var_info_t_full_free(micro_codegen_386_vars);
+    hashmap_micro_codegen_386_fun_info_t_full_free(micro_codegen_386_funs);
     string_free(micro_outbuf);
 }
 
@@ -203,5 +219,7 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
     for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
         string_push_back(micro_outbuf, instruction[i]);                      \
     }
+
+void micro_codegen_386_micro_instruction_parse();
 
 #endif
