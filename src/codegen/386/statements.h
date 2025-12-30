@@ -109,7 +109,7 @@ void micro_codegen_386__set()
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type == MICRO_TT_SEMICOLON && micro_pos != micro_toks_size) {
+    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
         micro_pos++;
     }
     return;
@@ -130,6 +130,7 @@ void micro_codegen_386__fun()
     fun_info->args = list_micro_codegen_386_var_info_t_create();
     fun_info->ret_type = MICRO_MT_NULL;
     fun_info->offset = micro_outbuf->size;
+    printf("fun:%u\n", fun_info->offset);
     
     if (micro_toks[micro_pos].type == MICRO_TT_KW_RET) {
         if (micro_toks[++micro_pos].type != MICRO_TT_TYPE_NAME) {
@@ -152,13 +153,15 @@ void micro_codegen_386__fun()
     while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
         micro_codegen_386_micro_instruction_parse();
     }
-    char ret_instruction[] = {0xC3};
+    char ret_instruction[] = asm_ret;
     push_instruction(ret_instruction);
+
+    hashmap_micro_codegen_386_fun_info_t_set(micro_codegen_386_funs, tok_ident.val, fun_info);
 
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type == MICRO_TT_KW_END && micro_pos != micro_toks_size) {
+    while (micro_toks[micro_pos].type != MICRO_TT_KW_END && micro_pos < micro_toks_size) {
         micro_pos++;
     }
     return;
@@ -175,15 +178,36 @@ void micro_codegen_386__call()
         __micro_push_err(err);
         goto err_exit;
     }
-
     if (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
-        
+        micro_error_t err = {.msg = "Expected ';'",
+                             .line_ref = micro_toks[micro_pos].line_ref,
+                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
     }
+
+    micro_codegen_386_fun_info_t *fun_info = hashmap_micro_codegen_386_fun_info_t_get(micro_codegen_386_funs, tok_fun_name.val);
+
+    if (!fun_info) {
+        micro_error_t err = {.msg = "Unknown function name",
+                             .line_ref = tok_fun_name.line_ref,
+                             .chpos_ref = tok_fun_name.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
+    printf("call:%u\n", fun_info->offset);
+
+    char addr[4];
+    // вызов процедур по аддресу: адрес процедуры - (адрес текущей иструкции + размер иструкции call)
+    micro_gen32imm_le(addr, fun_info->offset - (micro_outbuf->size + 5));
+    char instruction[] = asm_call(addr);
+    push_instruction(instruction);
 
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type == MICRO_TT_SEMICOLON && micro_pos != micro_toks_size) {
+    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
         micro_pos++;
     }
     return;

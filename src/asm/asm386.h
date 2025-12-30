@@ -32,6 +32,10 @@ typedef enum {
     REG8_BH = 7,
 } reg8;
 
+// functions
+#define asm_ret        {0xC3}
+#define asm_call(addr) {0xE8, (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+
 // exchange values
 #define asm_xchgR32R32(reg1, reg2) {       0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
 #define asm_xchgR16R16(reg1, reg2) { 0x66, 0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
