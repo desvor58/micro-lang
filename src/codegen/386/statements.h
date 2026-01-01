@@ -169,10 +169,19 @@ err_exit:
 
 void micro_codegen_386__call()
 {
-    micro_token_t tok_fun_name = __micro_get(1);
+    micro_token_t tok_dst_var_name = __micro_get(1);
+    micro_token_t tok_fun_name     = __micro_get(1);
     micro_pos++;
+
+    if (tok_dst_var_name.type != MICRO_TT_IDENT || tok_dst_var_name.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected destination variable name after 'call' keyword",
+                             .line_ref = micro_toks[micro_pos].line_ref,
+                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
     if (tok_fun_name.type != MICRO_TT_IDENT || tok_fun_name.type == MICRO_TT_NULL) {
-        micro_error_t err = {.msg = "Expected called functon name after 'call' keyword",
+        micro_error_t err = {.msg = "Expected called functon name after destination variable name",
                              .line_ref = micro_toks[micro_pos].line_ref,
                              .chpos_ref = micro_toks[micro_pos].chpos_ref};
         __micro_push_err(err);
@@ -195,8 +204,6 @@ void micro_codegen_386__call()
         __micro_push_err(err);
         goto err_exit;
     }
-
-    printf("call:%u\n", fun_info->offset);
 
     char addr[4];
     // вызов процедур по аддресу: адрес процедуры - (адрес текущей иструкции + размер иструкции call)

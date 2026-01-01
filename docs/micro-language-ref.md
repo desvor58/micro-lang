@@ -75,8 +75,78 @@ stack:
 |    4     | 0xFB  <- b
 ```
 
-## Variable change
+# Variable change
 To change the value of variable use *set* keyword:
 ```
 set <var name> <new expression>;
+```
+
+For example:
+```
+var u32 a 5; \ a = 5 \
+set a + 8 5; \ a = 13 \
+```
+
+# Functuins
+Functions in micro work like "functions" in most assembers: label is specified at the beginning of the function and 'ret' instruction is specified at end:
+```
+some_function_name:  ; start of function
+    add ax, cx       ; some code
+    ret              ; end of function
+```
+
+But these "function" desnt have parametrs and, for example, specified return type in language level, unlike micro
+
+Functions in micro declaration in BNF notation:
+```
+fun <name> [<param type 1> <param name 1> <param type 2> <param name 2> <param type N> <param name N>] [ret <function return type>] start <body of fuction> end
+```
+note: check the [style guide of function declaration](./good-micro-code-style.md#function-declaration)
+
+---
+
+Functions can be called like in an assebler: with 'call' keyword:
+```
+\ declaration \
+fun test:
+start
+    \ some code \
+end
+
+call _ test; \ calling function \
+```
+But keyword 'call' in micro requires destination variable for return value of function. If function do not have return value or if you dont wont save function return value, you can use '_' name
+
+Arguments of function can be given after function name:
+```
+\ declaration \
+fun test:
+    u32 arg1
+    u32 arg2
+start
+    \ some code \
+end
+
+var u32 a 5;
+var u32 b 7;
+
+call _ test a b; \ calling function \
+```
+
+To save return value of function:
+```
+\ declaration \
+fun test:
+    u32 arg1
+    u32 arg2
+    ret u32
+start
+    \ some code \
+end
+
+var u32 a 5;
+var u32 b 7;
+var u32 res;
+
+call res test a b; \ calling function \
 ```
