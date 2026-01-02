@@ -9,6 +9,7 @@
 
 #include <SCT/hashmap.h>
 #include <SCT/string.h>
+#include <SCT/vector.h>
 
 #include "../../types.h"
 #include "../../config.h"
@@ -131,12 +132,12 @@ genhashmap(micro_codegen_386_var_info_t);
 
 hashmap_micro_codegen_386_var_info_t_t *micro_codegen_386_vars;
 
-genlist(micro_codegen_386_var_info_t);
+genvector(micro_codegen_386_var_info_t, 1);
 
 typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
     micro_codegen_386_micro_type ret_type;
-    list_micro_codegen_386_var_info_t_pair_t *args;
+    vector_micro_codegen_386_var_info_t_t *args;
     size_t offset;
 } micro_codegen_386_fun_info_t;
 

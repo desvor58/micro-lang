@@ -3,6 +3,19 @@
 
 #include "common.h"
 
+size_t micro_expr_peek(size_t pos)
+{
+    if (micro_tokislit(micro_toks[pos]) || micro_toks[pos].type == MICRO_TT_IDENT) {
+        return 1;
+    } else
+    if (micro_tokisop(micro_toks[pos])) {
+        size_t expr1_end_offset = expr_peek(pos + 1);
+        size_t expr2_end_offset = expr_peek(pos + expr1_end_offset);
+        return expr1_end_offset + expr2_end_offset + 1;
+    }
+    return 0;
+}
+
 int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage_info_t dst)
 {
     if (dst.type == MICRO_ST_DATASEG) {

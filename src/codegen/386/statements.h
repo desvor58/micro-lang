@@ -127,7 +127,7 @@ void micro_codegen_386__fun()
 
     micro_codegen_386_fun_info_t *fun_info = (micro_codegen_386_fun_info_t*)malloc(sizeof(micro_codegen_386_fun_info_t));
     strcpy(fun_info->name, tok_ident.val);
-    fun_info->args = list_micro_codegen_386_var_info_t_create();
+    fun_info->args = vector_micro_codegen_386_var_info_t_create();
     fun_info->ret_type = MICRO_MT_NULL;
     fun_info->offset = micro_outbuf->size;
 
@@ -150,18 +150,18 @@ void micro_codegen_386__fun()
             goto err_exit;
         }
 
-        micro_codegen_386_var_info_t *param_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
-        strcpy(param_info->name, tok_param_ident.val);
-        param_info->type = micro_str2mt(tok_param_type.val);
-        param_info->storage_info = (micro_codegen_386_storage_info_t) {
+        micro_codegen_386_var_info_t param_info = {0};
+        strcpy(param_info.name, tok_param_ident.val);
+        param_info.type = micro_str2mt(tok_param_type.val);
+        param_info.storage_info = (micro_codegen_386_storage_info_t) {
             .type = MICRO_ST_STACK,
-            .size = micro_mt_size[param_info->type],
+            .size = micro_mt_size[param_info.type],
             // [ebp - 4 - ((N - 1) * 4 + sizeof(aN))]
-            .offset = - 4 - (param_num * 4 + micro_mt_size[param_info->type]),
-            .is_unsigned = micro_mtisunsigned(param_info->type)
+            .offset = - 4 - (param_num * 4 + micro_mt_size[param_info.type]),
+            .is_unsigned = micro_mtisunsigned(param_info.type)
         };
 
-        list_micro_codegen_386_var_info_t_add(fun_info->args, param_info);
+        vector_micro_codegen_386_var_info_t_push_back(fun_info->args, param_info);
 
         param_num++;
     }
@@ -221,16 +221,8 @@ void micro_codegen_386__call()
         __micro_push_err(err);
         goto err_exit;
     }
-    if (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
-        micro_error_t err = {.msg = "Expected ';'",
-                             .line_ref = micro_toks[micro_pos].line_ref,
-                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
-        __micro_push_err(err);
-        goto err_exit;
-    }
 
     micro_codegen_386_fun_info_t *fun_info = hashmap_micro_codegen_386_fun_info_t_get(micro_codegen_386_funs, tok_fun_name.val);
-
     if (!fun_info) {
         micro_error_t err = {.msg = "Unknown function name",
                              .line_ref = tok_fun_name.line_ref,
@@ -238,6 +230,29 @@ void micro_codegen_386__call()
         __micro_push_err(err);
         goto err_exit;
     }
+
+
+    size_t arg_expr_starts[16] = {0};
+    size_t cur_arg_num = 0;
+    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
+        arg_expr_starts[cur_arg_num++] = micro_pos;
+        micro_pos += micro_expr_peek(micro_pos) - 1;
+
+        if (++micro_pos >= micro_toks_size) {
+            micro_error_t err = {.msg = "Expected ';'",
+                                 .line_ref = micro_toks[micro_pos - 1].line_ref,
+                                 .chpos_ref = micro_toks[micro_pos - 1].chpos_ref};
+        }
+    }
+    for (size_t i = cur_arg_num - 1; i > 0; i++) {
+        micro_codegen_386_expr_parse(arg_expr_starts[i], (micro_codegen_386_storage_info_t){
+            .type = MICRO_ST_STACK,
+            .size = 4,
+            .offset = i * 4,
+            .is_unsigned = 0
+        });
+    }
+
 
     u8 addr[4];
     // вызов процедур по аддресу: адрес процедуры - (адрес текущей иструкции + размер иструкции call)
