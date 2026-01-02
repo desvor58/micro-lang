@@ -92,7 +92,7 @@ micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_m
     return MICRO_MT_NULL;
 }
 
-void micro_imm_from_mt(char *buf, micro_codegen_386_micro_type type, size_t val)
+void micro_imm_from_mt(u8 *buf, micro_codegen_386_micro_type type, size_t val)
 {
     if (micro_mt_size[type] == 1) {
         buf[0] = val;

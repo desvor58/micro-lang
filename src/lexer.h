@@ -268,7 +268,7 @@ void micro_lexing(const char *text, size_t text_size)
         pos++;
         chpos++;
     }
-err_exit:
+err_exit:;
 }
 
 #undef __micro_push_tok

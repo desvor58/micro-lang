@@ -78,14 +78,14 @@ int hashmap_##Ty##_delete(hashmap_##Ty##_t *map, const char *key)  \
     }  \
     return 1;  \
 }  \
-int hashmap_##Ty##_free(hashmap_##Ty##_t *map)  \
+void hashmap_##Ty##_free(hashmap_##Ty##_t *map)  \
 {  \
     for (size_t i = 0; i < HASHMAP_BUCKETS_NUM; i++) {  \
         list_hashmap_##Ty##_container_t_free(map->buckets[i]);  \
     }  \
     free(map);  \
 }  \
-int hashmap_##Ty##_full_free(hashmap_##Ty##_t *map)  \
+void hashmap_##Ty##_full_free(hashmap_##Ty##_t *map)  \
 {  \
     for (size_t i = 0; i < HASHMAP_BUCKETS_NUM; i++) {  \
         list_hashmap_##Ty##_container_t_full_free(map->buckets[i]);  \

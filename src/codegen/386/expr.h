@@ -7,29 +7,29 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
 {
     if (dst.type == MICRO_ST_DATASEG) {
         if (dst.size == 4) {
-            char dst_addr[4];
+            u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
-            char src_val[4];
+            u8 src_val[4];
             micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
 
-            char instruction[] = asm_movM32I32(dst_addr, src_val);
+            u8 instruction[] = asm_movM32I32(dst_addr, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 2) {
-            char dst_addr[4];
+            u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
-            char src_val[2];
+            u8 src_val[2];
             micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
 
-            char instruction[] = asm_movM16I16(dst_addr, src_val);
+            u8 instruction[] = asm_movM16I16(dst_addr, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 1) {
-            char dst_addr[4];
+            u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
-            char src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+            u8 src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
 
-            char instruction[] = asm_movM8I8(dst_addr, &src_val);
+            u8 instruction[] = asm_movM8I8(dst_addr, &src_val);
             push_instruction(instruction);
         } else {
             goto err_wrong_dst_type_size;
@@ -38,22 +38,22 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
     if (dst.type == MICRO_ST_REG) {
         if (dst.size == 4) {
             reg32 dst_reg = dst.offset;
-            char src_val[4];
+            u8 src_val[4];
             micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
-            char instruction[] = asm_movR32I32(dst_reg, src_val);
+            u8 instruction[] = asm_movR32I32(dst_reg, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 2) {
             reg32 dst_reg = dst.offset;
-            char src_val[2];
+            u8 src_val[2];
             micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
-            char instruction[] = asm_movR16I16(dst_reg, src_val);
+            u8 instruction[] = asm_movR16I16(dst_reg, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 1) {
             reg32 dst_reg = dst.offset;
-            char src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
-            char instruction[] = asm_movR8I8(dst_reg, &src_val);
+            u8 src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+            u8 instruction[] = asm_movR8I8(dst_reg, &src_val);
             push_instruction(instruction);
         } else {
             goto err_wrong_dst_type_size;
@@ -83,44 +83,44 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
     if (dst.type == MICRO_ST_DATASEG) {
         if (dst.size == 4) {
             reg32 acc_reg = REG32_EAX;
-            char addr[4];
+            u8 addr[4];
             // use as ident addr
             micro_gen32imm_le(addr, var_info->storage_info.offset);
 
-            char instruction1[] = asm_movR32M32(acc_reg, addr);
+            u8 instruction1[] = asm_movR32M32(acc_reg, addr);
             push_instruction(instruction1);
             // use as dst addr
             micro_gen32imm_le(addr, dst.offset);
 
-            char instruction2[] = asm_movM32R32(addr, acc_reg);
+            u8 instruction2[] = asm_movM32R32(addr, acc_reg);
             push_instruction(instruction2);
         } else
         if (dst.size == 2) {
             reg16 acc_reg = REG16_AX;
-            char addr[4];
+            u8 addr[4];
             // use as ident addr
             micro_gen32imm_le(addr, var_info->storage_info.offset);
 
-            char instruction1[] = asm_movR16M16(acc_reg, addr);
+            u8 instruction1[] = asm_movR16M16(acc_reg, addr);
             push_instruction(instruction1);
             // use as dst addr
             micro_gen32imm_le(addr, dst.offset);
 
-            char instruction2[] = asm_movM16R16(addr, acc_reg);
+            u8 instruction2[] = asm_movM16R16(addr, acc_reg);
             push_instruction(instruction2);
         } else
         if (dst.size == 1) {
             reg8 acc_reg = REG8_AL;
-            char addr[4];
+            u8 addr[4];
             // use as ident addr
             micro_gen32imm_le(addr, var_info->storage_info.offset);
 
-            char instruction1[] = asm_movR8M8(acc_reg, addr);
+            u8 instruction1[] = asm_movR8M8(acc_reg, addr);
             push_instruction(instruction1);
             // use as dst addr
             micro_gen32imm_le(addr, dst.offset);
 
-            char instruction2[] = asm_movM8R8(addr, acc_reg);
+            u8 instruction2[] = asm_movM8R8(addr, acc_reg);
             push_instruction(instruction2);
         } else {
             goto err_wrong_dst_type_size;
@@ -129,26 +129,26 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
     if (dst.type == MICRO_ST_REG) {
         if (dst.size == 4) {
             reg32 dst_reg = dst.offset;
-            char ident_addr[4];
+            u8 ident_addr[4];
             micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
 
-            char instruction[] = asm_movR32M32(dst_reg, ident_addr);
+            u8 instruction[] = asm_movR32M32(dst_reg, ident_addr);
             push_instruction(instruction);
         } else
         if (dst.size == 2) {
             reg16 dst_reg = dst.offset;
-            char ident_addr[4];
+            u8 ident_addr[4];
             micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
 
-            char instruction[] = asm_movR16M16(dst_reg, ident_addr);
+            u8 instruction[] = asm_movR16M16(dst_reg, ident_addr);
             push_instruction(instruction);
         } else
         if (dst.size == 1) {
             reg8 dst_reg = dst.offset;
-            char ident_addr[4];
+            u8 ident_addr[4];
             micro_gen32imm_le(ident_addr, var_info->storage_info.offset);
 
-            char instruction[] = asm_movR8M8(dst_reg, ident_addr);
+            u8 instruction[] = asm_movR8M8(dst_reg, ident_addr);
             push_instruction(instruction);
         } else {
             goto err_wrong_dst_type_size;
@@ -206,15 +206,15 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
         }
         if (micro_toks[pos].type == MICRO_TT_PLUS) {
             if (dst.size == 4) {
-                char instruction[] = asm_addR32R32(start_offset, start_offset + 1);
+                u8 instruction[] = asm_addR32R32(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else
             if (dst.size == 2) {
-                char instruction[] = asm_addR16R16(start_offset, start_offset + 1);
+                u8 instruction[] = asm_addR16R16(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else
             if (dst.size == 1) {
-                char instruction[] = asm_addR8R8(start_offset, start_offset + 1);
+                u8 instruction[] = asm_addR8R8(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else {
                 goto err_wrong_dst_type_size;
@@ -222,15 +222,15 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
         } else
         if (micro_toks[pos].type == MICRO_TT_MINUS) {
             if (dst.size == 4) {
-                char instruction[] = asm_subR32R32(start_offset, start_offset + 1);
+                u8 instruction[] = asm_subR32R32(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else
             if (dst.size == 2) {
-                char instruction[] = asm_subR16R16(start_offset, start_offset + 1);
+                u8 instruction[] = asm_subR16R16(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else
             if (dst.size == 1) {
-                char instruction[] = asm_subR8R8(start_offset, start_offset + 1);
+                u8 instruction[] = asm_subR8R8(start_offset, start_offset + 1);
                 push_instruction(instruction);
             } else {
                 goto err_wrong_dst_type_size;
@@ -240,37 +240,37 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
             if (dst.is_unsigned) {
                 if (dst.size == 4) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(0, start_offset);
+                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_mulR32(start_offset + 1);
+                    u8 instruction[] = asm_mulR32(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(start_offset, 0);
+                        u8 instruction[] = asm_xchgR32R32(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 2) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(0, start_offset);
+                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_mulR16(start_offset + 1);
+                    u8 instruction[] = asm_mulR16(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(start_offset, 0);
+                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 1) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(0, start_offset);
+                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_mulR8(start_offset + 1);
+                    u8 instruction[] = asm_mulR8(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(start_offset, 0);
+                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else {
@@ -278,15 +278,15 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
                 }
             } else {
                 if (dst.size == 4) {
-                    char instruction[] = asm_imulR32R32(start_offset, start_offset + 1);
+                    u8 instruction[] = asm_imulR32R32(start_offset, start_offset + 1);
                     push_instruction(instruction);
                 } else
                 if (dst.size == 2) {
-                    char instruction[] = asm_imulR16R16(start_offset, start_offset + 1);
+                    u8 instruction[] = asm_imulR16R16(start_offset, start_offset + 1);
                     push_instruction(instruction);
                 } else
                 if (dst.size == 1) {
-                    char instruction[] = asm_imulR8R8(start_offset, start_offset + 1);
+                    u8 instruction[] = asm_imulR8R8(start_offset, start_offset + 1);
                     push_instruction(instruction);
                 } else {
                     goto err_wrong_dst_type_size;
@@ -295,43 +295,43 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
         } else
         if (micro_toks[pos].type == MICRO_TT_SLASH) {
             if (start_offset + 1 >= REG32_EDX) {
-                char instruction[] = asm_pushR32(REG32_EDX);
+                u8 instruction[] = asm_pushR32(REG32_EDX);
                 push_instruction(instruction);
             }
             if (dst.is_unsigned) {
                 if (dst.size == 4) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(0, start_offset);
+                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_divR32(start_offset + 1);
+                    u8 instruction[] = asm_divR32(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(start_offset, 0);
+                        u8 instruction[] = asm_xchgR32R32(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 2) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(0, start_offset);
+                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_divR16(start_offset + 1);
+                    u8 instruction[] = asm_divR16(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(start_offset, 0);
+                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 1) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(0, start_offset);
+                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_divR8(start_offset + 1);
+                    u8 instruction[] = asm_divR8(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(start_offset, 0);
+                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else {
@@ -340,37 +340,37 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
             } else {
                 if (dst.size == 4) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(0, start_offset);
+                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_idivR32(start_offset + 1);
+                    u8 instruction[] = asm_idivR32(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR32R32(0, start_offset);
+                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 2) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(0, start_offset);
+                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_idivR16(start_offset + 1);
+                    u8 instruction[] = asm_idivR16(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR16R16(start_offset, 0);
+                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else
                 if (dst.size == 1) {
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(0, start_offset);
+                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
                         push_instruction(instruction);
                     }
-                    char instruction[] = asm_idivR8(start_offset + 1);
+                    u8 instruction[] = asm_idivR8(start_offset + 1);
                     push_instruction(instruction);
                     if (start_offset) {
-                        char instruction[] = asm_xchgR8R8(start_offset, 0);
+                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
                         push_instruction(instruction);
                     }
                 } else {
@@ -378,7 +378,7 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
                 }
             }
             if (start_offset + 1 >= REG32_EDX) {
-                char instruction[] = asm_popR32(REG32_EDX);
+                u8 instruction[] = asm_popR32(REG32_EDX);
                 push_instruction(instruction);
             }
         } else {
@@ -387,19 +387,19 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
             return 0;
         }
         if (dst.type == MICRO_ST_DATASEG) {
-            char dst_addr[4];
+            u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
 
             if (dst.size == 4) {
-                char instruction[] = asm_movM32R32(dst_addr, start_offset);
+                u8 instruction[] = asm_movM32R32(dst_addr, start_offset);
                 push_instruction(instruction);
             } else
             if (dst.size == 2) {
-                char instruction[] = asm_movM16R16(dst_addr, start_offset);
+                u8 instruction[] = asm_movM16R16(dst_addr, start_offset);
                 push_instruction(instruction);
             } else
             if (dst.size == 1) {
-                char instruction[] = asm_movM8R8(dst_addr, start_offset);
+                u8 instruction[] = asm_movM8R8(dst_addr, start_offset);
                 push_instruction(instruction);
             } else {
                 goto err_wrong_dst_type_size;
@@ -409,15 +409,15 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
             reg32 dst_reg = dst.offset;
 
             if (dst.size == 4) {
-                char instruction[] = asm_movR32R32(dst_reg, start_offset);
+                u8 instruction[] = asm_movR32R32(dst_reg, start_offset);
                 push_instruction(instruction);
             } else
             if (dst.size == 2) {
-                char instruction[] = asm_movR16R16(dst_reg, start_offset);
+                u8 instruction[] = asm_movR16R16(dst_reg, start_offset);
                 push_instruction(instruction);
             } else
             if (dst.size == 1) {
-                char instruction[] = asm_movR16R16(dst_reg, start_offset);
+                u8 instruction[] = asm_movR16R16(dst_reg, start_offset);
                 push_instruction(instruction);
             } else {
                 goto err_wrong_dst_type_size;

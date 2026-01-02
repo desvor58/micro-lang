@@ -53,7 +53,7 @@ void micro_codegen_386__static_var()
             return;
         }
         
-        char *imm_val = (char*)malloc(sizeof(char) * micro_mt_size[lit_type]);
+        u8 *imm_val = (u8*)malloc(sizeof(u8) * micro_mt_size[lit_type]);
         micro_imm_from_mt(imm_val, lit_type, strtoull(__micro_peek(3).val, (char**)0, 10));
         for (size_t i = 0; i < micro_mt_size[lit_type]; i++) {
             string_push_back(micro_outbuf, imm_val[i]);
@@ -79,7 +79,7 @@ void micro_codegen_386__set()
         __micro_push_err(err);
         goto err_exit;
     }
-    if (src_tok.type != MICRO_TT_IDENT && !micro_tokislit(src_tok) && !micro_tokisop(src_tok) || src_tok.type == MICRO_TT_NULL) {
+    if ((src_tok.type != MICRO_TT_IDENT && !micro_tokislit(src_tok) && !micro_tokisop(src_tok)) || src_tok.type == MICRO_TT_NULL) {
         printf("%u\n", src_tok.type);
         micro_error_t err = {.msg = "Expected source expression after destination variable name", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
         __micro_push_err(err);
@@ -130,7 +130,41 @@ void micro_codegen_386__fun()
     fun_info->args = list_micro_codegen_386_var_info_t_create();
     fun_info->ret_type = MICRO_MT_NULL;
     fun_info->offset = micro_outbuf->size;
-    printf("fun:%u\n", fun_info->offset);
+
+    size_t param_num = 0;
+    while (micro_toks[micro_pos].type != MICRO_TT_KW_RET && micro_toks[micro_pos].type != MICRO_TT_KW_START) {
+        micro_token_t tok_param_type = __micro_get(0);
+        micro_token_t tok_param_ident = __micro_get(0);
+        if (tok_param_type.type != MICRO_TT_TYPE_NAME || tok_param_type.type == MICRO_TT_NULL) {
+            micro_error_t err = {.msg = "Expected parameter type",
+                                 .line_ref = tok_param_type.line_ref,
+                                 .chpos_ref = tok_param_type.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+        if (tok_param_ident.type != MICRO_TT_IDENT || tok_param_ident.type == MICRO_TT_NULL) {
+            micro_error_t err = {.msg = "Expected parameter name",
+                                 .line_ref = tok_param_ident.line_ref,
+                                 .chpos_ref = tok_param_ident.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+
+        micro_codegen_386_var_info_t *param_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
+        strcpy(param_info->name, tok_param_ident.val);
+        param_info->type = micro_str2mt(tok_param_type.val);
+        param_info->storage_info = (micro_codegen_386_storage_info_t) {
+            .type = MICRO_ST_STACK,
+            .size = micro_mt_size[param_info->type],
+            // [ebp - 4 - ((N - 1) * 4 + sizeof(aN))]
+            .offset = - 4 - (param_num * 4 + micro_mt_size[param_info->type]),
+            .is_unsigned = micro_mtisunsigned(param_info->type)
+        };
+
+        list_micro_codegen_386_var_info_t_add(fun_info->args, param_info);
+
+        param_num++;
+    }
     
     if (micro_toks[micro_pos].type == MICRO_TT_KW_RET) {
         if (micro_toks[++micro_pos].type != MICRO_TT_TYPE_NAME) {
@@ -153,7 +187,7 @@ void micro_codegen_386__fun()
     while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
         micro_codegen_386_micro_instruction_parse();
     }
-    char ret_instruction[] = asm_ret;
+    u8 ret_instruction[] = asm_ret;
     push_instruction(ret_instruction);
 
     hashmap_micro_codegen_386_fun_info_t_set(micro_codegen_386_funs, tok_ident.val, fun_info);
@@ -161,7 +195,7 @@ void micro_codegen_386__fun()
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type != MICRO_TT_KW_END && micro_pos < micro_toks_size) {
+    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_KW_END) {
         micro_pos++;
     }
     return;
@@ -205,11 +239,48 @@ void micro_codegen_386__call()
         goto err_exit;
     }
 
-    char addr[4];
+    u8 addr[4];
     // вызов процедур по аддресу: адрес процедуры - (адрес текущей иструкции + размер иструкции call)
     micro_gen32imm_le(addr, fun_info->offset - (micro_outbuf->size + 5));
-    char instruction[] = asm_call(addr);
+    u8 instruction[] = asm_call(addr);
     push_instruction(instruction);
+
+    if (strcmp(tok_dst_var_name.val, "_")) {
+        micro_codegen_386_var_info_t *dst_var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, tok_dst_var_name.val);
+        if (!dst_var_info) {
+            micro_error_t err = {.msg = "Undeclareted variable name",
+                                .line_ref = tok_dst_var_name.line_ref,
+                                .chpos_ref = tok_dst_var_name.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+
+        if (dst_var_info->type != fun_info->ret_type) {
+            micro_error_t err = {.msg = "Wrong return type of function for this variable",
+                                .line_ref = tok_dst_var_name.line_ref,
+                                .chpos_ref = tok_dst_var_name.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+
+        if (dst_var_info->storage_info.type == MICRO_ST_DATASEG) {
+            u8 addr[4];
+            micro_gen32imm_le(addr, dst_var_info->storage_info.offset);
+
+            if (dst_var_info->storage_info.size == 4) {
+                u8 instruction[] = asm_movM32R32(addr, REG32_EAX);
+                push_instruction(instruction);
+            } else
+            if (dst_var_info->storage_info.size == 2) {
+                u8 instruction[] = asm_movM16R16(addr, REG16_AX);
+                push_instruction(instruction);
+            } else
+            if (dst_var_info->storage_info.size == 1) {
+                u8 instruction[] = asm_movM8R8(addr, REG8_AL);
+                push_instruction(instruction);
+            }
+        }
+    }
 
     return;
 
