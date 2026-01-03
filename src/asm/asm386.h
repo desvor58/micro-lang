@@ -32,9 +32,17 @@ typedef enum {
     REG8_BH = 7,
 } reg8;
 
-// functions
-#define asm_ret        {0xC3}
-#define asm_call(addr) {0xE8, (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+// ret
+#define asm_ret          { 0xC3 }
+
+// call <lbl>
+#define asm_call(addr)   { 0xE8, (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+
+// push ebp   mov ebp, esp
+#define asm_std_prelude  { 0x55, 0x89, 0xE5 }
+
+// leave  ret
+#define asm_std_epilogue { 0xC9, 0xC3 }
 
 // exchange values
 #define asm_xchgR32R32(reg1, reg2) {       0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
@@ -79,13 +87,19 @@ typedef enum {
 // move reg 8 to mem 8
 #define asm_movM8R8(addr, reg)   {       0x88, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
 
-// mov value 32 to reg 32
+// move value 32 to reg 32
 #define asm_movR32I32(reg, val)  {       0xB8 + reg, (val)[0], (val)[1], (val)[2], (val)[3] }
-// mov value 16 to reg 16
+// move value 16 to reg 16
 #define asm_movR16I16(reg, val)  { 0x66, 0xB8 + reg, (val)[0], (val)[1]  }
-// mov value 8 to reg 8
+// move value 8 to reg 8
 #define asm_movR8I8(reg, val)    {       0xB0 + reg, (val)[0] }
 
+// move value 32 to stack with 32bits offset
+#define asm_movS32I32(offset, val) {       0xC7, 0b10000100, 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0], (val)[1], (val)[2], (val)[3] }
+// move value 16 to stack with 32bits offset
+#define asm_movS32I16(offset, val) { 0x66, 0xC7, 0b10000100, 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0], (val)[1] }
+// move value 8 to stack with 32bits offset
+#define asm_movS32I8(offset, val)  {       0xC6, 0b10000100, 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0] }
 
 // add reg 32 and other reg 32
 #define asm_addR32R32(reg1, reg2) {       0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }

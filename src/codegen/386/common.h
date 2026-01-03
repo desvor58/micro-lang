@@ -151,6 +151,10 @@ size_t       __micro_codegen_386_err_stk_real_size;
 
 #define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_codegen_386_err_stk_size++] = err
 
+int micro_code_in_function;
+// смещение до первого свободного байта на стэке
+offset_t micro_top_stack_offset;
+
 string_t *micro_outbuf;
 
 size_t micro_pos = 0;
@@ -177,6 +181,9 @@ void micro_codegen_386_init()
     micro_codegen_386_err_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * MICRO_ERROR_STACK_EXTEND_SIZE);
     micro_codegen_386_err_stk_size = 0;
     __micro_codegen_386_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
+
+    micro_code_in_function = 0;
+    micro_top_stack_offset = 0;
 
     micro_codegen_386_vars = hashmap_micro_codegen_386_var_info_t_create();
     micro_codegen_386_funs = hashmap_micro_codegen_386_fun_info_t_create();
@@ -212,6 +219,9 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
         if (var_info->type == expected) {
             return expected;
         }
+    }
+    if (micro_tokisop(tok)) {
+        return expected;
     }
     return MICRO_MT_NULL;
 }

@@ -9,8 +9,8 @@ size_t micro_expr_peek(size_t pos)
         return 1;
     } else
     if (micro_tokisop(micro_toks[pos])) {
-        size_t expr1_end_offset = expr_peek(pos + 1);
-        size_t expr2_end_offset = expr_peek(pos + expr1_end_offset);
+        size_t expr1_end_offset = micro_expr_peek(pos + 1);
+        size_t expr2_end_offset = micro_expr_peek(pos + expr1_end_offset);
         return expr1_end_offset + expr2_end_offset + 1;
     }
     return 0;
@@ -23,7 +23,7 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
             u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
             u8 src_val[4];
-            micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            micro_gen32imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
 
             u8 instruction[] = asm_movM32I32(dst_addr, src_val);
             push_instruction(instruction);
@@ -32,7 +32,7 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
             u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
             u8 src_val[2];
-            micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            micro_gen16imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
 
             u8 instruction[] = asm_movM16I16(dst_addr, src_val);
             push_instruction(instruction);
@@ -40,7 +40,7 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
         if (dst.size == 1) {
             u8 dst_addr[4];
             micro_gen32imm_le(dst_addr, dst.offset);
-            u8 src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+            u8 src_val = strtoll(micro_toks[pos].val, (char**)0, 10);
 
             u8 instruction[] = asm_movM8I8(dst_addr, &src_val);
             push_instruction(instruction);
@@ -52,20 +52,20 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
         if (dst.size == 4) {
             reg32 dst_reg = dst.offset;
             u8 src_val[4];
-            micro_gen32imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            micro_gen32imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
             u8 instruction[] = asm_movR32I32(dst_reg, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 2) {
             reg32 dst_reg = dst.offset;
             u8 src_val[2];
-            micro_gen16imm_le(src_val, strtoull(micro_toks[pos].val, (char**)0, 10));
+            micro_gen16imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
             u8 instruction[] = asm_movR16I16(dst_reg, src_val);
             push_instruction(instruction);
         } else
         if (dst.size == 1) {
             reg32 dst_reg = dst.offset;
-            u8 src_val = strtoull(micro_toks[pos].val, (char**)0, 10);
+            u8 src_val = strtoll(micro_toks[pos].val, (char**)0, 10);
             u8 instruction[] = asm_movR8I8(dst_reg, &src_val);
             push_instruction(instruction);
         } else {

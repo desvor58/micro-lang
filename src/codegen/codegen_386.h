@@ -8,7 +8,11 @@ void micro_codegen_386_micro_instruction_parse()
 {
     // global var
     if (micro_toks[micro_pos].type == MICRO_TT_KW_VAR) {
-        micro_codegen_386__static_var();
+        if (micro_code_in_function) {
+            micro_codegen_386__var();
+        } else {
+            micro_codegen_386__static_var();
+        }
     } else
     // set value
     if (micro_toks[micro_pos].type == MICRO_TT_KW_SET) {

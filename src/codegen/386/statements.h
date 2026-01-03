@@ -6,27 +6,29 @@
 
 void micro_codegen_386__static_var()
 {
-    micro_token_t type_tok = __micro_peek(1);
-    micro_token_t ident_tok = __micro_peek(2);
+    micro_token_t tok_type = __micro_peek(1);
+    micro_token_t tok_name = __micro_peek(2);
 
-    if (type_tok.type != MICRO_TT_TYPE_NAME || type_tok.type == MICRO_TT_NULL) {
-        micro_error_t err = {.msg = "Expected type name after 'var' keyword", .line_ref = type_tok.line_ref, .chpos_ref = type_tok.chpos_ref};
+    if (tok_type.type != MICRO_TT_TYPE_NAME || tok_type.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected type name after 'var' keyword", .line_ref = tok_type.line_ref, .chpos_ref = tok_type.chpos_ref};
         __micro_push_err(err);
         goto err_exit;
     }
-    if (ident_tok.type != MICRO_TT_IDENT || ident_tok.type == MICRO_TT_NULL) {
-        micro_error_t err = {.msg = "Expected identifier after type name", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
+    if (tok_name.type != MICRO_TT_IDENT || tok_name.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected identifier after type name", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
         __micro_push_err(err);
         goto err_exit;
     }
 
     micro_codegen_386_var_info_t *var_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
-    strcpy(var_info->name, ident_tok.val);
-    var_info->type = micro_str2mt(type_tok.val);
-    var_info->storage_info.size = micro_mt_size[var_info->type];
-    var_info->storage_info.type = MICRO_ST_DATASEG;
-    var_info->storage_info.offset = micro_outbuf->size; // смещение будет такое, как число записаных байт в outbuf
-    var_info->storage_info.is_unsigned = micro_mtisunsigned(var_info->type);
+    strcpy(var_info->name, tok_name.val);
+    var_info->type = micro_str2mt(tok_type.val);
+    var_info->storage_info = (micro_codegen_386_storage_info_t){
+        .type = MICRO_ST_DATASEG,
+        .size = micro_mt_size[var_info->type],
+        .offset = micro_outbuf->size,
+        .is_unsigned = micro_mtisunsigned(var_info->type)
+    };
     hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
 
     if (__micro_peek(3).type == MICRO_TT_SEMICOLON) {
@@ -37,15 +39,16 @@ void micro_codegen_386__static_var()
         return;
     }
     if (micro_tokislit(__micro_peek(3))) {
-        micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(3), var_info->type);
         if (__micro_peek(4).type != MICRO_TT_SEMICOLON) {
-            micro_error_t err = {.msg = "Expected ';'", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
+            micro_error_t err = {.msg = "Expected ';'", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
             __micro_push_err(err);
             micro_pos += 3;
             return;
         }
+
+        micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(3), var_info->type);
         if (lit_type == MICRO_MT_NULL) {
-            micro_error_t err = {.msg = "Wrong literal type", .line_ref = ident_tok.line_ref, .chpos_ref = ident_tok.chpos_ref};
+            micro_error_t err = {.msg = "Wrong literal type", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
             __micro_push_err(err);
             while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
                 micro_pos++;
@@ -53,8 +56,8 @@ void micro_codegen_386__static_var()
             return;
         }
         
-        u8 *imm_val = (u8*)malloc(sizeof(u8) * micro_mt_size[lit_type]);
-        micro_imm_from_mt(imm_val, lit_type, strtoull(__micro_peek(3).val, (char**)0, 10));
+        u8 *imm_val = (u8*)alloca(sizeof(u8) * micro_mt_size[lit_type]);
+        micro_imm_from_mt(imm_val, lit_type, strtoll(__micro_peek(3).val, (char**)0, 10));
         for (size_t i = 0; i < micro_mt_size[lit_type]; i++) {
             string_push_back(micro_outbuf, imm_val[i]);
         }
@@ -63,7 +66,104 @@ void micro_codegen_386__static_var()
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
+    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
+        micro_pos++;
+    }
+    return;
+}
+
+void micro_codegen_386__var()
+{
+    micro_token_t tok_type = __micro_peek(1);
+    micro_token_t tok_name = __micro_peek(2);
+    
+    if (tok_type.type != MICRO_TT_TYPE_NAME || tok_type.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected type name after 'var' keyword", .line_ref = tok_type.line_ref, .chpos_ref = tok_type.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+    if (tok_name.type != MICRO_TT_IDENT || tok_name.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected identifier after type name", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
+    micro_codegen_386_var_info_t *var_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
+    strcpy(var_info->name, tok_name.val);
+    var_info->type = micro_str2mt(tok_type.val);
+    var_info->storage_info = (micro_codegen_386_storage_info_t){
+        .type = MICRO_ST_STACK,
+        .size = micro_mt_size[var_info->type],
+        .offset = micro_top_stack_offset
+    };
+    micro_top_stack_offset -= micro_mt_size[var_info->type];
+    hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
+
+    if (__micro_peek(3).type == MICRO_TT_SEMICOLON) {
+        micro_pos += 3;
+        return;
+    }
+    
+    if (micro_tokislit(__micro_peek(3))) {
+        if (__micro_peek(4).type != MICRO_TT_SEMICOLON) {
+            micro_error_t err = {.msg = "Expected ';'", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
+            __micro_push_err(err);
+            micro_pos += 3;
+            return;
+        }
+
+        micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(3), var_info->type);
+        if (lit_type == MICRO_MT_NULL) {
+            micro_error_t err = {.msg = "Wrong literal type", .line_ref = tok_name.line_ref, .chpos_ref = tok_name.chpos_ref};
+            __micro_push_err(err);
+            while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
+                micro_pos++;
+            }
+            return;
+        }
+        
+        if (micro_mt_size[lit_type] == 4) {
+            u8 offset[4];
+            micro_gen32imm_le(offset, var_info->storage_info.offset);
+
+            u8 val[4];
+            micro_gen32imm_le(val, strtoll(__micro_peek(3).val, (char**)0, 10));
+
+            u8 instruction[] = asm_movS32I32(offset, val);
+            push_instruction(instruction);
+        } else
+        if (micro_mt_size[lit_type] == 2) {
+            u8 offset[4];
+            micro_gen32imm_le(offset, var_info->storage_info.offset);
+
+            u8 val[2];
+            micro_gen16imm_le(val, strtoll(__micro_peek(3).val, (char**)0, 10));
+
+            u8 instruction[] = asm_movS32I16(offset, val);
+            push_instruction(instruction);
+        } else
+        if (micro_mt_size[lit_type] == 1) {
+            u8 offset[4];
+            micro_gen32imm_le(offset, var_info->storage_info.offset);
+
+            u8 val[1];
+            val[0] = strtoll(__micro_peek(3).val, (char**)0, 10);
+
+            u8 instruction[] = asm_movS32I8(offset, val);
+            push_instruction(instruction);
+        } else {
+            micro_error_t err = {.msg = "Wrong literal type size",
+                                 .line_ref = __micro_peek(3).line_ref,
+                                 .chpos_ref = __micro_peek(3).chpos_ref};
+            __micro_push_err(err);
+        }
+
+        micro_pos += 4;
+    }
+    return;
+
+err_exit:
+    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
         micro_pos++;
     }
     return;
@@ -71,30 +171,30 @@ err_exit:
 
 void micro_codegen_386__set()
 {
-    micro_token_t dst_tok = __micro_peek(1);
-    micro_token_t src_tok = __micro_peek(2);
+    micro_token_t tok_dst = __micro_peek(1);
+    micro_token_t tok_src = __micro_peek(2);
 
-    if (dst_tok.type != MICRO_TT_IDENT || dst_tok.type == MICRO_TT_NULL) {
-        micro_error_t err = {.msg = "Expected destination variable name after 'set' keyword", .line_ref = dst_tok.line_ref, .chpos_ref = dst_tok.chpos_ref};
+    if (tok_dst.type != MICRO_TT_IDENT || tok_dst.type == MICRO_TT_NULL) {
+        micro_error_t err = {.msg = "Expected destination variable name after 'set' keyword", .line_ref = tok_dst.line_ref, .chpos_ref = tok_dst.chpos_ref};
         __micro_push_err(err);
         goto err_exit;
     }
-    if ((src_tok.type != MICRO_TT_IDENT && !micro_tokislit(src_tok) && !micro_tokisop(src_tok)) || src_tok.type == MICRO_TT_NULL) {
-        printf("%u\n", src_tok.type);
-        micro_error_t err = {.msg = "Expected source expression after destination variable name", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
+    if ((tok_src.type != MICRO_TT_IDENT && !micro_tokislit(tok_src) && !micro_tokisop(tok_src)) || tok_src.type == MICRO_TT_NULL) {
+        printf("%u\n", tok_src.type);
+        micro_error_t err = {.msg = "Expected source expression after destination variable name", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
         goto err_exit;
     }
     
-    micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, dst_tok.val);
+    micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, tok_dst.val);
     if (!var_info) {
-        micro_error_t err = {.msg = "Undeclareted variable name", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
+        micro_error_t err = {.msg = "Undeclareted variable name", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
         return;
     }
 
-    if (micro_gettype(dst_tok, var_info->type) == MICRO_MT_NULL) {
-        micro_error_t err = {.msg = "Wrong type of sourse expression", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
+    if (micro_gettype(tok_src, var_info->type) == MICRO_MT_NULL) {
+        micro_error_t err = {.msg = "Wrong type of sourse expression", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
         return;
     }
@@ -103,13 +203,13 @@ void micro_codegen_386__set()
         goto err_exit;
     }
     if (micro_toks[micro_pos + 2 + expr_end_offset].type != MICRO_TT_SEMICOLON) {
-        micro_error_t err = {.msg = "Expected ';'", .line_ref = src_tok.line_ref, .chpos_ref = src_tok.chpos_ref};
+        micro_error_t err = {.msg = "Expected ';'", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
     }
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
+    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
         micro_pos++;
     }
     return;
@@ -184,11 +284,20 @@ void micro_codegen_386__fun()
         __micro_push_err(err);
         goto err_exit;
     }
+
+    u8 prelude_instruction[] = asm_std_prelude;
+    push_instruction(prelude_instruction);
+
+    micro_code_in_function = 1;
+    micro_top_stack_offset = -4;
     while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
         micro_codegen_386_micro_instruction_parse();
     }
-    u8 ret_instruction[] = asm_ret;
-    push_instruction(ret_instruction);
+    micro_code_in_function = 0;
+    micro_top_stack_offset = 0;
+
+    u8 epilogue_instruction[] = asm_std_epilogue;
+    push_instruction(epilogue_instruction);
 
     hashmap_micro_codegen_386_fun_info_t_set(micro_codegen_386_funs, tok_ident.val, fun_info);
 
@@ -242,6 +351,8 @@ void micro_codegen_386__call()
             micro_error_t err = {.msg = "Expected ';'",
                                  .line_ref = micro_toks[micro_pos - 1].line_ref,
                                  .chpos_ref = micro_toks[micro_pos - 1].chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
         }
     }
     for (size_t i = cur_arg_num - 1; i > 0; i++) {
@@ -296,11 +407,10 @@ void micro_codegen_386__call()
             }
         }
     }
-
     return;
 
 err_exit:
-    while (micro_toks[micro_pos].type != MICRO_TT_SEMICOLON && micro_pos < micro_toks_size) {
+    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
         micro_pos++;
     }
     return;

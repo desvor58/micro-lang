@@ -53,10 +53,14 @@ var <type> <name>;
 ```
 or
 ```
-var <type> <name> <init expression>;
+var <type> <name> <init value>;
 ```
-If *init expression* not set static variable will be initializate as 0
+If *init value* not set static variable will be initializate as 0
+
+You cant using expression as *init value*!
+
 ---
+
 Variables alocating on stack. *rsp* register stay on a return address:
 ```
 var i32 a 5;
