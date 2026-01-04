@@ -101,6 +101,20 @@ typedef enum {
 // move value 8 to stack with 32bits offset
 #define asm_movS32I8(offset, val)  {       0xC6, 0b10000100, 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0] }
 
+// move value from reg32 to stack with 32bits offset
+#define asm_movS32R32(offset, reg) {       0x89, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+// move value from reg16 to stack with 32bits offset
+#define asm_movS32R16(offset, reg) { 0x66, 0x89, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+// move value from reg8 to stack with 32bits offset
+#define asm_movS32R8(offset, reg)  {       0x89, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+
+// move value to reg32 from stack with 32bits offset
+#define asm_movR32S32(reg, offset) {       0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+// move value to reg16 from stack with 32bits offset
+#define asm_movR16S32(reg, offset) { 0x66, 0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+// move value to reg8 from stack with 32bits offset
+#define asm_movR8S32(reg, offset)  {       0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+
 // add reg 32 and other reg 32
 #define asm_addR32R32(reg1, reg2) {       0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 // add reg 16 and other reg 16

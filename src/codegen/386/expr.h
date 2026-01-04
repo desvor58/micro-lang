@@ -71,6 +71,36 @@ int __micro_codegen_386_expr_parse_get_lit(size_t pos, micro_codegen_386_storage
         } else {
             goto err_wrong_dst_type_size;
         }
+    } else
+    if (dst.type == MICRO_ST_STACK) {
+        if (dst.size == 4) {
+            u8 dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            u8 src_val[4];
+            micro_gen32imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
+
+            u8 instruction[] = asm_movS32I32(dst_addr, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            u8 dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            u8 src_val[2];
+            micro_gen16imm_le(src_val, strtoll(micro_toks[pos].val, (char**)0, 10));
+
+            u8 instruction[] = asm_movS32I16(dst_addr, src_val);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            u8 dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            u8 src_val = strtoll(micro_toks[pos].val, (char**)0, 10);
+
+            u8 instruction[] = asm_movS32I8(dst_addr, &src_val);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
     }
     return 1;
 
@@ -138,7 +168,7 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
         } else {
             goto err_wrong_dst_type_size;
         }
-    }
+    } else
     if (dst.type == MICRO_ST_REG) {
         if (dst.size == 4) {
             reg32 dst_reg = dst.offset;
@@ -163,6 +193,52 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
 
             u8 instruction[] = asm_movR8M8(dst_reg, ident_addr);
             push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    } else
+    if (dst.type == MICRO_ST_STACK) {
+        if (dst.size == 4) {
+            reg32 acc_reg = REG32_EAX;
+            u8 addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            u8 instruction1[] = asm_movR32M32(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            u8 instruction2[] = asm_movS32R32(addr, acc_reg);
+            push_instruction(instruction2);
+        } else
+        if (dst.size == 2) {
+            reg16 acc_reg = REG16_AX;
+            u8 addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            u8 instruction1[] = asm_movR16M16(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            u8 instruction2[] = asm_movS32R16(addr, acc_reg);
+            push_instruction(instruction2);
+        } else
+        if (dst.size == 1) {
+            reg8 acc_reg = REG8_AL;
+            u8 addr[4];
+            // use as ident addr
+            micro_gen32imm_le(addr, var_info->storage_info.offset);
+
+            u8 instruction1[] = asm_movR8M8(acc_reg, addr);
+            push_instruction(instruction1);
+            // use as dst addr
+            micro_gen32imm_le(addr, dst.offset);
+
+            u8 instruction2[] = asm_movS32R8(addr, acc_reg);
+            push_instruction(instruction2);
         } else {
             goto err_wrong_dst_type_size;
         }
@@ -430,7 +506,25 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
                 push_instruction(instruction);
             } else
             if (dst.size == 1) {
-                u8 instruction[] = asm_movR16R16(dst_reg, start_offset);
+                u8 instruction[] = asm_movR8R8(dst_reg, start_offset);
+                push_instruction(instruction);
+            } else {
+                goto err_wrong_dst_type_size;
+            }
+        } else
+        if (dst.type == MICRO_ST_STACK) {
+            u8 dst_addr[4];
+            micro_gen32imm_le(dst_addr, dst.offset);
+            if (dst.size == 4) {
+                u8 instruction[] = asm_movS32R32(dst_addr, start_offset);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 2) {
+                u8 instruction[] = asm_movS32R16(dst_addr, start_offset);
+                push_instruction(instruction);
+            } else
+            if (dst.size == 1) {
+                u8 instruction[] = asm_movS32R8(dst_addr, start_offset);
                 push_instruction(instruction);
             } else {
                 goto err_wrong_dst_type_size;
