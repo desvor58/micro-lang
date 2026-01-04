@@ -101,7 +101,7 @@ int micro_codegen_386__op_multiply(size_t start_offset, micro_codegen_386_storag
     return 0;
 }
 
-int micro_codegen_386__op_devision(size_t start_offset, micro_codegen_386_storage_info_t dst)
+int micro_codegen_386__op_division(size_t start_offset, micro_codegen_386_storage_info_t dst)
 {
     if (start_offset + 1 >= REG32_EDX) {
         u8 instruction[] = asm_pushR32(REG32_EDX);
@@ -190,6 +190,11 @@ int micro_codegen_386__op_devision(size_t start_offset, micro_codegen_386_storag
         u8 instruction[] = asm_popR32(REG32_EDX);
         push_instruction(instruction);
     }
+    return 0;
+}
+
+int micro_codegen_386__op_getaddr(size_t start_offset, micro_codegen_386_storage_info_t dst)
+{
     return 0;
 }
 

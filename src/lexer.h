@@ -12,6 +12,20 @@ typedef enum
 {
     MICRO_TT_NULL,
 
+    MICRO_TT_PLUS,
+    MICRO_TT_MINUS,
+    MICRO_TT_STAR,
+    MICRO_TT_SLASH,
+    MICRO_TT_DOT,
+    MICRO_TT_COMA,
+    MICRO_TT_COLON,
+    MICRO_TT_SEMICOLON,
+    MICRO_TT_AMPERRSAND,
+    MICRO_TT_DOLAR,
+    MICRO_TT_HASH,
+    MICRO_TT_APOSTROPHE,
+    MICRO_TT_TILDE,
+
     MICRO_TT_TYPE_NAME,
     MICRO_TT_IDENT,
 
@@ -29,15 +43,6 @@ typedef enum
     MICRO_TT_KW_END,
     MICRO_TT_KW_RET,
     MICRO_TT_KW_CALL,
-
-    MICRO_TT_PLUS,
-    MICRO_TT_MINUS,
-    MICRO_TT_STAR,
-    MICRO_TT_SLASH,
-    MICRO_TT_DOT,
-    MICRO_TT_COMA,
-    MICRO_TT_COLON,
-    MICRO_TT_SEMICOLON,
 } micro_token_type;
 
 typedef struct
@@ -262,6 +267,26 @@ void micro_lexing(const char *text, size_t text_size)
         } else
         if (text[pos] == ';') {
             micro_token_t tok = {.type = MICRO_TT_SEMICOLON, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            __micro_push_tok(tok);
+        } else
+        if (text[pos] == '&') {
+            micro_token_t tok = {.type = MICRO_TT_AMPERRSAND, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            __micro_push_tok(tok);
+        } else
+        if (text[pos] == '$') {
+            micro_token_t tok = {.type = MICRO_TT_DOLAR, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            __micro_push_tok(tok);
+        } else
+        if (text[pos] == '#') {
+            micro_token_t tok = {.type = MICRO_TT_HASH, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            __micro_push_tok(tok);
+        } else
+        if (text[pos] == '`') {
+            micro_token_t tok = {.type = MICRO_TT_APOSTROPHE, .val = 0, .line_ref = line, .chpos_ref = chpos};
+            __micro_push_tok(tok);
+        } else
+        if (text[pos] == '~') {
+            micro_token_t tok = {.type = MICRO_TT_TILDE, .val = 0, .line_ref = line, .chpos_ref = chpos};
             __micro_push_tok(tok);
         }
         

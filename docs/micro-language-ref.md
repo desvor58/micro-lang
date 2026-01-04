@@ -46,6 +46,26 @@ In this document single literals is a expresion:
 ## Operators
 Micro support +, -, * and / operators - addition, substruction, multipling, divising
 
+| operator         | C analog         | description                      |
+|------------------|------------------|----------------------------------|
+| + \<o1> \<o2>    | \<o1> + \<o2>    | adds *o1* and *o2*               |
+| - \<o1> \<o2>    | \<o1> - \<o2>    | from *o1* subtracts *o2*         |
+| ~ \<o1>          | -\<o1>           | negate <o1>                      |
+| * \<o1> \<o2>    | \<o1> * \<o2>    | mutliply *o1* and *o2*           |
+| / \<o1> \<o2>    | \<o1> / \<o2>    | divides *o1* by *o2*             |
+| # \<i>           | &\<i>            | get addres of <i>                |
+| $ \<p>           | *\<p>            | get value (see note 1) by addres |
+| & \<o1> \<o2>    | \<o1> & \<o2>    | bitwise *and* with *o1* and *o2* |
+| \| \<o1> \<o2>   | \<o1> \| \<o2>   | bitwise *or* with *o1* and *o2*  |
+| ^ \<o1> \<o2>    | \<o1> ^ \<o2>    | bitwise *xor* with *o1* and *o2* |
+| ` \<o1>          | ~\<o2>           | bitwise *not* with *o1*          |
+| && \<o1> \<o2>   | \<o1> && \<o2>   | logical *and* with *o1* and *o2* |
+| \|\| \<o1> \<o2> | \<o1> \|\| \<o2> | logical *or* with *o1* and *o2*  |
+| ! \<o1>          | !\<o2>           | logical *not* with *o1*          |
+
+### notes
+1. value for size of expected type
+
 # Variables
 Variables decl syntax:
 ```

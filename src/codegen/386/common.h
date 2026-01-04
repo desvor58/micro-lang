@@ -20,10 +20,16 @@
                           || (tok).type == MICRO_TT_LIT_INT    \
                           || (tok).type == MICRO_TT_LIT_STR)   \
 
-#define micro_tokisop(tok) ((tok).type == MICRO_TT_PLUS    \
-                         || (tok).type == MICRO_TT_MINUS   \
-                         || (tok).type == MICRO_TT_STAR    \
-                         || (tok).type == MICRO_TT_SLASH)  \
+#define micro_tokisop(tok) ((tok).type == MICRO_TT_PLUS        \
+                         || (tok).type == MICRO_TT_MINUS       \
+                         || (tok).type == MICRO_TT_STAR        \
+                         || (tok).type == MICRO_TT_SLASH       \
+                         || (tok).type == MICRO_TT_AMPERRSAND  \
+                         || (tok).type == MICRO_TT_HASH        \
+                         || (tok).type == MICRO_TT_DOLAR       \
+                         || (tok).type == MICRO_TT_TILDE       \
+                         || (tok).type == MICRO_TT_APOSTROPHE  \
+                        )
 
 typedef enum {
     MICRO_MT_NULL = 0,

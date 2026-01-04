@@ -276,14 +276,19 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
     return 1;
 }
 
-// return the offset to pos where expression has ending
-// + 5 4
-// p     r
-// 5     3
-//
-// 5
-// p r
-// 8 1
+typedef struct {
+    u8 operands_num;
+    int (*handler)(size_t, micro_codegen_386_storage_info_t);
+} micro_codegen_386_operator_info_t;
+
+micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
+    [MICRO_TT_PLUS]  = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_plus     },
+    [MICRO_TT_MINUS] = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_minus    },
+    [MICRO_TT_STAR]  = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_multiply },
+    [MICRO_TT_SLASH] = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_division },
+    [MICRO_TT_HASH]  = (micro_codegen_386_operator_info_t){ .operands_num = 1, .handler = micro_codegen_386__op_getaddr  },
+};
+
 int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t dst)
 {
     if (micro_tokislit(micro_toks[pos])) {
@@ -292,117 +297,94 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
     if (micro_toks[pos].type == MICRO_TT_IDENT) {
         return __micro_codegen_386_expr_parse_get_ident(pos, dst);
     }
-    size_t start_offset = dst.type == MICRO_ST_REG ? dst.offset : 0;    
-    if (micro_tokisop(micro_toks[pos])) {
-        int expr1_end_offset = micro_codegen_386_expr_parse(
-            pos + 1,
-            (micro_codegen_386_storage_info_t) {
-                .type = MICRO_ST_REG,
-                .size = dst.size,
-                .offset = start_offset,
-                .is_unsigned = dst.is_unsigned
-            }
-        );
-        if (expr1_end_offset == 0) {
-            return 0;
-        }
-        int expr2_end_offset = micro_codegen_386_expr_parse(
-            pos + expr1_end_offset + 1,
-            (micro_codegen_386_storage_info_t) {
-                .type = MICRO_ST_REG,
-                .size = dst.size,
-                .offset = start_offset + 1,
-                .is_unsigned = dst.is_unsigned
-            }
-        );
-        if (expr2_end_offset == 0) {
-            return 0;
-        }
-        if (micro_toks[pos].type == MICRO_TT_PLUS) {
-            int err = micro_codegen_386__op_plus(start_offset, dst);
-            if (err) {
-                goto err_wrong_dst_type_size;
-            }
-        } else
-        if (micro_toks[pos].type == MICRO_TT_MINUS) {
-            int err = micro_codegen_386__op_minus(start_offset, dst);
-            if (err) {
-                goto err_wrong_dst_type_size;
-            }
-        } else
-        if (micro_toks[pos].type == MICRO_TT_STAR) {
-            int err = micro_codegen_386__op_multiply(start_offset, dst);
-            if (err) {
-                goto err_wrong_dst_type_size;
-            }
-        } else
-        if (micro_toks[pos].type == MICRO_TT_SLASH) {
-            int err = micro_codegen_386__op_devision(start_offset, dst);
-            if (err) {
-                goto err_wrong_dst_type_size;
-            }
-        } else {
-            micro_error_t err = {.msg = "Unknow operator", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-            __micro_push_err(err);
-            return 0;
-        }
-        if (dst.type == MICRO_ST_DATASEG) {
-            u8 dst_addr[4];
-            micro_gen32imm_le(dst_addr, dst.offset);
 
-            if (dst.size == 4) {
-                u8 instruction[] = asm_movM32R32(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 2) {
-                u8 instruction[] = asm_movM16R16(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 1) {
-                u8 instruction[] = asm_movM8R8(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else {
-                goto err_wrong_dst_type_size;
-            }
-        } else
-        if (dst.type == MICRO_ST_REG && dst.offset != start_offset) {
-            reg32 dst_reg = dst.offset;
-
-            if (dst.size == 4) {
-                u8 instruction[] = asm_movR32R32(dst_reg, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 2) {
-                u8 instruction[] = asm_movR16R16(dst_reg, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 1) {
-                u8 instruction[] = asm_movR8R8(dst_reg, start_offset);
-                push_instruction(instruction);
-            } else {
-                goto err_wrong_dst_type_size;
-            }
-        } else
-        if (dst.type == MICRO_ST_STACK) {
-            u8 dst_addr[4];
-            micro_gen32imm_le(dst_addr, dst.offset);
-            if (dst.size == 4) {
-                u8 instruction[] = asm_movS32R32(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 2) {
-                u8 instruction[] = asm_movS32R16(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 1) {
-                u8 instruction[] = asm_movS32R8(dst_addr, start_offset);
-                push_instruction(instruction);
-            } else {
-                goto err_wrong_dst_type_size;
-            }
-        }
-        return expr1_end_offset + expr2_end_offset + 1;
+    if (!micro_tokisop(micro_toks[pos])) {
+        micro_error_t err = {.msg = "Expected operator", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
+        __micro_push_err(err);
+        return 0;
     }
+
+    size_t start_offset = dst.type == MICRO_ST_REG ? dst.offset : 0;    
+    micro_codegen_386_operator_info_t op_info = micro_codegen_386_ops_table[micro_toks[pos].type];
+
+    int global_expr_end_offset = 1;
+    for (size_t i = 0; i < op_info.operands_num; i++) {
+        int expr_end_offset = micro_codegen_386_expr_parse(
+            pos + global_expr_end_offset,
+            (micro_codegen_386_storage_info_t) {
+                .type = MICRO_ST_REG,
+                .size = dst.size,
+                .offset = start_offset + i,
+                .is_unsigned = dst.is_unsigned
+            }
+        );
+        if (expr_end_offset == 0) {
+            return 0;
+        }
+        global_expr_end_offset += expr_end_offset;
+    }
+
+    int op_handle_err = op_info.handler(start_offset, dst);
+    if (op_handle_err) {
+        goto err_wrong_dst_type_size;
+    }
+
+    if (dst.type == MICRO_ST_DATASEG) {
+        u8 dst_addr[4];
+        micro_gen32imm_le(dst_addr, dst.offset);
+
+        if (dst.size == 4) {
+            u8 instruction[] = asm_movM32R32(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            u8 instruction[] = asm_movM16R16(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            u8 instruction[] = asm_movM8R8(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    } else
+    if (dst.type == MICRO_ST_REG && dst.offset != start_offset) {
+        reg32 dst_reg = dst.offset;
+
+        if (dst.size == 4) {
+            u8 instruction[] = asm_movR32R32(dst_reg, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            u8 instruction[] = asm_movR16R16(dst_reg, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            u8 instruction[] = asm_movR8R8(dst_reg, start_offset);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    } else
+    if (dst.type == MICRO_ST_STACK) {
+        u8 dst_addr[4];
+        micro_gen32imm_le(dst_addr, dst.offset);
+        if (dst.size == 4) {
+            u8 instruction[] = asm_movS32R32(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 2) {
+            u8 instruction[] = asm_movS32R16(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else
+        if (dst.size == 1) {
+            u8 instruction[] = asm_movS32R8(dst_addr, start_offset);
+            push_instruction(instruction);
+        } else {
+            goto err_wrong_dst_type_size;
+        }
+    }
+    return global_expr_end_offset;
 
 err_wrong_dst_type_size:
     micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
