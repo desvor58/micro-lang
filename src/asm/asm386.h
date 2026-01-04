@@ -109,11 +109,11 @@ typedef enum {
 #define asm_movS32R8(offset, reg)  {       0x89, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 
 // move value to reg32 from stack with 32bits offset
-#define asm_movR32S32(reg, offset) {       0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+#define asm_movR32S32(reg, offset) {       0x8B, 0b10000100 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 // move value to reg16 from stack with 32bits offset
-#define asm_movR16S32(reg, offset) { 0x66, 0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+#define asm_movR16S32(reg, offset) { 0x66, 0x8B, 0b10000100 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 // move value to reg8 from stack with 32bits offset
-#define asm_movR8S32(reg, offset)  {       0x89, 0b10100000 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+#define asm_movR8S32(reg, offset)  {       0x8A, 0b10000100 | (reg), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 
 // add reg 32 and other reg 32
 #define asm_addR32R32(reg1, reg2) {       0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
@@ -123,11 +123,11 @@ typedef enum {
 #define asm_addR8R8(reg1, reg2)   {       0x00, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 
 // sub reg 32 and other reg 32
-#define asm_subR32R32(reg1, reg2) {       0x81, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_subR32R32(reg1, reg2) {       0x29, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 // sub reg 16 and other reg 16
-#define asm_subR16R16(reg1, reg2) { 0x66, 0x81, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_subR16R16(reg1, reg2) { 0x66, 0x29, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 // sub reg 8 and other reg 8
-#define asm_subR8R8(reg1, reg2)   {       0x80, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+#define asm_subR8R8(reg1, reg2)   {       0x28, 0b11000000 | ((reg2) << 3) | ((reg1)) }
 
 // multiply EAX and reg
 #define asm_mulR32(reg) {       0xF7, 0b11100000 | (reg) }
