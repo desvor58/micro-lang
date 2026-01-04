@@ -2,6 +2,7 @@
 #define MICRO_CODEGEN_386_EXPR_H
 
 #include "common.h"
+#include "operators.h"
 
 size_t micro_expr_peek(size_t pos)
 {
@@ -318,181 +319,27 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
             return 0;
         }
         if (micro_toks[pos].type == MICRO_TT_PLUS) {
-            if (dst.size == 4) {
-                u8 instruction[] = asm_addR32R32(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 2) {
-                u8 instruction[] = asm_addR16R16(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 1) {
-                u8 instruction[] = asm_addR8R8(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else {
+            int err = micro_codegen_386__op_plus(start_offset, dst);
+            if (err) {
                 goto err_wrong_dst_type_size;
             }
         } else
         if (micro_toks[pos].type == MICRO_TT_MINUS) {
-            if (dst.size == 4) {
-                u8 instruction[] = asm_subR32R32(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 2) {
-                u8 instruction[] = asm_subR16R16(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else
-            if (dst.size == 1) {
-                u8 instruction[] = asm_subR8R8(start_offset, start_offset + 1);
-                push_instruction(instruction);
-            } else {
+            int err = micro_codegen_386__op_minus(start_offset, dst);
+            if (err) {
                 goto err_wrong_dst_type_size;
             }
         } else
         if (micro_toks[pos].type == MICRO_TT_STAR) {
-            if (dst.is_unsigned) {
-                if (dst.size == 4) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_mulR32(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 2) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_mulR16(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 1) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_mulR8(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else {
-                    goto err_wrong_dst_type_size;
-                }
-            } else {
-                if (dst.size == 4) {
-                    u8 instruction[] = asm_imulR32R32(start_offset, start_offset + 1);
-                    push_instruction(instruction);
-                } else
-                if (dst.size == 2) {
-                    u8 instruction[] = asm_imulR16R16(start_offset, start_offset + 1);
-                    push_instruction(instruction);
-                } else
-                if (dst.size == 1) {
-                    u8 instruction[] = asm_imulR8R8(start_offset, start_offset + 1);
-                    push_instruction(instruction);
-                } else {
-                    goto err_wrong_dst_type_size;
-                }
+            int err = micro_codegen_386__op_multiply(start_offset, dst);
+            if (err) {
+                goto err_wrong_dst_type_size;
             }
         } else
         if (micro_toks[pos].type == MICRO_TT_SLASH) {
-            if (start_offset + 1 >= REG32_EDX) {
-                u8 instruction[] = asm_pushR32(REG32_EDX);
-                push_instruction(instruction);
-            }
-            if (dst.is_unsigned) {
-                if (dst.size == 4) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_divR32(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 2) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_divR16(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 1) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_divR8(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else {
-                    goto err_wrong_dst_type_size;
-                }
-            } else {
-                if (dst.size == 4) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_idivR32(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR32R32(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 2) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_idivR16(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR16R16(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else
-                if (dst.size == 1) {
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(0, start_offset);
-                        push_instruction(instruction);
-                    }
-                    u8 instruction[] = asm_idivR8(start_offset + 1);
-                    push_instruction(instruction);
-                    if (start_offset) {
-                        u8 instruction[] = asm_xchgR8R8(start_offset, 0);
-                        push_instruction(instruction);
-                    }
-                } else {
-                    goto err_wrong_dst_type_size;
-                }
-            }
-            if (start_offset + 1 >= REG32_EDX) {
-                u8 instruction[] = asm_popR32(REG32_EDX);
-                push_instruction(instruction);
+            int err = micro_codegen_386__op_devision(start_offset, dst);
+            if (err) {
+                goto err_wrong_dst_type_size;
             }
         } else {
             micro_error_t err = {.msg = "Unknow operator", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
