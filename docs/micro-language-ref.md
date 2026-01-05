@@ -1,5 +1,14 @@
+# Table of contents
+1. [Coments](#coments)
+2. [Types](#types)
+2. [Expressions](#expresions)
+3. [Variables (keyword var)](#variables)
+3. [Variables change (keyword set)](#variable-change)
+3. [Functions (keyword fun)](#functuins)
+4. [Functions calling (keyword call)](#functions-calling)
+
 # Coments
-All code betwen '\' will be ignored
+All code betwen '\\' will be ignored
 ```
 \ its a comments line \
 var i32 a 5;
@@ -131,7 +140,7 @@ fun <name> [<param type 1> <param name 1> <param type 2> <param name 2> <param t
 ```
 note: check the [style guide of function declaration](./good-micro-code-style.md#function-declaration)
 
----
+# Functions calling
 
 Functions can be called like in an assebler: with 'call' keyword:
 ```
