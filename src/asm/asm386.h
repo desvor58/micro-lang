@@ -80,6 +80,13 @@ typedef enum {
 // move mem 8 to reg 8
 #define asm_movR8M8(reg, addr)   {       0x8A, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
 
+// move mem 32 with pure register addrresing to reg 32
+#define asm_movR32MR32(reg1, reg2) {       0x8B, 0b00000000 | ((reg1) << 3) | (reg2) }
+// move mem 16 with pure register addrresing to reg 16
+#define asm_movR16MR16(reg1, reg2) { 0x66, 0x8B, 0b00000000 | ((reg1) << 3) | (reg2) }
+// move mem 8 with pure register addrresing to reg 8
+#define asm_movR8MR8(reg1, reg2)   {       0x8A, 0b00000000 | ((reg1) << 3) | (reg2) }
+
 // move reg 32 to mem 32
 #define asm_movM32R32(addr, reg) {       0x89, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
 // move reg 16 to mem 16
@@ -156,5 +163,15 @@ typedef enum {
 #define asm_idivR16(reg) { 0x66, 0xF7, 0b11111000 | (reg) }
 // division AL and reg
 #define asm_idivR8(reg)  {       0xF6, 0b11111000 | (reg) }
+
+// negate value from reg 32
+#define asm_negR32(reg) {       0xF7, 0b11011000 | (reg) }
+// negate value from reg 16
+#define asm_negR16(reg) { 0x66, 0xF7, 0b11011000 | (reg) }
+// negate value from reg 8
+#define asm_negR8(reg)  {       0xF6, 0b11011000 | (reg) }
+
+#define asm_leaR32S32(reg, offset) {       0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+#define asm_leaR16S32(reg, offset) { 0x66, 0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 
 #endif

@@ -104,7 +104,7 @@ void __micro_lexer_err_stk_size_check(size_t offset)
 void micro_lexing(const char *text, size_t text_size)
 {
     size_t pos = 0;
-    size_t line = 0;
+    size_t line = 1;
     size_t chpos = 1;
 
     char *buf = (char*)malloc(sizeof(char) * MICRO_MAX_SYMBOL_SIZE);

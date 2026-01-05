@@ -1,3 +1,20 @@
+# Coments
+between '\\'s one spaces
+```
+\ hello \
+```
+mutlinine coments:
+```
+\
+hello
+its comment
+\
+or
+\ hello
+| its comment
+\ by desvor
+```
+
 # Naming
 In micro, I recommend sticking to snake_case naming, but micro is an IR language, so naming conventions in micro code can be the same as those in the source language that compiles to micro.
 

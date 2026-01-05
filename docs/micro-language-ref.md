@@ -10,6 +10,7 @@ yeaaaaaaa
 \
 ```
 
+
 # Types
 Micro have 7 base types:
 | name | C analog            | size (in bytes) | min value          | max value          |
@@ -27,6 +28,7 @@ All pointers have ptr type
 
 ## note
 If micro code builds for 16bits target, i32, u32, f32 and ptr type will be have 2 byte size
+
 
 # Expresions
 Micro lang use prefix notation like this:
@@ -65,6 +67,7 @@ Micro support +, -, * and / operators - addition, substruction, multipling, divi
 
 ### notes
 1. value for size of expected type
+
 
 # Variables
 Variables decl syntax:
@@ -110,6 +113,7 @@ For example:
 var u32 a 5; \ a = 5 \
 set a + 8 5; \ a = 13 \
 ```
+
 
 # Functuins
 Functions in micro work like "functions" in most assembers: label is specified at the beginning of the function and 'ret' instruction is specified at end:
