@@ -138,12 +138,6 @@ typedef struct {
     micro_codegen_386_storage_info_t storage_info;
 } micro_codegen_386_var_info_t;
 
-// Ty: micro_codegen_386_var_info_t
-sct_hashmap_t *micro_codegen_386_vars;
-
-// Ty: string_t
-sct_list_pair_t *micro_codegen_386_local_vars_list;
-
 typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
     micro_codegen_386_micro_type ret_type;
@@ -152,8 +146,25 @@ typedef struct {
     size_t offset;
 } micro_codegen_386_fun_info_t;
 
-// Ty: micro_codegen_386_fun_info_t
-sct_hashmap_t *micro_codegen_386_funs;
+typedef enum {
+    IT_VAR,
+    IT_FUN,
+    IT_LBL,
+} micro_codegen_386_ident_type;
+
+typedef struct {
+    micro_codegen_386_ident_type type;
+    union {
+        micro_codegen_386_var_info_t var_info;
+        micro_codegen_386_fun_info_t fun_info;
+    };
+} micro_codegen_386_ident_info_t;
+
+// Ty: micro_codegen_386_ident_info_t
+sct_hashmap_t *micro_codegen_386_idents;
+
+// Ty: string_t
+sct_list_pair_t *micro_codegen_386_local_vars_list;
 
 micro_error_t *micro_codegen_386_err_stk;
 size_t         micro_codegen_386_err_stk_size;
@@ -178,9 +189,8 @@ void micro_codegen_386_init()
     micro_code_in_function = 0;
     micro_top_stack_offset = 0;
 
-    micro_codegen_386_vars = sct_hashmap_create();
+    micro_codegen_386_idents = sct_hashmap_create();
     micro_codegen_386_local_vars_list = sct_list_pair_create(0);
-    micro_codegen_386_funs = sct_hashmap_create();
 
     micro_outbuf = sct_string_create();
 }
@@ -188,9 +198,8 @@ void micro_codegen_386_init()
 void micro_codegen_386_delete()
 {
     free(micro_codegen_386_err_stk);
-    sct_hashmap_full_free(micro_codegen_386_vars);
+    sct_hashmap_full_free(micro_codegen_386_idents);
     sct_list_full_free(micro_codegen_386_local_vars_list);
-    sct_hashmap_full_free(micro_codegen_386_funs);
     sct_string_free(micro_outbuf);
 }
 
@@ -221,22 +230,25 @@ void __micro_codegen_386_err_stk_size_check(size_t offset)
     }
 }
 
-void __micro_dbg_print_vars()
+void __micro_dbg_print_idents()
 {
-    foreach (key_it, micro_codegen_386_vars->keys) {
+    foreach (key_it, micro_codegen_386_idents->keys) {
         // printf("putting:%s\n", (char*)key_it->val);
-        micro_codegen_386_var_info_t *var_info = sct_hashmap_get(micro_codegen_386_vars, (char*)key_it->val);
-        if (!var_info) {
+        micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(micro_codegen_386_idents, (char*)key_it->val);
+        if (!ident_info) {
             puts("EE");
             exit(1);
         }
-        printf("%s:{\n  type:%u,\n  storage_info:{\n    type:%u,\n    size:%u,\n    offset:%d,\n    isunssigned:%d\n  }\n}\n",
-               var_info->name,
-               var_info->type,
-               var_info->storage_info.type,
-               var_info->storage_info.size,
-               var_info->storage_info.offset,
-               var_info->storage_info.is_unsigned);
+        if (ident_info->type == IT_VAR) {
+            micro_codegen_386_var_info_t var_info = ident_info->var_info;
+            printf("%s:{\n  type:%u,\n  storage_info:{\n    type:%u,\n    size:%u,\n    offset:%d,\n    isunssigned:%d\n  }\n}\n",
+                   var_info.name,
+                   var_info.type,
+                   var_info.storage_info.type,
+                   var_info.storage_info.size,
+                   var_info.storage_info.offset,
+                   var_info.storage_info.is_unsigned);
+        }
     }
 }
 
@@ -244,21 +256,27 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
 {
     if (micro_tokislit(tok)) {
         return micro_lit2mt(tok, expected);
-    }
+    } else
     if (tok.type == MICRO_TT_IDENT) {
         //__micro_dbg_print_vars();
-        micro_codegen_386_var_info_t *var_info = sct_hashmap_get(micro_codegen_386_vars, tok.val);
-        if (!var_info) {
+        micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(micro_codegen_386_idents, tok.val);
+        if (!ident_info) {
             micro_error_t err = {.msg = "Undeclarated variable",
-                                .line_ref = tok.line_ref,
-                                .chpos_ref = tok.chpos_ref};
+                                 .line_ref = tok.line_ref,
+                                 .chpos_ref = tok.chpos_ref};
             __micro_push_err(err);
             return MICRO_MT_NULL;
         }
-        if (var_info->type == expected) {
-            return expected;
+        if (ident_info->type == IT_VAR) {
+            if (ident_info->var_info.type == expected) {
+                return expected;
+            }
+        } else {
+            if (expected == MICRO_MT_PTR) {
+                return expected;
+            }
         }
-    }
+    } else
     if (micro_tokisop(tok)) {
         return expected;
     }
