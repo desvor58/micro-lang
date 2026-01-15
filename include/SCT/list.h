@@ -1,126 +1,118 @@
-#ifndef LIST_H
-#define LIST_H
+#ifndef SCT_LIST_H
+#define SCT_LIST_H
 
 #include <malloc.h>
 
-#define foreach(LtTy, list) for (LtTy *cur = list; cur && cur->val; cur = cur->next)
+#define foreach(iter_name, list_start) for (sct_list_pair_t *(iter_name) = (list_start); (iter_name) && (iter_name)->val; (iter_name) = (iter_name)->next)
 
-#define genlist(Ty)  \
-struct list_##Ty##_pair_t {  \
-    Ty                        *val;  \
-    struct list_##Ty##_pair_t *next;  \
-};  \
-typedef struct list_##Ty##_pair_t list_##Ty##_pair_t;  \
-list_##Ty##_pair_t *list_##Ty##_create()  \
-{  \
-    list_##Ty##_pair_t *start  \
-        = (list_##Ty##_pair_t*)malloc(sizeof(list_##Ty##_pair_t));  \
-    start->val  = 0;  \
-    start->next = 0;  \
-    return start;  \
-}  \
-int list_##Ty##_add(list_##Ty##_pair_t *start, Ty *val)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0) {  \
-        return 1;  \
-    }  \
-    if (start->val == 0) {  \
-        start->val = val;  \
-        return 0;  \
-    }  \
-    list_##Ty##_pair_t *cur = start;  \
-    while (cur->next != (list_##Ty##_pair_t*)0) {  \
-        cur = cur->next;  \
-    }  \
-    cur->next = list_##Ty##_create();  \
-    cur->next->val = val;  \
-    return 0;  \
-}  \
-long long list_##Ty##_size(list_##Ty##_pair_t *start)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0) {  \
-        return -1;  \
-    }  \
-    if (start->val == 0) {  \
-        return 0;  \
-    }  \
-    list_##Ty##_pair_t *cur = start;  \
-    size_t size = 1;  \
-    while (cur->next != (list_##Ty##_pair_t*)0) {  \
-        cur = cur->next;  \
-        size++;  \
-    }  \
-    return size;  \
-}  \
-int list_##Ty##_set(list_##Ty##_pair_t *start, size_t index, Ty *val)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0 || index >= list_##Ty##_size(start)) {  \
-        return 1;  \
-    }  \
-    list_##Ty##_pair_t *cur = start;  \
-    size_t i = 0;  \
-    while (i < index) {  \
-        cur = cur->next;  \
-        i++;  \
-    }  \
-    cur->val = val;  \
-    return 0;  \
-}  \
-Ty *list_##Ty##_get(list_##Ty##_pair_t *start, size_t index)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0 || index >= list_##Ty##_size(start)) {  \
-        return (Ty*)0;  \
-    }  \
-    list_##Ty##_pair_t *cur = start;  \
-    size_t i = 0;  \
-    while (i < index) {  \
-        cur = cur->next;  \
-        i++;  \
-    }  \
-    return cur->val;  \
-}  \
-list_##Ty##_pair_t *list_##Ty##_delete(list_##Ty##_pair_t *start, size_t index)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0 || index >= list_##Ty##_size(start)) {  \
-        return 0;  \
-    }  \
-    list_##Ty##_pair_t *acc;  \
-    if (index == 0) {  \
-        acc = start->next;  \
-        free(start);  \
-        return acc;  \
-    }  \
-    list_##Ty##_pair_t *cur = start;  \
-    size_t i = 0;  \
-    while (i < index - 1) {  \
-        cur = cur->next;  \
-        i++;  \
-    }  \
-    acc = cur->next->next;  \
-    free(cur->next);  \
-    cur->next = acc;  \
-    return start;  \
-}  \
-int list_##Ty##_free(list_##Ty##_pair_t *start)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0) {  \
-        return 1;  \
-    }  \
-    list_##Ty##_free(start->next);  \
-    free(start);  \
-    return 0;  \
-}  \
-int list_##Ty##_full_free(list_##Ty##_pair_t *start)  \
-{  \
-    if (start == (list_##Ty##_pair_t*)0) {  \
-        return 1;  \
-    }  \
-    foreach (list_##Ty##_pair_t, start) {  \
-        free(cur->val);  \
-    }  \
-    list_##Ty##_free(start->next);  \
-    free(start);  \
-    return 0;  \
+typedef struct sct_list_pair_t {
+    void *val;
+    struct sct_list_pair_t *next;
+} sct_list_pair_t;
+
+sct_list_pair_t *sct_list_pair_create(void *val)
+{
+    sct_list_pair_t *pair = malloc(sizeof(sct_list_pair_t));
+    pair->val = val;
+    pair->next = 0;
+    return pair;
+}
+
+size_t sct_list_size(sct_list_pair_t *list_start)
+{
+    size_t size = 0;
+    foreach (cur, list_start) {
+        size++;
+    }
+    return size;
+}
+
+void sct_list_push_back(sct_list_pair_t *list_start, void *val)
+{
+    sct_list_pair_t *cur = list_start;
+    while (cur->next && cur->val) {
+        cur = cur->next;
+    }
+    if (!cur->val) {
+        cur->val = val;
+        return;
+    }
+    cur->next = sct_list_pair_create(val);
+}
+
+void *sct_list_get(sct_list_pair_t *list_start, size_t index)
+{
+    sct_list_pair_t *cur = list_start;
+    size_t i = 0;
+    while (i < index && cur->next) {
+        cur = cur->next;
+        i++;
+    }
+    return cur->val;
+}
+
+void sct_list_set(sct_list_pair_t *list_start, size_t index, void *val)
+{
+    sct_list_pair_t *el = sct_list_get(list_start, index);
+    el->val = val;
+}
+
+sct_list_pair_t *sct_list_delete(sct_list_pair_t *list_start, size_t index)
+{
+    if (index == 0) {
+        sct_list_pair_t *acc = list_start->next;
+        free(list_start);
+        return acc;
+    }
+    sct_list_pair_t *prev = list_start;
+    sct_list_pair_t *cur  = list_start;
+    size_t i = 0;
+    while (i < index && cur->next) {
+        prev = cur;
+        cur = cur->next;
+        i++;
+    }
+    prev->next = cur->next;
+    free(cur);
+    return list_start;
+}
+
+sct_list_pair_t *sct_list_full_delete(sct_list_pair_t *list_start, size_t index)
+{
+    if (index == 0) {
+        sct_list_pair_t *acc = list_start->next;
+        free(list_start->val);
+        free(list_start);
+        if (!acc) {
+            return sct_list_pair_create(0);
+        }
+        return acc;
+    }
+    sct_list_pair_t *prev = list_start;
+    sct_list_pair_t *cur  = list_start;
+    size_t i = 0;
+    while (i < index && cur->next) {
+        prev = cur;
+        cur = cur->next;
+        i++;
+    }
+    prev->next = cur->next;
+    free(cur->val);
+    free(cur);
+    return list_start;
+}
+
+void sct_list_free(sct_list_pair_t *list_start)
+{
+    if (list_start->next) sct_list_free(list_start->next);
+    free(list_start);
+}
+
+void sct_list_full_free(sct_list_pair_t *list_start)
+{
+    if (list_start->next) sct_list_full_free(list_start->next);
+    free(list_start->val);
+    free(list_start);
 }
 
 #endif

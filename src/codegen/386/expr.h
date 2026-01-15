@@ -24,12 +24,12 @@ typedef struct {
 } micro_codegen_386_operator_info_t;
 
 micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
-    [MICRO_TT_PLUS]  = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_plus     },
-    [MICRO_TT_MINUS] = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_minus    },
-    [MICRO_TT_STAR]  = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_multiply },
-    [MICRO_TT_SLASH] = (micro_codegen_386_operator_info_t){ .operands_num = 2, .handler = micro_codegen_386__op_division },
-    [MICRO_TT_TILDE] = (micro_codegen_386_operator_info_t){ .operands_num = 1, .handler = micro_codegen_386__op_negate   },
-    [MICRO_TT_DOLAR] = (micro_codegen_386_operator_info_t){ .operands_num = 1, .handler = micro_codegen_386__op_deref    },
+    [MICRO_TT_PLUS]  = { .operands_num = 2, .handler = micro_codegen_386__op_plus     },
+    [MICRO_TT_MINUS] = { .operands_num = 2, .handler = micro_codegen_386__op_minus    },
+    [MICRO_TT_STAR]  = { .operands_num = 2, .handler = micro_codegen_386__op_multiply },
+    [MICRO_TT_SLASH] = { .operands_num = 2, .handler = micro_codegen_386__op_division },
+    [MICRO_TT_TILDE] = { .operands_num = 1, .handler = micro_codegen_386__op_negate   },
+    [MICRO_TT_DOLAR] = { .operands_num = 1, .handler = micro_codegen_386__op_deref    },
 };
 
 int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t dst)

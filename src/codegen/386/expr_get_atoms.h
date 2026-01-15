@@ -336,7 +336,7 @@ int __micro_codegen_386_expr_parse_get_ident_addr_from_stack(u8 *ident_addr, mic
 
 int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_storage_info_t dst, int expected_addr)
 {
-    micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, micro_toks[pos].val);
+    micro_codegen_386_var_info_t *var_info = sct_hashmap_get(micro_codegen_386_vars, micro_toks[pos].val);
     if (!var_info) {
         micro_error_t err = {.msg = "Unknown identifire", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
         __micro_push_err(err);

@@ -29,11 +29,18 @@ void micro_codegen_386__static_var()
         .offset = micro_outbuf->size,
         .is_unsigned = micro_mtisunsigned(var_info->type)
     };
-    hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
+    micro_codegen_386_var_info_t *old_var_info = sct_hashmap_set(micro_codegen_386_vars, var_info->name, var_info);
+    if (old_var_info) {
+        micro_error_t err = {.msg = "Double decralation of variable",
+                             .line_ref = tok_name.line_ref,
+                             .chpos_ref = tok_name.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
 
     if (__micro_peek(3).type == MICRO_TT_SEMICOLON) {
         for (size_t i = 0; i < micro_mt_size[var_info->type]; i++) {
-            string_push_back(micro_outbuf, 0);
+            sct_string_push_back(micro_outbuf, 0);
         }
         micro_pos += 3;
         return;
@@ -59,7 +66,7 @@ void micro_codegen_386__static_var()
         u8 *imm_val = (u8*)alloca(sizeof(u8) * micro_mt_size[lit_type]);
         micro_imm_from_mt(imm_val, lit_type, strtoll(__micro_peek(3).val, (char**)0, 10));
         for (size_t i = 0; i < micro_mt_size[lit_type]; i++) {
-            string_push_back(micro_outbuf, imm_val[i]);
+            sct_string_push_back(micro_outbuf, imm_val[i]);
         }
         micro_pos += 4;
     }
@@ -97,7 +104,18 @@ void micro_codegen_386__var()
         .offset = micro_top_stack_offset
     };
     micro_top_stack_offset -= micro_mt_size[var_info->type];
-    hashmap_micro_codegen_386_var_info_t_set(micro_codegen_386_vars, var_info->name, var_info);
+    micro_codegen_386_var_info_t *old_var_info = sct_hashmap_set(micro_codegen_386_vars, var_info->name, var_info);
+    if (old_var_info) {
+        micro_error_t err = {.msg = "Double decralation of variable",
+                             .line_ref = tok_name.line_ref,
+                             .chpos_ref = tok_name.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
+    sct_string_t *str_name = sct_string_create();
+    sct_string_cat(str_name, "%s", var_info->name);
+    sct_list_push_back(micro_codegen_386_local_vars_list, str_name);
 
     if (__micro_peek(3).type == MICRO_TT_SEMICOLON) {
         micro_pos += 3;
@@ -186,9 +204,9 @@ void micro_codegen_386__set()
         goto err_exit;
     }
     
-    micro_codegen_386_var_info_t *var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, tok_dst.val);
+    micro_codegen_386_var_info_t *var_info = sct_hashmap_get(micro_codegen_386_vars, tok_dst.val);
     if (!var_info) {
-        micro_error_t err = {.msg = "Undeclareted variable name", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
+        micro_error_t err = {.msg = "Undeclareted variable name", .line_ref = tok_dst.line_ref, .chpos_ref = tok_dst.chpos_ref};
         __micro_push_err(err);
         return;
     }
@@ -198,10 +216,13 @@ void micro_codegen_386__set()
         __micro_push_err(err);
         return;
     }
+
+    //__micro_dbg_print_vars();
     int expr_end_offset = micro_codegen_386_expr_parse(micro_pos + 2, var_info->storage_info);
     if (!expr_end_offset) {
         goto err_exit;
     }
+
     if (micro_toks[micro_pos + 2 + expr_end_offset].type != MICRO_TT_SEMICOLON) {
         micro_error_t err = {.msg = "Expected ';'", .line_ref = tok_src.line_ref, .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
@@ -227,14 +248,15 @@ void micro_codegen_386__fun()
 
     micro_codegen_386_fun_info_t *fun_info = (micro_codegen_386_fun_info_t*)malloc(sizeof(micro_codegen_386_fun_info_t));
     strcpy(fun_info->name, tok_ident.val);
-    fun_info->args = vector_micro_codegen_386_var_info_t_create();
+    fun_info->args = sct_vector_create(1);
     fun_info->ret_type = MICRO_MT_NULL;
     fun_info->offset = micro_outbuf->size;
 
     size_t param_num = 0;
     while (micro_toks[micro_pos].type != MICRO_TT_KW_RET && micro_toks[micro_pos].type != MICRO_TT_KW_START) {
-        micro_token_t tok_param_type = __micro_get(0);
-        micro_token_t tok_param_ident = __micro_get(0);
+        micro_token_t tok_param_type = __micro_peek(0);
+        micro_token_t tok_param_ident = __micro_peek(1);
+        micro_pos += 2;
         if (tok_param_type.type != MICRO_TT_TYPE_NAME || tok_param_type.type == MICRO_TT_NULL) {
             micro_error_t err = {.msg = "Expected parameter type",
                                  .line_ref = tok_param_type.line_ref,
@@ -250,19 +272,29 @@ void micro_codegen_386__fun()
             goto err_exit;
         }
 
-        micro_codegen_386_var_info_t param_info = {0};
-        strcpy(param_info.name, tok_param_ident.val);
-        param_info.type = micro_str2mt(tok_param_type.val);
-        param_info.storage_info = (micro_codegen_386_storage_info_t) {
+        micro_codegen_386_var_info_t *param_info = (micro_codegen_386_var_info_t*)malloc(sizeof(micro_codegen_386_var_info_t));
+        strcpy(param_info->name, tok_param_ident.val);
+        param_info->type = micro_str2mt(tok_param_type.val);
+        param_info->storage_info = (micro_codegen_386_storage_info_t) {
             .type = MICRO_ST_STACK,
-            .size = micro_mt_size[param_info.type],
-            // [ebp - 4 - ((N - 1) * 4 + sizeof(aN))]
-            .offset = - 4 - (param_num * 4 + micro_mt_size[param_info.type]),
-            .is_unsigned = micro_mtisunsigned(param_info.type)
+            .size = micro_mt_size[param_info->type],
+            .offset = + 4 + (param_num * 4 + micro_mt_size[param_info->type]),
+            .is_unsigned = micro_mtisunsigned(param_info->type)
         };
 
-        vector_micro_codegen_386_var_info_t_push_back(fun_info->args, param_info);
-
+        sct_string_t *str_name = sct_string_create();
+        sct_string_cat(str_name, "%s", param_info->name);
+        sct_list_push_back(micro_codegen_386_local_vars_list, str_name);
+        
+        // vector_micro_codegen_386_var_info_t_push_back(fun_info->args, *param_info);
+        micro_codegen_386_var_info_t *old_param_info = sct_hashmap_set(micro_codegen_386_vars, tok_param_ident.val, param_info);
+        if (old_param_info) {
+            micro_error_t err = {.msg = "Double decralation of parametr",
+                                .line_ref = tok_param_ident.line_ref,
+                                .chpos_ref = tok_param_ident.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
         param_num++;
     }
     
@@ -288,6 +320,15 @@ void micro_codegen_386__fun()
     u8 prelude_instruction[] = asm_std_prelude;
     push_instruction(prelude_instruction);
 
+    // puts("fun start vars map:");
+    // __micro_dbg_print_vars();
+    // printf("END\n");
+    // puts("fun start vars list:");
+    // foreach (var_info_it, micro_codegen_386_local_vars_list) {
+    //     printf("%s\n", ((sct_string_t*)var_info_it->val)->str);
+    // }
+    // printf("END\n");
+
     micro_code_in_function = 1;
     micro_top_stack_offset = -4;
     while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
@@ -296,10 +337,38 @@ void micro_codegen_386__fun()
     micro_code_in_function = 0;
     micro_top_stack_offset = 0;
 
+    for (size_t i = 0; i < fun_info->args->size; i++) {
+        sct_hashmap_full_delete(micro_codegen_386_vars, ((micro_codegen_386_var_info_t*)fun_info->args->arr[i])->name);
+    }
+
+    // puts("vars->keys before freeing:");
+    // foreach (key_it, micro_codegen_386_vars->keys) {
+    //     printf_s("  %s\n", key_it->val);
+    // }
+
+    foreach (var_info_it, micro_codegen_386_local_vars_list) {
+        printf("deletting:%s\n", ((sct_string_t*)var_info_it->val)->str);
+        sct_hashmap_full_delete(micro_codegen_386_vars, ((sct_string_t*)var_info_it->val)->str);
+    }
+    sct_list_full_free(micro_codegen_386_local_vars_list);
+    micro_codegen_386_local_vars_list = sct_list_pair_create(0);
+
+    // puts("vars->keys after freeing:");
+    // foreach (key_it, micro_codegen_386_vars->keys) {
+    //     printf_s("  %s\n", key_it->val);
+    // }
+
     u8 epilogue_instruction[] = asm_std_epilogue;
     push_instruction(epilogue_instruction);
 
-    hashmap_micro_codegen_386_fun_info_t_set(micro_codegen_386_funs, tok_ident.val, fun_info);
+    micro_codegen_386_var_info_t *old_fun_info = sct_hashmap_set(micro_codegen_386_funs, tok_ident.val, fun_info);
+    if (old_fun_info) {
+        micro_error_t err = {.msg = "Double decralation of function",
+                            .line_ref = tok_ident.line_ref,
+                            .chpos_ref = tok_ident.chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
 
     return;
 
@@ -312,6 +381,14 @@ err_exit:
 
 void micro_codegen_386__call()
 {
+    if (!micro_code_in_function) {
+        micro_error_t err = {.msg = "Instruction 'call' can be usage only in function body",
+                             .line_ref = micro_toks[micro_pos].line_ref,
+                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
+        __micro_push_err(err);
+        goto err_exit;
+    }
+
     micro_token_t tok_dst_var_name = __micro_get(1);
     micro_token_t tok_fun_name     = __micro_get(1);
     micro_pos++;
@@ -331,7 +408,7 @@ void micro_codegen_386__call()
         goto err_exit;
     }
 
-    micro_codegen_386_fun_info_t *fun_info = hashmap_micro_codegen_386_fun_info_t_get(micro_codegen_386_funs, tok_fun_name.val);
+    micro_codegen_386_fun_info_t *fun_info = sct_hashmap_get(micro_codegen_386_funs, tok_fun_name.val);
     if (!fun_info) {
         micro_error_t err = {.msg = "Unknown function name",
                              .line_ref = tok_fun_name.line_ref,
@@ -355,11 +432,11 @@ void micro_codegen_386__call()
             goto err_exit;
         }
     }
-    for (size_t i = cur_arg_num - 1; i > 0; i++) {
+    for (offset_t i = cur_arg_num - 1, arg_offset = 0; i >= 0; i--,arg_offset++) {
         micro_codegen_386_expr_parse(arg_expr_starts[i], (micro_codegen_386_storage_info_t){
             .type = MICRO_ST_STACK,
             .size = 4,
-            .offset = i * 4,
+            .offset = micro_top_stack_offset - (arg_offset * 4),
             .is_unsigned = 0
         });
     }
@@ -372,7 +449,7 @@ void micro_codegen_386__call()
     push_instruction(instruction);
 
     if (strcmp(tok_dst_var_name.val, "_")) {
-        micro_codegen_386_var_info_t *dst_var_info = hashmap_micro_codegen_386_var_info_t_get(micro_codegen_386_vars, tok_dst_var_name.val);
+        micro_codegen_386_var_info_t *dst_var_info = sct_hashmap_get(micro_codegen_386_vars, tok_dst_var_name.val);
         if (!dst_var_info) {
             micro_error_t err = {.msg = "Undeclareted variable name",
                                 .line_ref = tok_dst_var_name.line_ref,

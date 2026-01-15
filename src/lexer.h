@@ -45,6 +45,40 @@ typedef enum
     MICRO_TT_KW_CALL,
 } micro_token_type;
 
+char *__micro_token_type2str[] = {
+    [MICRO_TT_NULL]       = "null",
+    [MICRO_TT_PLUS]       = "plus",
+    [MICRO_TT_MINUS]      = "minus",
+    [MICRO_TT_STAR]       = "star",
+    [MICRO_TT_SLASH]      = "slash",
+    [MICRO_TT_DOT]        = "dot",
+    [MICRO_TT_COMA]       = "coma",
+    [MICRO_TT_COLON]      = "colon",
+    [MICRO_TT_SEMICOLON]  = "semicolon",
+    [MICRO_TT_AMPERRSAND] = "ampersand",
+    [MICRO_TT_DOLAR]      = "dolar",
+    [MICRO_TT_HASH]       = "hash",
+    [MICRO_TT_APOSTROPHE] = "apostrophe",
+    [MICRO_TT_TILDE]      = "tilde",
+
+    [MICRO_TT_TYPE_NAME]  = "type name",
+    [MICRO_TT_IDENT]      = "ident",
+    [MICRO_TT_LIT_INT]    = "lit int",
+    [MICRO_TT_LIT_FLOAT]  = "lit float",
+    [MICRO_TT_LIT_STR]    = "lit str",
+
+    [MICRO_TT_KW_VAR]     = "var",
+    [MICRO_TT_KW_FUN]     = "fun",
+    [MICRO_TT_KW_SET]     = "set",
+    [MICRO_TT_KW_IF]      = "if",
+    [MICRO_TT_KW_ELSE]    = "else",
+    [MICRO_TT_KW_WHILE]   = "while",
+    [MICRO_TT_KW_START]   = "start",
+    [MICRO_TT_KW_END]     = "end",
+    [MICRO_TT_KW_RET]     = "ret",
+    [MICRO_TT_KW_CALL]    = "call",
+};
+
 typedef struct
 {
     micro_token_type type;
@@ -120,7 +154,6 @@ void micro_lexing(const char *text, size_t text_size)
                     line++;
                     chpos = 0;
                 }
-                pos++;
                 chpos++;
                 if (pos >= text_size) {
                     micro_error_t err = {.msg = "Expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};

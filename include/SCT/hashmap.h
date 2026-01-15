@@ -1,96 +1,145 @@
-#ifndef HASHMAP_H
-#define HASHMAP_H
+#ifndef SCT_HASHMAP_H
+#define SCT_HASHMAP_H
 
+#include <string.h>
 #include "list.h"
 #include "crc32.h"
 
-#define HASHMAP_KEY_SIZE    64
-#define HASHMAP_BUCKETS_NUM 64
-#define HASHMAP_KEYS_NUM    256
+#define SCT_HASHMAP_KEY_SIZE     64
+#define SCT_HASHMAP_BUCKETS_NUM  2
+#define SCT_HASHMAP_KEYS_MAX_NUM 256
 
-#define genhashmap(Ty)  \
-typedef struct {  \
-    char key[HASHMAP_KEY_SIZE];  \
-    Ty *val;  \
-} hashmap_##Ty##_container_t;  \
-genlist(hashmap_##Ty##_container_t)  \
-typedef struct {  \
-    list_hashmap_##Ty##_container_t_pair_t *buckets[HASHMAP_BUCKETS_NUM];  \
-    char keys[(HASHMAP_KEY_SIZE + 1) * HASHMAP_KEYS_NUM];  \
-    size_t keys_top;  \
-} hashmap_##Ty##_t;  \
-hashmap_##Ty##_t *hashmap_##Ty##_create()  \
-{  \
-    hashmap_##Ty##_t *map = malloc(sizeof(hashmap_##Ty##_t));  \
-    for (size_t i = 0; i < HASHMAP_BUCKETS_NUM; i++) {  \
-        map->buckets[i] = list_hashmap_##Ty##_container_t_create();  \
-    }  \
-    map->keys_top = 0;  \
-    return map;  \
-}  \
-int hashmap_##Ty##_set(hashmap_##Ty##_t *map, const char *key, Ty *val) /* val обязательно выделен в куче! */ \
-{  \
-    if (map == 0 || !key || strlen(key) > HASHMAP_KEY_SIZE || val == 0) {  \
-        return 1;  \
-    }  \
-    strcpy(map->keys + ((map->keys_top++) * (HASHMAP_KEY_SIZE + 1)), key);  \
-    crc32_t bkt = crc32(key, strlen(key)) % HASHMAP_BUCKETS_NUM;  \
-    hashmap_##Ty##_container_t *container = malloc(sizeof(hashmap_##Ty##_container_t));  \
-    strcpy(container->key, key);  \
-    container->val = val;  \
-    foreach (list_hashmap_##Ty##_container_t_pair_t, map->buckets[bkt]) {  \
-        if (!strcmp(cur->val->key, key)) {  \
-            /* cur->val->val остаеться выделеным в случае если он был выделен в куче */  \
-            free(cur->val);  \
-            cur->val = container;  \
-            return 0;  \
-        }  \
-    }  \
-    list_hashmap_##Ty##_container_t_add(map->buckets[bkt], container);  \
-    return 0;  \
-}  \
-Ty *hashmap_##Ty##_get(hashmap_##Ty##_t *map, const char *key)  \
-{  \
-    if (!map || !key || strlen(key) > HASHMAP_KEY_SIZE) {  \
-        return 0;  \
-    }  \
-    crc32_t bkt = crc32(key, strlen(key)) % HASHMAP_BUCKETS_NUM;  \
-    foreach (list_hashmap_##Ty##_container_t_pair_t, map->buckets[bkt]) {  \
-        if (!strcmp(cur->val->key, key)) {  \
-            return cur->val->val;  \
-        }  \
-    }  \
-    return 0;  \
-}  \
-int hashmap_##Ty##_delete(hashmap_##Ty##_t *map, const char *key)  \
-{  \
-    if (!map || !key || strlen(key) > 63) {  \
-        return 1;  \
-    }  \
-    crc32_t bkt = crc32(key, strlen(key)) % HASHMAP_BUCKETS_NUM;  \
-    size_t i = 0;  \
-    foreach(list_hashmap_##Ty##_container_t_pair_t, map->buckets[bkt]) {  \
-        if (!strcmp(cur->val->key, key)) {  \
-            list_hashmap_##Ty##_container_t_delete(map->buckets[bkt], i);  \
-            return 0;  \
-        }  \
-        i++;  \
-    }  \
-    return 1;  \
-}  \
-void hashmap_##Ty##_free(hashmap_##Ty##_t *map)  \
-{  \
-    for (size_t i = 0; i < HASHMAP_BUCKETS_NUM; i++) {  \
-        list_hashmap_##Ty##_container_t_free(map->buckets[i]);  \
-    }  \
-    free(map);  \
-}  \
-void hashmap_##Ty##_full_free(hashmap_##Ty##_t *map)  \
-{  \
-    for (size_t i = 0; i < HASHMAP_BUCKETS_NUM; i++) {  \
-        list_hashmap_##Ty##_container_t_full_free(map->buckets[i]);  \
-    }  \
-    free(map);  \
+typedef struct {
+    char  key[SCT_HASHMAP_KEY_SIZE];
+    void *val;
+} __sct_hashmap_container_t;
+
+typedef struct {
+    sct_list_pair_t *buckets_list[SCT_HASHMAP_BUCKETS_NUM];
+    sct_list_pair_t *keys;
+} sct_hashmap_t;
+
+sct_hashmap_t *sct_hashmap_create()
+{
+    sct_hashmap_t *map = malloc(sizeof(sct_hashmap_t));
+    for (size_t i = 0; i < SCT_HASHMAP_BUCKETS_NUM; i++) {
+        map->buckets_list[i] = sct_list_pair_create(0);
+    }
+    map->keys = sct_list_pair_create(0);
+
+    return map;
+}
+
+// возвращает указатель на старое значение под ключом, если его не существовало возвращает 0
+void *sct_hashmap_set(sct_hashmap_t *map, char *key, void *val)
+{
+    char *key_copy = malloc(sizeof(char) * strlen(key) + 1);
+    strcpy(key_copy, key);
+    sct_list_push_back(map->keys, key_copy);
+
+    sct_list_pair_t *bkts = map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM];
+    foreach (bkt_it, bkts) {
+        if (!strcmp(((__sct_hashmap_container_t*)bkt_it->val)->key, key)) {
+            void *val_acc = ((__sct_hashmap_container_t*)bkt_it->val)->val;
+            free((__sct_hashmap_container_t*)bkt_it->val);
+            ((__sct_hashmap_container_t*)bkt_it->val)->val = val;
+            return val_acc;
+        }
+    }
+
+    __sct_hashmap_container_t *new_bkt = malloc(sizeof(__sct_hashmap_container_t));
+    strcpy(new_bkt->key, key);
+    new_bkt->val = val;
+    sct_list_push_back(bkts, new_bkt);
+    return 0;
+}
+
+// ret 0 если значения не существует
+void *sct_hashmap_get(sct_hashmap_t *map, char *key)
+{
+    sct_list_pair_t *bkts = map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM];
+    foreach (bkt_it, bkts) {
+        if (!strcmp(((__sct_hashmap_container_t*)bkt_it->val)->key, key)) {
+            return ((__sct_hashmap_container_t*)bkt_it->val)->val;
+        }
+    }
+    return 0;
+}
+
+// возвращает 0 если элемента не существует
+int sct_hashmap_delete(sct_hashmap_t *map, char *key)
+{
+    size_t i = 0;
+    foreach (key_it, map->keys) {
+        if (!strcmp(key_it->val, key)) {
+            map->keys = sct_list_full_delete(map->keys, i);
+            break;
+        }
+        i++;
+    }
+
+    sct_list_pair_t *bkts = map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM];
+    i = 0;
+    foreach (bkt_it, bkts) {
+        if (!strcmp(((__sct_hashmap_container_t*)bkt_it->val)->key, key)) {
+            bkts = sct_list_full_delete(bkts, i);
+            map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM] = bkts;
+            return 0;
+        }
+        i++;
+    }
+    return 1;
+}
+
+// возвращает 0 если элемента не существует
+int sct_hashmap_full_delete(sct_hashmap_t *map, char *key)
+{
+    size_t i = 0;
+    foreach (key_it, map->keys) {
+        if (!strcmp(key_it->val, key)) {
+            map->keys = sct_list_full_delete(map->keys, i);
+            break;
+        }
+        i++;
+    }
+
+    sct_list_pair_t *bkts = map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM];
+    i = 0;
+    foreach (bkt_it, bkts) {
+        if (!strcmp(((__sct_hashmap_container_t*)bkt_it->val)->key, key)) {
+            free(((__sct_hashmap_container_t*)bkt_it->val)->val);
+            bkts = sct_list_full_delete(bkts, i);
+            map->buckets_list[crc32(key, strlen(key)) % SCT_HASHMAP_BUCKETS_NUM] = bkts;
+            return 0;
+        }
+        i++;
+    }
+    return 1;
+}
+
+void sct_hashmap_free(sct_hashmap_t *map)
+{
+    sct_list_full_free(map->keys);
+    
+    for (size_t i = 0; i < SCT_HASHMAP_BUCKETS_NUM; i++) {
+        sct_list_free(map->buckets_list[i]);
+    }
+
+    free(map);
+}
+
+void sct_hashmap_full_free(sct_hashmap_t *map)
+{
+    sct_list_full_free(map->keys);
+    
+    for (size_t i = 0; i < SCT_HASHMAP_BUCKETS_NUM; i++) {
+        foreach (bkt_it, map->buckets_list[i]) {
+            free(((__sct_hashmap_container_t*)bkt_it->val)->val);
+        }
+        sct_list_free(map->buckets_list[i]);
+    }
+
+    free(map);
 }
 
 #endif

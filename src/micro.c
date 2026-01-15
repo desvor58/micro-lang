@@ -20,6 +20,8 @@ int main(int argc, char **argv)
     micro_args_t *args = (micro_args_t*)malloc(sizeof(micro_args_t));
 
     *args = micro_args_parse(argc, argv);
+    // strcpy(args->inputfile, "../test.micro");
+    // strcpy(args->outfile,  "../test.bin");
 
     if (args->inputfile[0] == 0) {
         puts("Error: Expected input file name");
@@ -65,11 +67,11 @@ int main(int argc, char **argv)
 
         if (args->flags & MICRO_AF_TOKS_PUT) {
             for (size_t i = 0; i < micro_toks_size; i++) {
-                printf("%lu. %lu:%lu type:%u, val:%s\n",
+                printf("%lu. %lu:%lu type:%s, val:%s\n",
                         i,
                         micro_toks[i].line_ref,
                         micro_toks[i].chpos_ref,
-                        micro_toks[i].type,
+                        __micro_token_type2str[micro_toks[i].type],
                         micro_toks[i].val);
             }
         }

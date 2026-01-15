@@ -8,11 +8,11 @@ typedef struct
     char  *str;
     size_t size;
     size_t aloc_size;
-} string_t;
+} sct_string_t;
 
-string_t *string_create()
+sct_string_t *sct_string_create()
 {
-    string_t *str = malloc(sizeof(string_t));
+    sct_string_t *str = malloc(sizeof(sct_string_t));
     str->str = malloc(sizeof(char) * 512);
     str->str[0] = '\0';
     str->size = 0;
@@ -20,7 +20,7 @@ string_t *string_create()
     return str;
 }
 
-void __string_realoc(string_t *str)
+void __sct_string_realoc(sct_string_t *str)
 {
     char *new_str = malloc(sizeof(char) * (str->aloc_size += 512));
     for (size_t i = 0; i < str->size; i++) {
@@ -30,16 +30,16 @@ void __string_realoc(string_t *str)
     str->str = new_str;
 }
 
-void string_push_back(string_t *str, char c)
+void sct_string_push_back(sct_string_t *str, char c)
 {
     if (str->size + 2 >= str->aloc_size) {
-        __string_realoc(str);
+        __sct_string_realoc(str);
     }
     str->str[str->size++] = c;
     str->str[str->size]   = '\0';
 }
 
-void string_cat(string_t *str, char *fmt, ...)
+void sct_string_cat(sct_string_t *str, char *fmt, ...)
 {
     char *buf = malloc(4*1024);
     va_list args;
@@ -60,12 +60,13 @@ void string_cat(string_t *str, char *fmt, ...)
         i++;
         j++;
     }
+    new_str[i] = 0;
     free(str->str);
     str->str = new_str;
     free(buf);
 }
 
-void string_insert(string_t *str, size_t index, char *fmt, ...)
+void sct_string_insert(sct_string_t *str, size_t index, char *fmt, ...)
 {
     char *buf = malloc(4*1024);
     va_list args;
@@ -97,7 +98,7 @@ void string_insert(string_t *str, size_t index, char *fmt, ...)
     free(buf);
 }
 
-void string_replace(string_t *str, size_t start, size_t end, char *fmt, ...)
+void sct_string_replace(sct_string_t *str, size_t start, size_t end, char *fmt, ...)
 {
     char *buf = malloc(4*1024);
     va_list args;
@@ -133,7 +134,7 @@ void string_replace(string_t *str, size_t start, size_t end, char *fmt, ...)
     free(buf);
 }
 
-void string_free(string_t *str)
+void sct_string_free(sct_string_t *str)
 {
     free(str->str);
     free(str);
