@@ -146,6 +146,11 @@ typedef struct {
     size_t offset;
 } micro_codegen_386_fun_info_t;
 
+typedef struct {
+    char name[MICRO_MAX_SYMBOL_SIZE];
+    size_t offset;
+} micro_codegen_386_lbl_info_t;
+
 typedef enum {
     IT_VAR,
     IT_FUN,
@@ -157,6 +162,7 @@ typedef struct {
     union {
         micro_codegen_386_var_info_t var_info;
         micro_codegen_386_fun_info_t fun_info;
+        micro_codegen_386_lbl_info_t lbl_info;
     };
 } micro_codegen_386_ident_info_t;
 
@@ -176,6 +182,13 @@ int micro_code_in_function;
 // смещение до первого свободного байта на стэке
 offset_t micro_top_stack_offset;
 
+typedef struct {
+    size_t code_ref;
+    size_t outbuf_ref;
+} micro_goto_ref_t;
+
+sct_list_pair_t *micro_goto_refs;
+
 sct_string_t *micro_outbuf;
 
 size_t micro_pos = 0;
@@ -192,6 +205,8 @@ void micro_codegen_386_init()
     micro_codegen_386_idents = sct_hashmap_create();
     micro_codegen_386_local_vars_list = sct_list_pair_create(0);
 
+    micro_goto_refs = sct_list_pair_create(0);
+
     micro_outbuf = sct_string_create();
 }
 
@@ -200,6 +215,7 @@ void micro_codegen_386_delete()
     free(micro_codegen_386_err_stk);
     sct_hashmap_full_free(micro_codegen_386_idents);
     sct_list_full_free(micro_codegen_386_local_vars_list);
+    sct_list_full_free(micro_goto_refs);
     sct_string_free(micro_outbuf);
 }
 
@@ -249,6 +265,30 @@ void __micro_dbg_print_idents()
                    var_info.storage_info.offset,
                    var_info.storage_info.is_unsigned);
         }
+        if (ident_info->type == IT_FUN) {
+            micro_codegen_386_fun_info_t fun_info = ident_info->fun_info;
+            printf("%s:{\n  ret_type:%u,\n  offset:%u,\n  agrs:{\n",
+                   fun_info.name,
+                   fun_info.ret_type,
+                   fun_info.offset);
+            for (size_t i = 0; i < fun_info.args->size; i++) {
+                micro_codegen_386_var_info_t *var_info = fun_info.args->arr[i];
+                printf("    %s:{\n      type:%u,\n      storage_info:{\n        type:%u,\n        size:%u,\n        offset:%d,\n        isunssigned:%d\n      }\n}\n",
+                       var_info->name,
+                       var_info->type,
+                       var_info->storage_info.type,
+                       var_info->storage_info.size,
+                       var_info->storage_info.offset,
+                       var_info->storage_info.is_unsigned);
+            }
+            printf("}\n");
+        }
+        if (ident_info->type == IT_LBL) {
+            micro_codegen_386_lbl_info_t lbl_info = ident_info->lbl_info;
+            printf("%s:{\n  offset:%d\n}\n",
+                   lbl_info.name,
+                   lbl_info.offset);
+        }
     }
 }
 
@@ -287,6 +327,11 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
     for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
         sct_string_push_back(micro_outbuf, instruction[i]);                  \
     }
+
+#define push_instruction2addr(instruction, addr)                                       \
+    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {            \
+        micro_outbuf->str[addr + i] = instruction[i];                                  \
+    }                                                                                  \
 
 void micro_codegen_386_micro_instruction_parse();
 

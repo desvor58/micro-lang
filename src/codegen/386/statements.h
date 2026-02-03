@@ -376,6 +376,47 @@ void micro_codegen_386__fun()
     while (micro_toks[++micro_pos].type != MICRO_TT_KW_END) {
         micro_codegen_386_micro_instruction_parse();
     }
+    size_t i = 0;
+    size_t micro_pos_acc = micro_pos;
+    foreach (ref_it, micro_goto_refs) {
+        size_t micro_pos_save = micro_pos;
+        micro_pos = ((micro_goto_ref_t*)ref_it->val)->code_ref;
+
+        micro_token_t tok_lbl = __micro_peek(1);
+        if (tok_lbl.type != MICRO_TT_IDENT) {
+            micro_error_t err = {.msg = "Expected label name",
+                                .line_ref = tok_lbl.line_ref,
+                                .chpos_ref = tok_lbl.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+
+        micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(micro_codegen_386_idents, tok_lbl.val);
+        if (!ident_info) {
+            micro_error_t err = {.msg = "Undeclared label name",
+                                .line_ref = tok_lbl.line_ref,
+                                .chpos_ref = tok_lbl.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+        if (ident_info->type != IT_LBL) {
+            micro_error_t err = {.msg = "Expected label name",
+                                .line_ref = tok_lbl.line_ref,
+                                .chpos_ref = tok_lbl.chpos_ref};
+            __micro_push_err(err);
+            goto err_exit;
+        }
+        
+        u8 addr[4];
+        micro_gen32imm_le(addr, ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
+        u8 instruction[] = asm_jmpL32(addr);
+        push_instruction2addr(instruction, ((micro_goto_ref_t*)ref_it->val)->outbuf_ref);
+        
+        micro_pos = micro_pos_save;
+        micro_goto_refs = sct_list_full_delete(micro_goto_refs, i);
+        i++;
+    }
+    micro_pos = micro_pos_acc;
     micro_code_in_function = 0;
     micro_top_stack_offset = 0;
 
@@ -383,13 +424,14 @@ void micro_codegen_386__fun()
         sct_hashmap_full_delete(micro_codegen_386_idents, ((micro_codegen_386_var_info_t*)fun_info.args->arr[i])->name);
     }
 
+    // __micro_dbg_print_idents();
+
     // puts("vars->keys before freeing:");
     // foreach (key_it, micro_codegen_386_vars->keys) {
     //     printf_s("  %s\n", key_it->val);
     // }
 
     foreach (var_info_it, micro_codegen_386_local_vars_list) {
-        printf("deletting:%s\n", ((sct_string_t*)var_info_it->val)->str);
         sct_hashmap_full_delete(micro_codegen_386_idents, ((sct_string_t*)var_info_it->val)->str);
     }
     sct_list_full_free(micro_codegen_386_local_vars_list);
@@ -550,6 +592,17 @@ err_exit:
         micro_pos++;
     }
     return;
+}
+
+void micro_codegen_386__goto()
+{
+    micro_goto_ref_t *ref = malloc(sizeof(micro_goto_ref_t));
+    ref->code_ref = micro_pos;
+    ref->outbuf_ref = micro_outbuf->size;
+    sct_list_push_back(micro_goto_refs, ref);
+    for (size_t i = 0; i < 5; i++) {
+        sct_string_push_back(micro_outbuf, 0);
+    }
 }
 
 #endif

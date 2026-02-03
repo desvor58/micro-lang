@@ -174,4 +174,6 @@ typedef enum {
 #define asm_leaR32S32(reg, offset) {       0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 #define asm_leaR16S32(reg, offset) { 0x66, 0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
 
+#define asm_jmpL32(lbl) { 0xE9, (lbl)[0], (lbl)[1], (lbl)[2], (lbl)[3] }
+
 #endif

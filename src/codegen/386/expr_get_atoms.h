@@ -343,6 +343,7 @@ int __micro_codegen_386_expr_parse_get_ident(size_t pos, micro_codegen_386_stora
         __micro_push_err(err);
         return 0;
     }
+    
     if (micro_mt_size[ident_info->var_info.type] != dst.size) {
         micro_error_t err = {.msg = "Variable has wrong type for this expression",
                              .line_ref = micro_toks[pos].line_ref,

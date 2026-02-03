@@ -43,6 +43,7 @@ typedef enum
     MICRO_TT_KW_END,
     MICRO_TT_KW_RET,
     MICRO_TT_KW_CALL,
+    MICRO_TT_KW_GOTO,
 } micro_token_type;
 
 char *__micro_token_type2str[] = {
@@ -77,6 +78,7 @@ char *__micro_token_type2str[] = {
     [MICRO_TT_KW_END]     = "end",
     [MICRO_TT_KW_RET]     = "ret",
     [MICRO_TT_KW_CALL]    = "call",
+    [MICRO_TT_KW_GOTO]    = "goto",
 };
 
 typedef struct
@@ -209,6 +211,10 @@ void micro_lexing(const char *text, size_t text_size)
             } else
             if (!strcmp(buf, "call")) {
                 micro_token_t tok = {.type = MICRO_TT_KW_CALL, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
+                __micro_push_tok(tok);
+            } else
+            if (!strcmp(buf, "goto")) {
+                micro_token_t tok = {.type = MICRO_TT_KW_GOTO, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
                 __micro_push_tok(tok);
             } else
             if (!strcmp(buf, "i8")
