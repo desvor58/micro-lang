@@ -6,6 +6,7 @@
 3. [Variables change (keyword set)](#variable-change)
 3. [Functions (keyword fun)](#functuins)
 4. [Functions calling (keyword call)](#functions-calling)
+5. [Labels and jumping (keyword goto)](#labels-and-jamping)
 
 # Coments
 All code betwen '\\' will be ignored
@@ -186,4 +187,37 @@ var u32 b 7;
 var u32 res;
 
 call res test a b; \ calling function \
+```
+
+# Labels and jamping
+Labels its a global pointer to code part
+
+syntax:
+```
+    ...
+my_label:
+    ...
+```
+
+you can jump to label with *goto* keyword
+```
+    ...
+    goto my_label;
+    ...
+my_label:
+    ...
+```
+
+Labels, unlike C, are global and can be called from anywhere
+```
+fun F
+start
+lbl:
+    ret 5;
+end
+
+fun B
+start
+    goto lbl; \ returns 65 \
+end
 ```

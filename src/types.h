@@ -2,6 +2,7 @@
 #define MICRO_TYPES_H
 
 #include "config.h"
+#include "stddef.h"
 
 typedef          char  i8;
 typedef unsigned char  u8;
@@ -18,41 +19,21 @@ typedef struct
 /// @brief put to the buffer 16 bits immediante value from size_t in leatle endiane
 /// @param buf buf with size 2 to put the immVal
 /// @param imm size_t value for put
-void micro_gen16imm_le(u8 *buf, offset_t imm)
-{
-    buf[0] = (u8)imm;
-    buf[1] = (u8)(imm >> 8);
-}
+void micro_gen16imm_le(u8 *buf, offset_t imm);
 
 /// @brief put to the buffer 32 bits immediante value from size_t in leatle endiane
 /// @param buf buf with size 4 to put the immVal
 /// @param imm size_t value for put
-void micro_gen32imm_le(u8 *buf, offset_t imm)
-{
-    buf[0] = (u8)imm;
-    buf[1] = (u8)(imm >> 8);
-    buf[2] = (u8)(imm >> 16);
-    buf[3] = (u8)(imm >> 24);
-}
+void micro_gen32imm_le(u8 *buf, offset_t imm);
 
 /// @brief put to the buffer 16 bits immediante value from size_t in big endiane
 /// @param buf buf with size 2 to put the immVal
 /// @param imm size_t value for put
-void micro_gen16imm_be(u8 *buf, offset_t imm)
-{
-    buf[1] = (u8)imm;
-    buf[0] = (u8)(imm >> 8);
-}
+void micro_gen16imm_be(u8 *buf, offset_t imm);
 
 /// @brief put to the buffer 32 bits immediante value from size_t in big endiane
 /// @param buf buf with size 4 to put the immVal
 /// @param imm size_t value for put
-void micro_gen32imm_be(u8 *buf, offset_t imm)
-{
-    buf[3] = (u8)imm;
-    buf[2] = (u8)(imm >> 8);
-    buf[1] = (u8)(imm >> 16);
-    buf[0] = (u8)(imm >> 24);
-}
+void micro_gen32imm_be(u8 *buf, offset_t imm);
 
 #endif
