@@ -1,6 +1,22 @@
 #ifndef ASM386_H
 #define ASM386_H
 
+#include <map.h>
+
+#define __micro_put_instruction(I) {                                         \
+    u8 instruction[] = I;                                                    \
+    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
+        sct_string_push_back(micro_outbuf, instruction[i]);                  \
+    }                                                                        \
+}
+
+#define __micro_put_instruction2addr(I) {                                    \
+    u8 instruction[] = I;                                                    \
+    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
+        micro_outbuf->str[addr + i] = instruction[i];                        \
+    }                                                                        \
+}
+
 typedef enum {
     REG32_EAX = 0,
     REG32_ECX = 1,
@@ -43,6 +59,11 @@ typedef enum {
 
 // leave  ret
 #define asm_std_epilogue { 0xC9, 0xC3 }
+
+// compares
+#define asm_cmpR32R32(reg1, reg2) {       0x39, 0b11000000 | ((reg1) << 3) | (reg2) }
+#define asm_cmpR16R16(reg1, reg2) { 0x66, 0x39, 0b11000000 | ((reg1) << 3) | (reg2) }
+#define asm_cmpR8R8(reg1, reg2)   {       0x38, 0b11000000 | ((reg1) << 3) | (reg2) }
 
 // exchange values
 #define asm_xchgR32R32(reg1, reg2) {       0x87, 0b11000000 | ((reg1) << 3) | (reg2) }

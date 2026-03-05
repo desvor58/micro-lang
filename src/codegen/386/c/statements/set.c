@@ -45,7 +45,6 @@ void micro_codegen_386__set()
         goto err_exit;
     }
 
-    //__micro_dbg_print_vars();
     int expr_end_offset = micro_codegen_386_expr_parse(micro_pos + 2, ident_info->var_info.storage_info);
     if (!expr_end_offset) {
         goto err_exit;

@@ -16,4 +16,6 @@ void micro_codegen_386__call();
 
 void micro_codegen_386__goto();
 
+void micro_codegen_386__if();
+
 #endif
