@@ -1,4 +1,5 @@
 #include "../lexer.h"
+
 char *__micro_token_type2str[] = {
     [MICRO_TT_NULL]       = "null",
     [MICRO_TT_PLUS]       = "plus",
@@ -9,8 +10,8 @@ char *__micro_token_type2str[] = {
     [MICRO_TT_COMA]       = "coma",
     [MICRO_TT_COLON]      = "colon",
     [MICRO_TT_SEMICOLON]  = "semicolon",
-    [MICRO_TT_AMPERRSAND] = "ampersand",
-    [MICRO_TT_DOLAR]      = "dolar",
+    [MICRO_TT_AMPERSAND]  = "ampersand",
+    [MICRO_TT_DOLLAR]     = "dollar",
     [MICRO_TT_HASH]       = "hash",
     [MICRO_TT_APOSTROPHE] = "apostrophe",
     [MICRO_TT_TILDE]      = "tilde",
@@ -218,58 +219,19 @@ void micro_lexing(const char *text, size_t text_size)
             strcpy(tok.val, buf);
             __micro_lexer_push_tok(tok);
         } else
-        if (text[pos] == '+') {
-            micro_token_t tok = {.type = MICRO_TT_PLUS, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '-') {
-            micro_token_t tok = {.type = MICRO_TT_MINUS, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '*') {
-            micro_token_t tok = {.type = MICRO_TT_STAR, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '/') {
-            micro_token_t tok = {.type = MICRO_TT_SLASH, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '.') {
-            micro_token_t tok = {.type = MICRO_TT_DOT, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == ',') {
-            micro_token_t tok = {.type = MICRO_TT_COMA, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == ':') {
-            micro_token_t tok = {.type = MICRO_TT_COLON, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == ';') {
-            micro_token_t tok = {.type = MICRO_TT_SEMICOLON, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '&') {
-            micro_token_t tok = {.type = MICRO_TT_AMPERRSAND, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '$') {
-            micro_token_t tok = {.type = MICRO_TT_DOLAR, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '#') {
-            micro_token_t tok = {.type = MICRO_TT_HASH, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '`') {
-            micro_token_t tok = {.type = MICRO_TT_APOSTROPHE, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        } else
-        if (text[pos] == '~') {
-            micro_token_t tok = {.type = MICRO_TT_TILDE, .val = 0, .line_ref = line, .chpos_ref = chpos};
-            __micro_lexer_push_tok(tok);
-        }
+        __micro_single_chlex('+', MICRO_TT_PLUS)       else
+        __micro_single_chlex('-', MICRO_TT_MINUS)      else
+        __micro_single_chlex('*', MICRO_TT_STAR)       else
+        __micro_single_chlex('/', MICRO_TT_SLASH)      else
+        __micro_single_chlex('.', MICRO_TT_DOT)        else
+        __micro_single_chlex(',', MICRO_TT_COMA)       else
+        __micro_single_chlex(':', MICRO_TT_COLON)      else
+        __micro_single_chlex(';', MICRO_TT_SEMICOLON)  else
+        __micro_single_chlex('&', MICRO_TT_AMPERSAND)  else
+        __micro_single_chlex('$', MICRO_TT_DOLLAR)     else
+        __micro_single_chlex('#', MICRO_TT_HASH)       else
+        __micro_single_chlex('`', MICRO_TT_APOSTROPHE) else
+        __micro_single_chlex('~', MICRO_TT_TILDE)
         
         pos++;
         chpos++;

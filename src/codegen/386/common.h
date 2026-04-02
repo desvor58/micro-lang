@@ -28,9 +28,9 @@
                          || (tok).type == MICRO_TT_MINUS       \
                          || (tok).type == MICRO_TT_STAR        \
                          || (tok).type == MICRO_TT_SLASH       \
-                         || (tok).type == MICRO_TT_AMPERRSAND  \
+                         || (tok).type == MICRO_TT_AMPERSAND  \
                          || (tok).type == MICRO_TT_HASH        \
-                         || (tok).type == MICRO_TT_DOLAR       \
+                         || (tok).type == MICRO_TT_DOLLAR       \
                          || (tok).type == MICRO_TT_TILDE       \
                          || (tok).type == MICRO_TT_APOSTROPHE  \
                         )
@@ -47,10 +47,15 @@ typedef enum {
     MICRO_MT_PTR,
 } micro_codegen_386_micro_type;
 
+typedef enum {
+    MICRO_SZ_8  = 0,
+    MICRO_SZ_16 = 1,
+    MICRO_SZ_32 = 2,
+} micro_codegen_386_size;
+
 #define micro_mtisunsigned(mt) (mt == MICRO_MT_U8 || mt == MICRO_MT_U16 || mt == MICRO_MT_U32 || mt == MICRO_MT_PTR)
 
-// in bytes
-extern size_t micro_mt_size[];
+extern micro_codegen_386_size micro_mt_size[];
 
 micro_codegen_386_micro_type micro_str2mt(char *str);
 
@@ -69,8 +74,8 @@ typedef struct {
     // if type == MICRO_ST_STACK:    esp + offset
     // if type == MICRO_ST_DATASEG:  start_of_file + org + offset
     // if type == MICRO_ST_REGISTER: offset - num of register
-    offset_t offset;
-    size_t size;
+    ptrdiff_t offset;
+    micro_codegen_386_size size;
     int is_unsigned;
 } micro_codegen_386_storage_info_t;
 
@@ -120,8 +125,8 @@ extern size_t       __micro_codegen_386_err_stk_real_size;
 
 #define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_codegen_386_err_stk_size++] = err
 
-extern int      micro_code_in_function;
-extern offset_t micro_top_stack_offset;
+extern int       micro_code_in_function;
+extern ptrdiff_t micro_top_stack_offset;
 
 typedef struct {
     size_t code_ref;
@@ -131,7 +136,6 @@ typedef struct {
 extern sct_list_pair_t *micro_goto_refs;
 
 extern sct_string_t *micro_outbuf;
-
 extern size_t micro_pos;
 
 void micro_codegen_386_init();

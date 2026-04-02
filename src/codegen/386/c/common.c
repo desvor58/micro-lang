@@ -9,23 +9,23 @@ size_t         micro_codegen_386_err_stk_size;
 size_t       __micro_codegen_386_err_stk_real_size;
 
 int      micro_code_in_function;
-offset_t micro_top_stack_offset;
+ptrdiff_t micro_top_stack_offset;
 
 sct_list_pair_t *micro_goto_refs;
 
 sct_string_t *micro_outbuf;
 size_t micro_pos = 0;
 
-size_t micro_mt_size[] = {
-    [MICRO_MT_NULL] = 0,
-    [MICRO_MT_I8]   = 1,
-    [MICRO_MT_U8]   = 1,
-    [MICRO_MT_I16]  = 2,
-    [MICRO_MT_U16]  = 2,
-    [MICRO_MT_I32]  = 4,
-    [MICRO_MT_U32]  = 4,
-    [MICRO_MT_F32]  = 4,
-    [MICRO_MT_PTR]  = 4
+micro_codegen_386_size micro_mt_size[] = {
+    [MICRO_MT_NULL] = MICRO_SZ_8,
+    [MICRO_MT_I8]   = MICRO_SZ_8,
+    [MICRO_MT_U8]   = MICRO_SZ_8,
+    [MICRO_MT_I16]  = MICRO_SZ_16,
+    [MICRO_MT_U16]  = MICRO_SZ_16,
+    [MICRO_MT_I32]  = MICRO_SZ_32,
+    [MICRO_MT_U32]  = MICRO_SZ_32,
+    [MICRO_MT_F32]  = MICRO_SZ_32,
+    [MICRO_MT_PTR]  = MICRO_SZ_32
 };
 
 micro_codegen_386_micro_type micro_str2mt(char *str)
@@ -67,19 +67,6 @@ micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_m
         return MICRO_MT_PTR;
     }
     return MICRO_MT_NULL;
-}
-
-void micro_imm_from_mt(u8 *buf, micro_codegen_386_micro_type type, size_t val)
-{
-    if (micro_mt_size[type] == 1) {
-        buf[0] = val;
-    } else
-    if (micro_mt_size[type] == 2) {
-        micro_gen16imm_le(buf, val);
-    } else
-    if (micro_mt_size[type] == 4) {
-        micro_gen32imm_le(buf, val);
-    }
 }
 
 void micro_codegen_386_init()

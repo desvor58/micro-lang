@@ -75,10 +75,9 @@ void micro_codegen_386() {
             goto err_exit;
         }
         
-        u8 addr[4];
-        micro_gen32imm_le(addr, ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
-        u8 instruction[] = asm_jmpL32(addr);
-        push_instruction2addr(instruction, ((micro_goto_ref_t*)ref_it->val)->outbuf_ref);
+        micro_imm_le_t addr = micro_imm_le_gen(ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
+        asm386_jmpL32(addr);
+        asm_put_instructions_to_addr((((micro_goto_ref_t*)ref_it->val)->outbuf_ref));
         goto exit;
 
 err_exit:

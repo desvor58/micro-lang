@@ -1,21 +1,20 @@
 #ifndef ASM386_H
 #define ASM386_H
 
-#include <map.h>
+#include <string.h>
+#include <SCT/string.h>
+#include "../types.h"
 
-#define __micro_put_instruction(I) {                                         \
-    u8 instruction[] = I;                                                    \
-    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
-        sct_string_push_back(micro_outbuf, instruction[i]);                  \
-    }                                                                        \
+#define __micro_defntbytes(...) { __VA_ARGS__, 0x00 }
+#define __micro_write_instr(...)  {  \
+    u8 I[] = { __VA_ARGS__ };  \
+    memcpy(__micro_asm_instruction_stack[__micro_asm_instruction_stack_top].instr, I, sizeof(I) / sizeof(*I));  \
+    __micro_asm_instruction_stack[__micro_asm_instruction_stack_top].size = sizeof(I) / sizeof(*I);  \
+    __micro_asm_instruction_stack_top++;  \
 }
 
-#define __micro_put_instruction2addr(I) {                                    \
-    u8 instruction[] = I;                                                    \
-    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
-        micro_outbuf->str[addr + i] = instruction[i];                        \
-    }                                                                        \
-}
+extern sct_string_t *micro_outbuf;
+extern size_t micro_pos;
 
 typedef enum {
     REG32_EAX = 0,
@@ -26,8 +25,7 @@ typedef enum {
     REG32_EBP = 5,
     REG32_ESI = 6,
     REG32_EDI = 7,
-} reg32;
-typedef enum {
+    
     REG16_AX = 0,
     REG16_CX = 1,
     REG16_DX = 2,
@@ -36,8 +34,7 @@ typedef enum {
     REG16_BP = 5,
     REG16_SI = 6,
     REG16_DI = 7,
-} reg16;
-typedef enum {
+
     REG8_AL = 0,
     REG8_CL = 1,
     REG8_DL = 2,
@@ -46,155 +43,108 @@ typedef enum {
     REG8_CH = 5,
     REG8_DH = 6,
     REG8_BH = 7,
-} reg8;
+} asm386_reg;
 
-// ret
-#define asm_ret          { 0xC3 }
+#define MICRO_ASM386_MAX_INSTRUCTION_SIZE 15
 
-// call <lbl>
-#define asm_call(addr)   { 0xE8, (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+typedef struct {
+    u8 instr[MICRO_ASM386_MAX_INSTRUCTION_SIZE];
+    u8 size;
+} __micro_asm386_instruction_t;
 
-// push ebp   mov ebp, esp
-#define asm_std_prelude  { 0x55, 0x89, 0xE5 }
+extern __micro_asm386_instruction_t __micro_asm_instruction_stack[MICRO_INSTRUCTION_STACK_SIZE];
+extern u8 __micro_asm_instruction_stack_top;
 
-// leave  ret
-#define asm_std_epilogue { 0xC9, 0xC3 }
+void asm_put_instructions();
 
-// compares
-#define asm_cmpR32R32(reg1, reg2) {       0x39, 0b11000000 | ((reg1) << 3) | (reg2) }
-#define asm_cmpR16R16(reg1, reg2) { 0x66, 0x39, 0b11000000 | ((reg1) << 3) | (reg2) }
-#define asm_cmpR8R8(reg1, reg2)   {       0x38, 0b11000000 | ((reg1) << 3) | (reg2) }
+void asm_put_instructions_to_addr(size_t addr);
 
-// exchange values
-#define asm_xchgR32R32(reg1, reg2) {       0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
-#define asm_xchgR16R16(reg1, reg2) { 0x66, 0x87, 0b11000000 | ((reg1) << 3) | (reg2) }
-#define asm_xchgR8R8(reg1, reg2)   {       0x86, 0b11000000 | ((reg1) << 3) | (reg2) }
+void asm386_ret();
+void asm386_call(micro_addr_le_t addr);
+void asm386_prelude();
+void asm386_epilogue();
 
-// pushing reg 32 to stack
-#define asm_pushR32(reg) {       0xFF, 0b11110000 | (reg) }
-// pushing reg 16 to stack
-#define asm_pushR16(reg) { 0x66, 0xFF, 0b11110000 | (reg) }
+void asm386_cmpR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_cmpR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_cmpR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// poping reg 32 to stack
-#define asm_popR32(reg) {       0x58 + (reg) }
-// poping reg 16 to stack
-#define asm_popR16(reg) { 0x66, 0x58 + (reg) }
+void asm386_xchgR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_xchgR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_xchgR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// move reg 32 to reg 32
-#define asm_movR32R32(reg1, reg2) {       0x8B, 0b11000000 | ((reg2) << 3) | (reg1) }
-// move reg 16 to reg 16
-#define asm_movR16R16(reg1, reg2) { 0x66, 0x8B, 0b11000000 | ((reg2) << 3) | (reg1) }
-// move reg 8 to reg 8
-#define asm_movR8R8(reg1, reg2)   {       0x8A, 0b11000000 | ((reg2) << 3) | (reg1) }
+void asm386_pushR32(asm386_reg reg);
+void asm386_pushR16(asm386_reg reg);
 
-// move value 32 to mem 32
-#define asm_movM32I32(addr, val) {       0xC7, 0x05, (addr)[0], (addr)[1], (addr)[2], (addr)[3], (val)[0], (val)[1], (val)[2], (val)[3] }
-// move value 16 to mem 16
-#define asm_movM16I16(addr, val) { 0x66, 0xC7, 0x05, (addr)[0], (addr)[1], (addr)[2], (addr)[3], (val)[0], (val)[1]                     }
-// move value 8 to mem 8
-#define asm_movM8I8(addr, val)   {       0xC6, 0x05, (addr)[0], (addr)[1], (addr)[2], (addr)[3], (val)[0]                               }
+void asm386_popR32(asm386_reg reg);
+void asm386_popR16(asm386_reg reg);
 
-// move mem 32 to reg 32
-#define asm_movR32M32(reg, addr) {       0x8B, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
-// move mem 16 to reg 16
-#define asm_movR16M16(reg, addr) { 0x66, 0x8B, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
-// move mem 8 to reg 8
-#define asm_movR8M8(reg, addr)   {       0x8A, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+void asm386_movR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_movR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_movR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// move mem 32 with pure register addrresing to reg 32
-#define asm_movR32MR32(reg1, reg2) {       0x8B, 0b00000000 | ((reg1) << 3) | (reg2) }
-// move mem 16 with pure register addrresing to reg 16
-#define asm_movR16MR16(reg1, reg2) { 0x66, 0x8B, 0b00000000 | ((reg1) << 3) | (reg2) }
-// move mem 8 with pure register addrresing to reg 8
-#define asm_movR8MR8(reg1, reg2)   {       0x8A, 0b00000000 | ((reg1) << 3) | (reg2) }
+void asm386_movM32I32(micro_addr_le_t addr, micro_imm_le_t val);
+void asm386_movM16I16(micro_addr_le_t addr, micro_imm_le_t val);
+void asm386_movM8I8(micro_addr_le_t addr, micro_imm_le_t val);
 
-// move reg 32 to mem 32
-#define asm_movM32R32(addr, reg) {       0x89, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
-// move reg 16 to mem 16
-#define asm_movM16R16(addr, reg) { 0x66, 0x89, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
-// move reg 8 to mem 8
-#define asm_movM8R8(addr, reg)   {       0x88, 0b00000101 | ((reg) << 3), (addr)[0], (addr)[1], (addr)[2], (addr)[3] }
+void asm386_movR32M32(asm386_reg reg, micro_addr_le_t addr);
+void asm386_movR16M16(asm386_reg reg, micro_addr_le_t addr);
+void asm386_movR8M8(asm386_reg reg, micro_addr_le_t addr);
 
-// move value 32 to reg 32
-#define asm_movR32I32(reg, val)  {       0xB8 + reg, (val)[0], (val)[1], (val)[2], (val)[3] }
-// move value 16 to reg 16
-#define asm_movR16I16(reg, val)  { 0x66, 0xB8 + reg, (val)[0], (val)[1]  }
-// move value 8 to reg 8
-#define asm_movR8I8(reg, val)    {       0xB0 + reg, (val)[0] }
+void asm386_movR32MR32(asm386_reg reg1, asm386_reg reg2);
+void asm386_movR16MR16(asm386_reg reg1, asm386_reg reg2);
+void asm386_movR8MR8(asm386_reg reg1, asm386_reg reg2);
 
-// move value 32 to stack with 32bits offset
-#define asm_movS32I32(offset, val) {       0xC7, 0b10000101, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0], (val)[1], (val)[2], (val)[3] }
-// move value 16 to stack with 32bits offset
-#define asm_movS32I16(offset, val) { 0x66, 0xC7, 0b10000101, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0], (val)[1] }
-// move value 8 to stack with 32bits offset
-#define asm_movS32I8(offset, val)  {       0xC6, 0b10000101, (offset)[0], (offset)[1], (offset)[2], (offset)[3], (val)[0] }
+void asm386_movM32R32(micro_addr_le_t addr, asm386_reg reg);
+void asm386_movM16R16(micro_addr_le_t addr, asm386_reg reg);
+void asm386_movM8R8(micro_addr_le_t addr, asm386_reg reg);
 
-// move value from reg32 to stack with 32bits offset
-#define asm_movS32R32(offset, reg) {       0x89, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
-// move value from reg16 to stack with 32bits offset
-#define asm_movS32R16(offset, reg) { 0x66, 0x89, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
-// move value from reg8 to stack with 32bits offset
-#define asm_movS32R8(offset, reg)  {       0x89, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+void asm386_movR32I32(asm386_reg reg, micro_imm_le_t val);
+void asm386_movR16I16(asm386_reg reg, micro_imm_le_t val);
+void asm386_movR8I8(asm386_reg reg, micro_imm_le_t val);
 
-// move value to reg32 from stack with 32bits offset
-#define asm_movR32S32(reg, offset) {       0x8B, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
-// move value to reg16 from stack with 32bits offset
-#define asm_movR16S32(reg, offset) { 0x66, 0x8B, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
-// move value to reg8 from stack with 32bits offset
-#define asm_movR8S32(reg, offset)  {       0x8A, 0b10000101 | ((reg) << 3), (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+void asm386_movS32I32(micro_imm_le_t offset, micro_imm_le_t val);
+void asm386_movS32I16(micro_imm_le_t offset, micro_imm_le_t val);
+void asm386_movS32I8(micro_imm_le_t offset, micro_imm_le_t val);
 
-// add reg 32 and other reg 32
-#define asm_addR32R32(reg1, reg2) {       0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
-// add reg 16 and other reg 16
-#define asm_addR16R16(reg1, reg2) { 0x66, 0x01, 0b11000000 | ((reg2) << 3) | ((reg1)) }
-// add reg 8 and other reg 8
-#define asm_addR8R8(reg1, reg2)   {       0x00, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+void asm386_movS32R32(micro_imm_le_t offset, asm386_reg reg);
+void asm386_movS32R16(micro_imm_le_t offset, asm386_reg reg);
+void asm386_movS32R8(micro_imm_le_t offset, asm386_reg reg);
 
-// sub reg 32 and other reg 32
-#define asm_subR32R32(reg1, reg2) {       0x29, 0b11000000 | ((reg2) << 3) | ((reg1)) }
-// sub reg 16 and other reg 16
-#define asm_subR16R16(reg1, reg2) { 0x66, 0x29, 0b11000000 | ((reg2) << 3) | ((reg1)) }
-// sub reg 8 and other reg 8
-#define asm_subR8R8(reg1, reg2)   {       0x28, 0b11000000 | ((reg2) << 3) | ((reg1)) }
+void asm386_movR32S32(asm386_reg reg, micro_imm_le_t offset);
+void asm386_movR16S32(asm386_reg reg, micro_imm_le_t offset);
+void asm386_movR8S32(asm386_reg reg, micro_imm_le_t offset);
 
-// multiply EAX and reg
-#define asm_mulR32(reg) {       0xF7, 0b11100000 | (reg) }
-// multiply AX and reg
-#define asm_mulR16(reg) { 0x66, 0xF7, 0b11100000 | (reg) }
-// multiply AL and reg
-#define asm_mulR8(reg)  {       0xF6, 0b11100000 | (reg) }
+void asm386_addR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_addR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_addR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// signed multiply reg 32 and reg 32
-#define asm_imulR32R32(reg1, reg2) {       0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
-// signed multiply reg 16 and reg 16
-#define asm_imulR16R16(reg1, reg2) { 0x66, 0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
-// signed multiply reg 8 and reg 8
-#define asm_imulR8R8(reg1, reg2)   {       0x0F, 0xAF, 0b11000000 | ((reg1) << 3) | ((reg2)) }
+void asm386_subR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_subR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_subR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// division EAX and reg
-#define asm_divR32(reg) {       0xF7, 0b11110000 | (reg) }
-// division AX and reg
-#define asm_divR16(reg) { 0x66, 0xF7, 0b11110000 | (reg) }
-// division AL and reg
-#define asm_divR8(reg)  {       0xF6, 0b11110000 | (reg) }
+void asm386_mulR32(asm386_reg reg);
+void asm386_mulR16(asm386_reg reg);
+void asm386_mulR8(asm386_reg reg);
 
-// division EAX and reg
-#define asm_idivR32(reg) {       0xF7, 0b11111000 | (reg) }
-// division AX and reg
-#define asm_idivR16(reg) { 0x66, 0xF7, 0b11111000 | (reg) }
-// division AL and reg
-#define asm_idivR8(reg)  {       0xF6, 0b11111000 | (reg) }
+void asm386_imulR32R32(asm386_reg reg1, asm386_reg reg2);
+void asm386_imulR16R16(asm386_reg reg1, asm386_reg reg2);
+void asm386_imulR8R8(asm386_reg reg1, asm386_reg reg2);
 
-// negate value from reg 32
-#define asm_negR32(reg) {       0xF7, 0b11011000 | (reg) }
-// negate value from reg 16
-#define asm_negR16(reg) { 0x66, 0xF7, 0b11011000 | (reg) }
-// negate value from reg 8
-#define asm_negR8(reg)  {       0xF6, 0b11011000 | (reg) }
+void asm386_divR32(asm386_reg reg);
+void asm386_divR16(asm386_reg reg);
+void asm386_divR8(asm386_reg reg);
 
-#define asm_leaR32S32(reg, offset) {       0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
-#define asm_leaR16S32(reg, offset) { 0x66, 0x8D, 0b10000100 | ((reg) << 3), 0b00100100, (offset)[0], (offset)[1], (offset)[2], (offset)[3] }
+void asm386_idivR32(asm386_reg reg);
+void asm386_idivR16(asm386_reg reg);
+void asm386_idivR8(asm386_reg reg);
 
-#define asm_jmpL32(lbl) { 0xE9, (lbl)[0], (lbl)[1], (lbl)[2], (lbl)[3] }
+void asm386_negR32(asm386_reg reg);
+void asm386_negR16(asm386_reg reg);
+void asm386_negR8(asm386_reg reg);
+
+void asm386_leaR32S32(asm386_reg reg, micro_imm_le_t offset);
+void asm386_leaR16S32(asm386_reg reg, micro_imm_le_t offset);
+
+void asm386_jmpL32(micro_imm_le_t lbl);
 
 #endif

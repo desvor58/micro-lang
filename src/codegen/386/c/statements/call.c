@@ -22,7 +22,7 @@ void micro_codegen_386__call()
         goto err_exit;
     }
     if (tok_fun_name.type != MICRO_TT_IDENT || tok_fun_name.type == MICRO_TT_NULL) {
-        micro_error_t err = {.msg = "Expected called functon name after destination variable name",
+        micro_error_t err = {.msg = "Expected called function name after destination variable name",
                              .line_ref = micro_toks[micro_pos].line_ref,
                              .chpos_ref = micro_toks[micro_pos].chpos_ref};
         __micro_push_err(err);
@@ -59,7 +59,7 @@ void micro_codegen_386__call()
             goto err_exit;
         }
     }
-    for (offset_t i = cur_arg_num - 1, arg_offset = 0; i >= 0; i--,arg_offset++) {
+    for (ptrdiff_t i = cur_arg_num - 1, arg_offset = 0; i >= 0; i--,arg_offset++) {
         micro_codegen_386_expr_parse(arg_expr_starts[i], (micro_codegen_386_storage_info_t){
             .type = MICRO_ST_STACK,
             .size = 4,
@@ -69,11 +69,9 @@ void micro_codegen_386__call()
     }
 
 
-    u8 addr[4];
-    // вызов процедур по аддресу: адрес процедуры - (адрес текущей иструкции + размер иструкции call)
-    micro_gen32imm_le(addr, fun_ident_info->fun_info.offset - (micro_outbuf->size + 5));
-    u8 instruction[] = asm_call(addr);
-    push_instruction(instruction);
+    micro_addr_le_t call_addr = micro_imm_le_gen(fun_ident_info->fun_info.offset - (micro_outbuf->size + 5));
+    asm386_call(call_addr);
+    asm_put_instructions();
 
     if (strcmp(tok_dst_var_name.val, "_")) {
         micro_codegen_386_ident_info_t *dst_var_ident_info = sct_hashmap_get(micro_codegen_386_idents, tok_dst_var_name.val);
@@ -101,21 +99,15 @@ void micro_codegen_386__call()
         }
 
         if (dst_var_ident_info->var_info.storage_info.type == MICRO_ST_DATASEG) {
-            u8 addr[4];
-            micro_gen32imm_le(addr, dst_var_ident_info->var_info.storage_info.offset);
-
-            if (dst_var_ident_info->var_info.storage_info.size == 4) {
-                u8 instruction[] = asm_movM32R32(addr, REG32_EAX);
-                push_instruction(instruction);
-            } else
-            if (dst_var_ident_info->var_info.storage_info.size == 2) {
-                u8 instruction[] = asm_movM16R16(addr, REG16_AX);
-                push_instruction(instruction);
-            } else
-            if (dst_var_ident_info->var_info.storage_info.size == 1) {
-                u8 instruction[] = asm_movM8R8(addr, REG8_AL);
-                push_instruction(instruction);
-            }
+            micro_addr_le_t addr = micro_imm_le_gen(dst_var_ident_info->var_info.storage_info.offset);
+            
+            void (*instr_tbl[])(micro_addr_le_t, asm386_reg) = {
+                [MICRO_SZ_8]  = asm386_movM8R8,
+                [MICRO_SZ_16] = asm386_movM16R16,
+                [MICRO_SZ_32] = asm386_movM32R32,
+            };
+            instr_tbl[dst_var_ident_info->var_info.storage_info.size](addr, REG32_EAX);
+            asm_put_instructions();
         }
     }
     return;

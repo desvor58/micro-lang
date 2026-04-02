@@ -15,6 +15,11 @@
 
 #include "codegen/codegen_386.h"
 
+void put_err(char *file, size_t line, size_t chpos, char *msg)
+{
+    printf("Error:%s:%lu:%lu: %s\n", file, line, chpos, msg);
+}
+
 int main(int argc, char **argv)
 {
     micro_args_t *args = (micro_args_t*)malloc(sizeof(micro_args_t));
@@ -55,11 +60,10 @@ int main(int argc, char **argv)
         micro_lexing(text, text_size);
 
         for (size_t i = 0; i < micro_lexer_err_stk_size; i++) {
-            printf("Error:%s:%lu:%lu: %s",
-                     args->inputfile,
-                     micro_lexer_err_stk[i].line_ref,
-                     micro_lexer_err_stk[i].chpos_ref,
-                     micro_lexer_err_stk[i].msg);
+            put_err(args->inputfile,
+                    micro_lexer_err_stk[i].line_ref,
+                    micro_lexer_err_stk[i].chpos_ref,
+                    micro_lexer_err_stk[i].msg);
         }
         if (micro_lexer_err_stk_size) {
             return 2;
@@ -68,11 +72,11 @@ int main(int argc, char **argv)
         if (args->flags & MICRO_AF_TOKS_PUT) {
             for (size_t i = 0; i < micro_toks_size; i++) {
                 printf("%lu. %lu:%lu type:%s, val:%s\n",
-                        i,
-                        micro_toks[i].line_ref,
-                        micro_toks[i].chpos_ref,
-                        __micro_token_type2str[micro_toks[i].type],
-                        micro_toks[i].val);
+                       i,
+                       micro_toks[i].line_ref,
+                       micro_toks[i].chpos_ref,
+                       __micro_token_type2str[micro_toks[i].type],
+                       micro_toks[i].val);
             }
         }
 
@@ -80,8 +84,7 @@ int main(int argc, char **argv)
             micro_codegen_386();
 
             for (size_t i = 0; i < micro_codegen_386_err_stk_size; i++) {
-                printf("Error:%s:%lu:%lu: %s\n",
-                        args->inputfile,
+                put_err(args->inputfile,
                         micro_codegen_386_err_stk[i].line_ref,
                         micro_codegen_386_err_stk[i].chpos_ref,
                         micro_codegen_386_err_stk[i].msg);

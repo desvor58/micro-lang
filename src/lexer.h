@@ -20,8 +20,8 @@ typedef enum
     MICRO_TT_COMA,
     MICRO_TT_COLON,
     MICRO_TT_SEMICOLON,
-    MICRO_TT_AMPERRSAND,
-    MICRO_TT_DOLAR,
+    MICRO_TT_AMPERSAND,
+    MICRO_TT_DOLLAR,
     MICRO_TT_HASH,
     MICRO_TT_APOSTROPHE,
     MICRO_TT_TILDE,
@@ -74,6 +74,12 @@ void __micro_lexer_err_stk_size_check(size_t offset);
 
 #define __micro_lexer_push_tok(tok) __micro_toks_size_check(1); micro_toks[micro_toks_size++] = tok
 #define __micro_lexer_push_err(err) __micro_lexer_err_stk_size_check(1); micro_lexer_err_stk[micro_lexer_err_stk_size++] = err
+
+#define __micro_single_chlex(ch, tt)  \
+    if (text[pos] == (ch)) {  \
+        micro_token_t tok = {.type = tt, .val = 0, .line_ref = line, .chpos_ref = chpos};  \
+        __micro_lexer_push_tok(tok);  \
+    }
 
 void micro_lexing(const char *text, size_t text_size);
 

@@ -36,7 +36,7 @@ void micro_codegen_386__var()
 
     micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(micro_codegen_386_idents, var_info.name, ident_info);
     if (old_ident_info) {
-        micro_error_t err = {.msg = "Double decralation of variable",
+        micro_error_t err = {.msg = "Double declaration of variable",
                              .line_ref = tok_name.line_ref,
                              .chpos_ref = tok_name.chpos_ref};
         __micro_push_err(err);
@@ -71,42 +71,15 @@ void micro_codegen_386__var()
             }
             return;
         }
-        
-        if (micro_mt_size[lit_type] == 4) {
-            u8 offset[4];
-            micro_gen32imm_le(offset, var_info.storage_info.offset);
 
-            u8 val[4];
-            micro_gen32imm_le(val, strtoll(__micro_peek(3).val, (char**)0, 10));
-
-            u8 instruction[] = asm_movS32I32(offset, val);
-            push_instruction(instruction);
-        } else
-        if (micro_mt_size[lit_type] == 2) {
-            u8 offset[4];
-            micro_gen32imm_le(offset, var_info.storage_info.offset);
-
-            u8 val[2];
-            micro_gen16imm_le(val, strtoll(__micro_peek(3).val, (char**)0, 10));
-
-            u8 instruction[] = asm_movS32I16(offset, val);
-            push_instruction(instruction);
-        } else
-        if (micro_mt_size[lit_type] == 1) {
-            u8 offset[4];
-            micro_gen32imm_le(offset, var_info.storage_info.offset);
-
-            u8 val[1];
-            val[0] = strtoll(__micro_peek(3).val, (char**)0, 10);
-
-            u8 instruction[] = asm_movS32I8(offset, val);
-            push_instruction(instruction);
-        } else {
-            micro_error_t err = {.msg = "Wrong literal type size",
-                                 .line_ref = __micro_peek(3).line_ref,
-                                 .chpos_ref = __micro_peek(3).chpos_ref};
-            __micro_push_err(err);
-        }
+        void (*instr_tbl[])(micro_addr_le_t, micro_imm_le_t) = {
+            [MICRO_SZ_8]  = asm386_movS32I8,
+            [MICRO_SZ_16] = asm386_movS32I16,
+            [MICRO_SZ_32] = asm386_movS32I32,
+        };
+        instr_tbl[micro_mt_size[lit_type]](micro_imm_le_gen(var_info.storage_info.offset),
+                                           micro_imm_le_gen(strtoll(__micro_peek(3).val, (char**)0, 10)));
+        asm_put_instructions();
 
         micro_pos += 4;
     }

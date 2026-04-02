@@ -4,8 +4,7 @@
 #include <string.h>
 #include "config.h"
 
-typedef struct
-{
+typedef struct {
     char   inputfile[MICRO_MAX_SYMBOL_SIZE];
     char   outfile[MICRO_MAX_SYMBOL_SIZE];
     size_t flags;

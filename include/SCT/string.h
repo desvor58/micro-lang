@@ -1,4 +1,5 @@
-#ifndef STRING_H
+#ifndef SCT_STRING_H
+#define SCT_STRING_H
 
 #include <stdio.h>
 #include <malloc.h>

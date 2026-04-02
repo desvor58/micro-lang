@@ -11,5 +11,6 @@ BUILD_TARGETS = [
     "src/codegen/386/c/statements/*.c",
     "src/codegen/386/c/expr_get_atoms/*.c",
     "src/codegen/c/*.c",
+    "src/asm/*.c",
     "src/micro.c",
 ]

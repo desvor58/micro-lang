@@ -87,8 +87,8 @@ void micro_codegen_386__fun()
         goto err_exit;
     }
 
-    u8 prelude_instruction[] = asm_std_prelude;
-    push_instruction(prelude_instruction);
+    asm386_prelude();
+    asm_put_instructions();
 
     // puts("fun start vars map:");
     // __micro_dbg_print_vars();
@@ -135,10 +135,9 @@ void micro_codegen_386__fun()
             goto err_exit;
         }
         
-        u8 addr[4];
-        micro_gen32imm_le(addr, ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
-        u8 instruction[] = asm_jmpL32(addr);
-        push_instruction2addr(instruction, ((micro_goto_ref_t*)ref_it->val)->outbuf_ref);
+        micro_addr_le_t addr = micro_imm_le_gen(ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
+        asm386_jmpL32(addr);
+        asm_put_instructions_to_addr(((micro_goto_ref_t*)ref_it->val)->outbuf_ref);
         
         micro_pos = micro_pos_save;
         micro_goto_refs = sct_list_full_delete(micro_goto_refs, i);
@@ -170,8 +169,8 @@ void micro_codegen_386__fun()
     //     printf_s("  %s\n", key_it->val);
     // }
 
-    u8 epilogue_instruction[] = asm_std_epilogue;
-    push_instruction(epilogue_instruction);
+    asm386_epilogue();
+    asm_put_instructions();
 
     micro_codegen_386_ident_info_t *fun_ident = malloc(sizeof(micro_codegen_386_ident_info_t));
     fun_ident->type = IT_FUN;

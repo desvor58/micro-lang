@@ -2,6 +2,7 @@
 
 void micro_codegen_386__set()
 {
+    puts("set");
     micro_token_t tok_dst = __micro_peek(1);
     micro_token_t tok_src = __micro_peek(2);
 
@@ -38,7 +39,7 @@ void micro_codegen_386__set()
     }
 
     if (micro_gettype(tok_src, ident_info->var_info.type) == MICRO_MT_NULL) {
-        micro_error_t err = {.msg = "Wrong type of sourse expression",
+        micro_error_t err = {.msg = "Wrong type of source expression",
                              .line_ref = tok_src.line_ref,
                              .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
@@ -56,6 +57,7 @@ void micro_codegen_386__set()
                              .chpos_ref = tok_src.chpos_ref};
         __micro_push_err(err);
     }
+    puts("set end");
     return;
 
 err_exit:
