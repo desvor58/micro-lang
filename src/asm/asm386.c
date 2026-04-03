@@ -17,7 +17,7 @@ void asm_put_instructions_to_addr(size_t addr)
 {
     for (size_t i = 0; i < __micro_asm_instruction_stack_top; i++) {
         for (size_t j = 0; j < __micro_asm_instruction_stack[i].size; j++) {
-            micro_outbuf->str[i] = __micro_asm_instruction_stack[i].instr[j];
+            micro_outbuf->str[addr + i] = __micro_asm_instruction_stack[i].instr[j];
         }
     }
     __micro_asm_instruction_stack_top = 0;
