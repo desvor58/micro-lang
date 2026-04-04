@@ -1,21 +1,5 @@
 #include "../common.h"
 
-sct_hashmap_t *micro_codegen_386_idents;
-
-sct_list_pair_t *micro_codegen_386_local_vars_list;
-
-micro_error_t *micro_codegen_386_err_stk;
-size_t         micro_codegen_386_err_stk_size;
-size_t       __micro_codegen_386_err_stk_real_size;
-
-int      micro_code_in_function;
-ptrdiff_t micro_top_stack_offset;
-
-sct_list_pair_t *micro_goto_refs;
-
-sct_string_t *micro_outbuf;
-size_t micro_pos = 0;
-
 micro_codegen_386_size micro_mt_size[] = {
     [MICRO_MT_NULL] = MICRO_SZ_8,
     [MICRO_MT_I8]   = MICRO_SZ_8,
@@ -69,57 +53,29 @@ micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_m
     return MICRO_MT_NULL;
 }
 
-void micro_codegen_386_init()
+micro_token_t __micro_peek(micro_codegen_t *codegen, size_t offset)
 {
-    micro_codegen_386_err_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * MICRO_ERROR_STACK_EXTEND_SIZE);
-    micro_codegen_386_err_stk_size = 0;
-    __micro_codegen_386_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
-
-    micro_code_in_function = 0;
-    micro_top_stack_offset = 0;
-
-    micro_codegen_386_idents = sct_hashmap_create();
-    micro_codegen_386_local_vars_list = sct_list_pair_create(0);
-
-    micro_goto_refs = sct_list_pair_create(0);
-
-    micro_outbuf = sct_string_create();
-}
-
-void micro_codegen_386_delete()
-{
-    free(micro_codegen_386_err_stk);
-    sct_hashmap_full_free(micro_codegen_386_idents);
-    sct_list_full_free(micro_codegen_386_local_vars_list);
-    sct_list_full_free(micro_goto_refs);
-    sct_string_free(micro_outbuf);
-}
-
-micro_token_t __micro_peek(size_t offset)
-{
-    if (micro_pos + offset >= micro_toks_size) {
-        return (micro_token_t){.type = MICRO_TT_NULL, .line_ref = micro_toks[micro_pos].line_ref, .chpos_ref = micro_toks[micro_pos].chpos_ref};
+    if (codegen->toks_pos + offset >= codegen->toks->size) {
+        return (micro_token_t){
+            .type = MICRO_TT_NULL,
+            .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
+            .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref
+        };
     }
-    return micro_toks[micro_pos + offset];
+    return codegen->toks->toks[codegen->toks_pos + offset];
 }
 
-micro_token_t __micro_get(size_t offset)
+micro_token_t __micro_get(micro_codegen_t *codegen, size_t offset)
 {
-    if (micro_pos + offset >= micro_toks_size) {
-        return (micro_token_t){.type = MICRO_TT_NULL, .line_ref = micro_toks[micro_pos].line_ref, .chpos_ref = micro_toks[micro_pos].chpos_ref};
+    if (codegen->toks_pos + offset >= codegen->toks->size) {
+        return (micro_token_t){
+            .type = MICRO_TT_NULL,
+            .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
+            .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref
+        };
     }
-    micro_pos += offset;
-    return micro_toks[micro_pos];
-}
-
-void __micro_codegen_386_err_stk_size_check(size_t offset)
-{
-    if (micro_codegen_386_err_stk_size + offset >= __micro_codegen_386_err_stk_real_size) {
-        micro_error_t *new_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * (__micro_codegen_386_err_stk_real_size += offset / MICRO_ERROR_STACK_EXTEND_SIZE + 1));
-        memcpy(new_stk, micro_codegen_386_err_stk, sizeof(micro_error_t) * micro_codegen_386_err_stk_size);
-        free(micro_codegen_386_err_stk);
-        micro_codegen_386_err_stk = new_stk;
-    }
+    codegen->toks_pos += offset;
+    return codegen->toks->toks[codegen->toks_pos];
 }
 
 micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_micro_type expected)
@@ -131,10 +87,11 @@ micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_
         //__micro_dbg_print_vars();
         micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(micro_codegen_386_idents, tok.val);
         if (!ident_info) {
-            micro_error_t err = {.msg = "Undeclarated variable",
-                                 .line_ref = tok.line_ref,
-                                 .chpos_ref = tok.chpos_ref};
-            __micro_push_err(err);
+            micro_push_err((micro_error_t){
+                .msg = "Undeclareted variable",
+                .line_ref = tok.line_ref,
+                .chpos_ref = tok.chpos_ref
+            });
             return MICRO_MT_NULL;
         }
         if (ident_info->type == IT_VAR) {
@@ -159,7 +116,6 @@ void __micro_dbg_print_idents()
         // printf("putting:%s\n", (char*)key_it->val);
         micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(micro_codegen_386_idents, (char*)key_it->val);
         if (!ident_info) {
-            puts("EE");
             exit(1);
         }
         if (ident_info->type == IT_VAR) {

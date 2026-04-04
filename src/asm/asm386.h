@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <SCT/string.h>
-#include "../types.h"
+#include "../common.h"
 
 #define __micro_defntbytes(...) { __VA_ARGS__, 0x00 }
 #define __micro_write_instr(...)  {  \

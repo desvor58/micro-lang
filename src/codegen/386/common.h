@@ -15,10 +15,12 @@
 #include <SCT/string.h>
 #include <SCT/vector.h>
 
-#include "../../types.h"
-#include "../../config.h"
+#include "../codegen.h"
+#include "../../common.h"
 #include "../../lexer.h"
 #include "../../asm/asm386.h"
+
+#define get_codegen_386_ext(cg) ((micro_codegen_386_ext_t*)(cg)->ext)
 
 #define micro_tokislit(tok) ((tok).type == MICRO_TT_LIT_FLOAT  \
                           || (tok).type == MICRO_TT_LIT_INT    \
@@ -113,34 +115,10 @@ typedef struct {
     };
 } micro_codegen_386_ident_info_t;
 
-// Ty: micro_codegen_386_ident_info_t
-extern sct_hashmap_t *micro_codegen_386_idents;
-
-// Ty: string_t
-extern sct_list_pair_t *micro_codegen_386_local_vars_list;
-
-extern micro_error_t *micro_codegen_386_err_stk;
-extern size_t         micro_codegen_386_err_stk_size;
-extern size_t       __micro_codegen_386_err_stk_real_size;
-
-#define __micro_push_err(err) __micro_codegen_386_err_stk_size_check(1); micro_codegen_386_err_stk[micro_codegen_386_err_stk_size++] = err
-
-extern int       micro_code_in_function;
-extern ptrdiff_t micro_top_stack_offset;
-
 typedef struct {
     size_t code_ref;
     size_t outbuf_ref;
 } micro_goto_ref_t;
-
-extern sct_list_pair_t *micro_goto_refs;
-
-extern sct_string_t *micro_outbuf;
-extern size_t micro_pos;
-
-void micro_codegen_386_init();
-
-void micro_codegen_386_delete();
 
 micro_token_t __micro_peek(size_t offset);
 
@@ -151,16 +129,6 @@ void __micro_codegen_386_err_stk_size_check(size_t offset);
 void __micro_dbg_print_idents();
 
 micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_micro_type expected);
-
-#define push_instruction(instruction)                                        \
-    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {  \
-        sct_string_push_back(micro_outbuf, instruction[i]);                  \
-    }
-
-#define push_instruction2addr(instruction, addr)                                       \
-    for (size_t i = 0; i < sizeof(instruction)/sizeof(*instruction); i++) {            \
-        micro_outbuf->str[addr + i] = instruction[i];                                  \
-    }                                                                                  \
 
 void micro_codegen_386_micro_instruction_parse();
 

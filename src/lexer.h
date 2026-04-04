@@ -5,11 +5,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "types.h"
-#include "config.h"
+#include "common.h"
 
-typedef enum
-{
+typedef enum {
     MICRO_TT_NULL,
 
     MICRO_TT_PLUS,
@@ -48,39 +46,34 @@ typedef enum
 
 extern char *__micro_token_type2str[];
 
-typedef struct
-{
+typedef struct {
     micro_token_type type;
     char       val[MICRO_MAX_SYMBOL_SIZE];
     size_t     line_ref;
     size_t     chpos_ref;
 } micro_token_t;
 
-extern micro_error_t *micro_lexer_err_stk;
-extern size_t         micro_lexer_err_stk_size;
-extern size_t       __micro_lexer_err_stk_real_size;
+typedef struct {
+    micro_token_t *toks;
+    size_t         size;
+    size_t         real_size;
+} micro_tok_vec_t;
 
-extern micro_token_t *micro_toks;
-extern size_t         micro_toks_size;
-extern size_t       __micro_toks_real_size;
-
-void micro_lexer_init();
-
-void micro_lexer_delete();
-
-void __micro_toks_size_check(size_t offset);
-
-void __micro_lexer_err_stk_size_check(size_t offset);
-
-#define __micro_lexer_push_tok(tok) __micro_toks_size_check(1); micro_toks[micro_toks_size++] = tok
-#define __micro_lexer_push_err(err) __micro_lexer_err_stk_size_check(1); micro_lexer_err_stk[micro_lexer_err_stk_size++] = err
+void micro_create_tok_vec(micro_tok_vec_t *vec);
+void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok);
+void micro_free_tok_vec(micro_tok_vec_t *vec);
 
 #define __micro_single_chlex(ch, tt)  \
     if (text[pos] == (ch)) {  \
-        micro_token_t tok = {.type = tt, .val = 0, .line_ref = line, .chpos_ref = chpos};  \
-        __micro_lexer_push_tok(tok);  \
+        micro_token_t tok = {  \
+            .type = tt,  \
+            .val = 0,  \
+            .line_ref = line,  \
+            .chpos_ref = chpos  \
+        };  \
+        micro_push_tok(toks, tok);  \
     }
 
-void micro_lexing(const char *text, size_t text_size);
+void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks);
 
 #endif

@@ -35,52 +35,30 @@ char *__micro_token_type2str[] = {
     [MICRO_TT_KW_GOTO]    = "goto",
 };
 
-micro_error_t *micro_lexer_err_stk;
-size_t         micro_lexer_err_stk_size;
-size_t       __micro_lexer_err_stk_real_size;
-
-micro_token_t *micro_toks;
-size_t         micro_toks_size;
-size_t       __micro_toks_real_size;
-
-void micro_lexer_init()
+void micro_create_tok_vec(micro_tok_vec_t *vec)
 {
-    micro_lexer_err_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * MICRO_ERROR_STACK_EXTEND_SIZE);
-    micro_lexer_err_stk_size = 0;
-    __micro_lexer_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
-
-    micro_toks = (micro_token_t*)malloc(sizeof(micro_token_t) * MICRO_TOKEN_BUFFER_EXTEND_SIZE);
-    micro_toks_size = 0;
-    __micro_toks_real_size = MICRO_TOKEN_BUFFER_EXTEND_SIZE;
+    vec->toks = malloc(MICRO_TOKEN_VEC_EXTEND_SIZE * sizeof(micro_token_t));
+    vec->size = 0;
+    vec->real_size = MICRO_TOKEN_VEC_EXTEND_SIZE;
 }
 
-void micro_lexer_delete()
+void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok)
 {
-    free(micro_toks);
-    free(micro_lexer_err_stk);
-}
-
-void __micro_toks_size_check(size_t offset)
-{
-    if (micro_toks_size + offset >= __micro_toks_real_size) {
-        micro_token_t *new_toks = (micro_token_t*)malloc(sizeof(micro_token_t) * (__micro_toks_real_size += offset / MICRO_TOKEN_BUFFER_EXTEND_SIZE + 1));
-        memcpy(new_toks, micro_toks, sizeof(micro_token_t) * micro_toks_size);
-        free(micro_toks);
-        micro_toks = new_toks;
+    if (vec->size + 1 >= vec->real_size) {
+        micro_token_t *new_toks = malloc((vec->real_size += MICRO_TOKEN_VEC_EXTEND_SIZE) * sizeof(micro_token_t));
+        memcpy(new_toks, vec->toks, sizeof(micro_token_t) * vec->size);
+        free(vec->toks);
+        vec->toks = new_toks;
     }
+    vec->toks[vec->size++] = tok;
 }
 
-void __micro_lexer_err_stk_size_check(size_t offset)
+void micro_free_tok_vec(micro_tok_vec_t *vec)
 {
-    if (micro_lexer_err_stk_size + offset >= __micro_lexer_err_stk_real_size) {
-        micro_error_t *new_stk = (micro_error_t*)malloc(sizeof(micro_error_t) * (__micro_lexer_err_stk_real_size += offset / MICRO_ERROR_STACK_EXTEND_SIZE + 1));
-        memcpy(new_stk, micro_lexer_err_stk, sizeof(micro_error_t) * micro_lexer_err_stk_size);
-        free(micro_lexer_err_stk);
-        micro_lexer_err_stk = new_stk;
-    }
+    free(vec->toks);
 }
 
-void micro_lexing(const char *text, size_t text_size)
+void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
 {
     size_t pos = 0;
     size_t line = 1;
@@ -101,8 +79,11 @@ void micro_lexing(const char *text, size_t text_size)
                 }
                 chpos++;
                 if (pos >= text_size) {
-                    micro_error_t err = {.msg = "Expected closing '\\' character for comment", .line_ref = line, .chpos_ref = chpos};
-                    __micro_lexer_push_err(err);
+                    micro_push_err((micro_error_t){
+                        .msg = "Expected closing '\\' character for comment",
+                        .line_ref = line,
+                        .chpos_ref = chpos
+                    });
                     goto err_exit;
                 }
             }
@@ -117,48 +98,92 @@ void micro_lexing(const char *text, size_t text_size)
             buf[i] = '\0';
 
             if (!strcmp(buf, "var")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_VAR, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_VAR,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "fun")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_FUN, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_FUN,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "set")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_SET, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_SET,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "if")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_IF, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_IF,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "else")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_ELSE, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_ELSE,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "while")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_WHILE, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_WHILE,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "start")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_START, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_START,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "end")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_END, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_END,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "ret")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_RET, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_RET,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "call")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_CALL, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_CALL,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "goto")) {
-                micro_token_t tok = {.type = MICRO_TT_KW_GOTO, .val = 0, .line_ref = line, .chpos_ref = tok_start_chpos};
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, (micro_token_t){
+                    .type = MICRO_TT_KW_GOTO,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
             } else
             if (!strcmp(buf, "i8")
              || !strcmp(buf, "u8")
@@ -168,13 +193,21 @@ void micro_lexing(const char *text, size_t text_size)
              || !strcmp(buf, "u32")
              || !strcmp(buf, "f32")
              || !strcmp(buf, "ptr")) {
-                micro_token_t tok = {.type = MICRO_TT_TYPE_NAME, .line_ref = line, .chpos_ref = tok_start_chpos};
+                micro_token_t tok = (micro_token_t){
+                    .type = MICRO_TT_TYPE_NAME,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                };
                 strcpy(tok.val, buf);
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, tok);
             } else {
-                micro_token_t tok = {.type = MICRO_TT_IDENT, .line_ref = line, .chpos_ref = tok_start_chpos};
+                micro_token_t tok = {
+                    .type = MICRO_TT_IDENT,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                };
                 strcpy(tok.val, buf);
-                __micro_lexer_push_tok(tok);
+                micro_push_tok(toks, tok);
             }
             pos--;
             chpos--;
@@ -194,9 +227,13 @@ void micro_lexing(const char *text, size_t text_size)
             } while (isdigit(text[pos]) && pos < text_size);
             buf[i] = '\0';
 
-            micro_token_t tok = {.type = type, .line_ref = line, .chpos_ref = tok_start_chpos};
+            micro_token_t tok = {
+                .type = type,
+                .line_ref = line,
+                .chpos_ref = tok_start_chpos
+            };
             strcpy(tok.val, buf);
-            __micro_lexer_push_tok(tok);
+            micro_push_tok(toks, tok);
             pos--;
         } else
         if (text[pos] == '"') {
@@ -208,16 +245,23 @@ void micro_lexing(const char *text, size_t text_size)
                 chpos++;
                 
                 if (pos >= text_size) {
-                    micro_error_t err = {.msg = "Expected closing '\"' character for the string literal", .line_ref = line, .chpos_ref = chpos};
-                    __micro_lexer_push_err(err);
+                    micro_push_err((micro_error_t){
+                        .msg = "Expected closing '\"' character for the string literal",
+                        .line_ref = line,
+                        .chpos_ref = chpos
+                    });
                     goto err_exit;
                 }
             }
             buf[i] = '\0';
 
-            micro_token_t tok = {.type = MICRO_TT_LIT_STR, .line_ref = line, .chpos_ref = tok_start_chpos};
+            micro_token_t tok = {
+                .type = MICRO_TT_LIT_STR,
+                .line_ref = line,
+                .chpos_ref = tok_start_chpos
+            };
             strcpy(tok.val, buf);
-            __micro_lexer_push_tok(tok);
+            micro_push_tok(toks, tok);
         } else
         __micro_single_chlex('+', MICRO_TT_PLUS)       else
         __micro_single_chlex('-', MICRO_TT_MINUS)      else
