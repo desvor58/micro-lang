@@ -1,21 +1,20 @@
 #include "../../statements.h"
 
-void micro_codegen_386__if()
+void micro_codegen_386__if(micro_codegen_t *codegen)
 {
-    micro_token_t tok_expr_start = __micro_peek(1);
+    micro_token_t tok_expr_start = __micro_peek(codegen, 1);
     if (tok_expr_start.type == MICRO_TT_NULL || tok_expr_start.type != MICRO_TT_IDENT) {
-        micro_error_t err = {.msg = "Expected expression after 'if' keyword",
-                             .line_ref = micro_toks[micro_pos].line_ref,
-                             .chpos_ref = micro_toks[micro_pos].chpos_ref};
-        __micro_push_err(err);
+        micro_push_err((micro_error_t){
+            .msg = "Expected expression after 'if' keyword",
+            .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
+            .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref
+        });
         goto err_exit;
     }
     
-    
-
 err_exit:
-    while (micro_pos < micro_toks_size && micro_toks[micro_pos].type != MICRO_TT_SEMICOLON) {
-        micro_pos++;
+    while (codegen->toks_pos < codegen->toks->size && codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON) {
+        codegen->toks_pos++;
     }
     return;
 }

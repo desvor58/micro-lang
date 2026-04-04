@@ -9,7 +9,6 @@ typedef struct {
     micro_tok_vec_t *toks;
     sct_string_t    *outbuf;
     size_t           toks_pos;
-    void           (*codegen)();
     void            *ext;
 } micro_codegen_t;
 

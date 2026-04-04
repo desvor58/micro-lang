@@ -4,18 +4,18 @@
 #include "common.h"
 #include "expr.h"
 
-void micro_codegen_386__static_var();
+void micro_codegen_386__static_var(micro_codegen_t *codegen);
 
-void micro_codegen_386__var();
+void micro_codegen_386__var(micro_codegen_t *codegen);
 
-void micro_codegen_386__set();
+void micro_codegen_386__set(micro_codegen_t *codegen);
 
-void micro_codegen_386__fun();
+void micro_codegen_386__fun(micro_codegen_t *codegen);
 
-void micro_codegen_386__call();
+void micro_codegen_386__call(micro_codegen_t *codegen);
 
-void micro_codegen_386__goto();
+void micro_codegen_386__goto(micro_codegen_t *codegen);
 
-void micro_codegen_386__if();
+void micro_codegen_386__if(micro_codegen_t *codegen);
 
 #endif

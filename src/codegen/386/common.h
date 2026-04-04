@@ -20,22 +20,31 @@
 #include "../../lexer.h"
 #include "../../asm/asm386.h"
 
+typedef struct {
+    int       code_in_function;
+    ptrdiff_t top_stack_offset;
+    // Ty: micro_codegen_386_ident_info_t
+    sct_hashmap_t *idents;
+    // Ty: string_t
+    sct_list_pair_t *local_var_list;
+    sct_list_pair_t *goto_refs;
+} micro_codegen_386_ext_t;
+
 #define get_codegen_386_ext(cg) ((micro_codegen_386_ext_t*)(cg)->ext)
 
 #define micro_tokislit(tok) ((tok).type == MICRO_TT_LIT_FLOAT  \
                           || (tok).type == MICRO_TT_LIT_INT    \
                           || (tok).type == MICRO_TT_LIT_STR)   \
 
-#define micro_tokisop(tok) ((tok).type == MICRO_TT_PLUS        \
-                         || (tok).type == MICRO_TT_MINUS       \
-                         || (tok).type == MICRO_TT_STAR        \
-                         || (tok).type == MICRO_TT_SLASH       \
-                         || (tok).type == MICRO_TT_AMPERSAND  \
-                         || (tok).type == MICRO_TT_HASH        \
+#define micro_tokisop(tok) ((tok).type == MICRO_TT_PLUS         \
+                         || (tok).type == MICRO_TT_MINUS        \
+                         || (tok).type == MICRO_TT_STAR         \
+                         || (tok).type == MICRO_TT_SLASH        \
+                         || (tok).type == MICRO_TT_AMPERSAND    \
+                         || (tok).type == MICRO_TT_HASH         \
                          || (tok).type == MICRO_TT_DOLLAR       \
-                         || (tok).type == MICRO_TT_TILDE       \
-                         || (tok).type == MICRO_TT_APOSTROPHE  \
-                        )
+                         || (tok).type == MICRO_TT_TILDE        \
+                         || (tok).type == MICRO_TT_APOSTROPHE)  \
 
 typedef enum {
     MICRO_MT_NULL = 0,
@@ -120,16 +129,14 @@ typedef struct {
     size_t outbuf_ref;
 } micro_goto_ref_t;
 
-micro_token_t __micro_peek(size_t offset);
+micro_token_t __micro_peek(micro_codegen_t *codegen, size_t offset);
 
-micro_token_t __micro_get(size_t offset);
+micro_token_t __micro_get(micro_codegen_t *codegen, size_t offset);
 
-void __micro_codegen_386_err_stk_size_check(size_t offset);
+void __micro_dbg_print_idents(micro_codegen_t *codegen);
 
-void __micro_dbg_print_idents();
+micro_codegen_386_micro_type micro_gettype(micro_codegen_t *codegen, micro_token_t tok, micro_codegen_386_micro_type expected);
 
-micro_codegen_386_micro_type micro_gettype(micro_token_t tok, micro_codegen_386_micro_type expected);
-
-void micro_codegen_386_micro_instruction_parse();
+void micro_codegen_386_micro_instruction_parse(micro_codegen_t *codegen);
 
 #endif

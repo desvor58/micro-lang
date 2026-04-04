@@ -3,21 +3,21 @@
 __micro_asm386_instruction_t __micro_asm_instruction_stack[MICRO_INSTRUCTION_STACK_SIZE];
 u8 __micro_asm_instruction_stack_top = 0;
 
-void asm_put_instructions()
+void asm_put_instructions(micro_codegen_t *codegen)
 {
     for (size_t i = 0; i < __micro_asm_instruction_stack_top; i++) {
         for (size_t j = 0; j < __micro_asm_instruction_stack[i].size; j++) {
-            sct_string_push_back(micro_outbuf, __micro_asm_instruction_stack[i].instr[j]);
+            sct_string_push_back(codegen->outbuf, __micro_asm_instruction_stack[i].instr[j]);
         }
     }
     __micro_asm_instruction_stack_top = 0;
 }
 
-void asm_put_instructions_to_addr(size_t addr)
+void asm_put_instructions_to_addr(micro_codegen_t *codegen, size_t addr)
 {
     for (size_t i = 0; i < __micro_asm_instruction_stack_top; i++) {
         for (size_t j = 0; j < __micro_asm_instruction_stack[i].size; j++) {
-            micro_outbuf->str[addr + i] = __micro_asm_instruction_stack[i].instr[j];
+            codegen->outbuf->str[addr + i] = __micro_asm_instruction_stack[i].instr[j];
         }
     }
     __micro_asm_instruction_stack_top = 0;

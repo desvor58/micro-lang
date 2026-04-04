@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <SCT/string.h>
-#include "../common.h"
+#include "../codegen/codegen.h"
 
 #define __micro_defntbytes(...) { __VA_ARGS__, 0x00 }
 #define __micro_write_instr(...)  {  \
@@ -12,9 +12,6 @@
     __micro_asm_instruction_stack[__micro_asm_instruction_stack_top].size = sizeof(I) / sizeof(*I);  \
     __micro_asm_instruction_stack_top++;  \
 }
-
-extern sct_string_t *micro_outbuf;
-extern size_t micro_pos;
 
 typedef enum {
     REG32_EAX = 0,
@@ -55,9 +52,9 @@ typedef struct {
 extern __micro_asm386_instruction_t __micro_asm_instruction_stack[MICRO_INSTRUCTION_STACK_SIZE];
 extern u8 __micro_asm_instruction_stack_top;
 
-void asm_put_instructions();
+void asm_put_instructions(micro_codegen_t *codegen);
 
-void asm_put_instructions_to_addr(size_t addr);
+void asm_put_instructions_to_addr(micro_codegen_t *codegen, size_t addr);
 
 void asm386_ret();
 void asm386_call(micro_addr_le_t addr);
