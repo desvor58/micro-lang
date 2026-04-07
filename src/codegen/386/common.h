@@ -72,8 +72,6 @@ micro_codegen_386_micro_type micro_str2mt(char *str);
 
 micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_micro_type expected);
 
-void micro_imm_from_mt(u8 *buf, micro_codegen_386_micro_type type, size_t val);
-
 typedef enum {
     MICRO_ST_STACK,
     MICRO_ST_DATASEG,

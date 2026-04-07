@@ -1,8 +1,10 @@
 #ifndef MICRO_COMMON_H
 #define MICRO_COMMON_H
 
+#include <malloc.h>
 #include <inttypes.h>
 #include <stddef.h>
+#include <string.h>
 
 // size by which error stack will be extended on each overflow
 #define MICRO_ERROR_STACK_EXTEND_SIZE 4

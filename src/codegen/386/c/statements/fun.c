@@ -187,7 +187,7 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
 
     micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(get_codegen_386_ext(codegen)->idents, tok_ident.val, fun_ident);
     if (old_ident_info) {
-        __micro_push_err((micro_error_t){
+        micro_push_err((micro_error_t){
             .msg = "Double declaration of function",
             .line_ref = tok_ident.line_ref,
             .chpos_ref = tok_ident.chpos_ref

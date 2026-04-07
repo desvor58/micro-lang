@@ -1,6 +1,6 @@
 #include "../../expr_get_atoms.h"
 
-int __micro_codegen_386_expr_parse_get_ident_from_dataseg(micro_addr_le_t ident_addr, micro_codegen_386_var_info_t *var_info, micro_codegen_386_storage_info_t dst)
+int __micro_codegen_386_expr_parse_get_ident_from_dataseg(micro_codegen_t *codegen, micro_addr_le_t ident_addr, micro_codegen_386_var_info_t *var_info, micro_codegen_386_storage_info_t dst)
 {
     if (dst.type == MICRO_ST_DATASEG) {
         void (*instr_tbl1[])(asm386_reg, micro_addr_le_t) = {
@@ -40,11 +40,11 @@ int __micro_codegen_386_expr_parse_get_ident_from_dataseg(micro_addr_le_t ident_
         };
         instr_tbl2[dst.size](micro_imm_le_gen(dst.offset), REG32_EAX);
     }
-    asm_put_instructions();
+    asm_put_instructions(codegen);
     return 0;
 }
 
-int __micro_codegen_386_expr_parse_get_ident_addr_from_dataseg(micro_addr_le_t ident_addr, micro_codegen_386_var_info_t *var_info, micro_codegen_386_storage_info_t dst)
+int __micro_codegen_386_expr_parse_get_ident_addr_from_dataseg(micro_codegen_t *codegen, micro_addr_le_t ident_addr, micro_codegen_386_var_info_t *var_info, micro_codegen_386_storage_info_t dst)
 {
     if (dst.type == MICRO_ST_DATASEG) {
         void (*instr_tbl[])(micro_addr_le_t, micro_imm_le_t) = {
@@ -70,6 +70,6 @@ int __micro_codegen_386_expr_parse_get_ident_addr_from_dataseg(micro_addr_le_t i
         };
         instr_tbl[dst.size](micro_imm_le_gen(dst.offset), ident_addr);
     }
-    asm_put_instructions();
+    asm_put_instructions(codegen);
     return 0;
 }

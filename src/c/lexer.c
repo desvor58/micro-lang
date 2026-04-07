@@ -1,6 +1,6 @@
 #include "../lexer.h"
 
-char *__micro_token_type2str[] = {
+char *micro_token_type2str[] = {
     [MICRO_TT_NULL]       = "null",
     [MICRO_TT_PLUS]       = "plus",
     [MICRO_TT_MINUS]      = "minus",

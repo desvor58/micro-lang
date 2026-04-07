@@ -68,9 +68,6 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
 
         micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(codegen, 3), var_info.type);
         if (lit_type == MICRO_MT_NULL) {
-            micro_error_t err = {.msg = "Wrong literal type",
-                                 .line_ref = tok_name.line_ref,
-                                 .chpos_ref = tok_name.chpos_ref};
             micro_push_err((micro_error_t){
                 .msg = "Wrong literal type",
                 .line_ref = tok_name.line_ref,

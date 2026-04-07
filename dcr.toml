@@ -1,0 +1,14 @@
+[package]
+name = "micro"
+version = "0.0.1"
+
+[build]
+language = "c"
+standard = "c99"
+compiler = "gcc"
+cflags   = ["-Wall", "-Wextra", "-Wno-format", "-Wno-missing-braces", "-Iinclude"]
+
+[build.windows]
+ldflags = ["-Llib", "-lsct-win"]
+
+[dependencies]

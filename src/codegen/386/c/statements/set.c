@@ -49,7 +49,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
         goto err_exit;
     }
 
-    int expr_end_offset = micro_codegen_386_expr_parse(codegen->toks_pos + 2, ident_info->var_info.storage_info);
+    int expr_end_offset = micro_codegen_386_expr_parse(codegen, codegen->toks_pos + 2, ident_info->var_info.storage_info);
     if (!expr_end_offset) {
         goto err_exit;
     }

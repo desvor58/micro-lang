@@ -44,7 +44,7 @@ typedef enum {
     MICRO_TT_KW_GOTO,
 } micro_token_type;
 
-extern char *__micro_token_type2str[];
+extern char *micro_token_type2str[];
 
 typedef struct {
     micro_token_type type;

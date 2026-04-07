@@ -2,7 +2,7 @@
 #define MICRO_ARGS_H
 
 #include <string.h>
-#include "config.h"
+#include "common.h"
 
 typedef struct {
     char   inputfile[MICRO_MAX_SYMBOL_SIZE];

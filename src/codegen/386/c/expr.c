@@ -9,14 +9,14 @@ micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
     [MICRO_TT_DOLLAR] = { .operands_num = 1, .handler = micro_codegen_386__op_deref    },
 };
 
-size_t micro_expr_peek(size_t pos)
+size_t micro_expr_peek(micro_codegen_t *codegen, size_t pos)
 {
-    if (micro_tokislit(micro_toks[pos]) || micro_toks[pos].type == MICRO_TT_IDENT) {
+    if (micro_tokislit(codegen->toks->toks[pos]) || codegen->toks->toks[pos].type == MICRO_TT_IDENT) {
         return 1;
     } else
-    if (micro_tokisop(micro_toks[pos])) {
-        size_t expr1_end_offset = micro_expr_peek(pos + 1);
-        size_t expr2_end_offset = micro_expr_peek(pos + expr1_end_offset);
+    if (micro_tokisop(codegen->toks->toks[pos])) {
+        size_t expr1_end_offset = micro_expr_peek(codegen, pos + 1);
+        size_t expr2_end_offset = micro_expr_peek(codegen, pos + expr1_end_offset);
         return expr1_end_offset + expr2_end_offset + 1;
     }
     return 0;
@@ -24,36 +24,43 @@ size_t micro_expr_peek(size_t pos)
 
 // returns offset to next instruction after expr
 // if returns 0 - err
-int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t dst)
+int micro_codegen_386_expr_parse(micro_codegen_t *codegen, size_t pos, micro_codegen_386_storage_info_t dst)
 {
-    if (micro_toks[pos].type == MICRO_TT_HASH) {
-        if (micro_toks[pos + 1].type != MICRO_TT_IDENT) {
-            micro_error_t err = {.msg = "Expected identifier", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-            __micro_push_err(err);
+    if (codegen->toks->toks[pos].type == MICRO_TT_HASH) {
+        if (codegen->toks->toks[pos + 1].type != MICRO_TT_IDENT) {
+            micro_push_err((micro_error_t){
+                .msg = "Expected identifier",
+                .line_ref = codegen->toks->toks[pos].line_ref,
+                .chpos_ref = codegen->toks->toks[pos].chpos_ref
+            });
             return 0;
         }
-        return __micro_codegen_386_expr_parse_get_ident(pos + 1, dst, 1) + 1;
+        return __micro_codegen_386_expr_parse_get_ident(codegen, pos + 1, dst, 1) + 1;
     }
 
-    if (micro_tokislit(micro_toks[pos])) {
-        return __micro_codegen_386_expr_parse_get_lit(pos, dst);
+    if (micro_tokislit(codegen->toks->toks[pos])) {
+        return __micro_codegen_386_expr_parse_get_lit(codegen, pos, dst);
     }
-    if (micro_toks[pos].type == MICRO_TT_IDENT) {
-        return __micro_codegen_386_expr_parse_get_ident(pos, dst, 0);
+    if (codegen->toks->toks[pos].type == MICRO_TT_IDENT) {
+        return __micro_codegen_386_expr_parse_get_ident(codegen, pos, dst, 0);
     }
 
-    if (!micro_tokisop(micro_toks[pos])) {
-        micro_error_t err = {.msg = "Expected operator", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-        __micro_push_err(err);
+    if (!micro_tokisop(codegen->toks->toks[pos])) {
+        micro_push_err((micro_error_t){
+            .msg = "Expected operator",
+            .line_ref = codegen->toks->toks[pos].line_ref,
+            .chpos_ref = codegen->toks->toks[pos].chpos_ref
+        });
         return 0;
     }
 
     size_t operand_offset = dst.type == MICRO_ST_REG ? dst.offset : 0;    
-    micro_codegen_386_operator_info_t op_info = micro_codegen_386_ops_table[micro_toks[pos].type];
+    micro_codegen_386_operator_info_t op_info = micro_codegen_386_ops_table[codegen->toks->toks[pos].type];
 
     int global_expr_end_offset = 1;
     for (size_t i = 0; i < op_info.operands_num; i++) {
         int expr_end_offset = micro_codegen_386_expr_parse(
+            codegen,
             pos + global_expr_end_offset,
             (micro_codegen_386_storage_info_t){
                 .type = MICRO_ST_REG,
@@ -62,15 +69,19 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
                 .is_unsigned = dst.is_unsigned
             }
         );
-        if (expr_end_offset == 0) {
+        if (!expr_end_offset) {
             return 0;
         }
         global_expr_end_offset += expr_end_offset;
     }
 
-    int op_handle_err = op_info.handler(operand_offset, dst);
+    int op_handle_err = op_info.handler(codegen, operand_offset, dst);
     if (op_handle_err) {
-        goto err_wrong_dst_type_size;
+        micro_push_err((micro_error_t){
+            .msg = "Wrong destination type size",
+            .line_ref = codegen->toks->toks[pos].line_ref,
+            .chpos_ref = codegen->toks->toks[pos].chpos_ref
+        });
     }
 
     if (dst.type == MICRO_ST_DATASEG) {
@@ -103,11 +114,6 @@ int micro_codegen_386_expr_parse(size_t pos, micro_codegen_386_storage_info_t ds
         };
         instr_tbl[dst.size](dst_addr, operand_offset);
     }
-    asm_put_instructions();
+    asm_put_instructions(codegen);
     return global_expr_end_offset;
-
-err_wrong_dst_type_size:
-    micro_error_t err = {.msg = "Wrong destination type size", .line_ref = micro_toks[pos].line_ref, .chpos_ref = micro_toks[pos].chpos_ref};
-    __micro_push_err(err);
-    return 0;
 }

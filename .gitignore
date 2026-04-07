@@ -4,6 +4,9 @@
 test.*
 bin/
 .vscode/
+target/
 
 tests/bin/
 tests/log/
+
+s.txt

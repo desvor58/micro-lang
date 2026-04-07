@@ -3,7 +3,7 @@
 void micro_codegen_386__call(micro_codegen_t *codegen)
 {
     if (!get_codegen_386_ext(codegen)->code_in_function) {
-        __micro_push_err((micro_error_t){
+        micro_push_err((micro_error_t){
             .msg = "Instruction 'call' can be usage only in function body",
             .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
             .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref
@@ -54,7 +54,7 @@ void micro_codegen_386__call(micro_codegen_t *codegen)
     size_t cur_arg_num = 0;
     while (codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON) {
         arg_expr_starts[cur_arg_num++] = codegen->toks_pos;
-        codegen->toks_pos += micro_expr_peek(codegen->toks_pos) - 1;
+        codegen->toks_pos += micro_expr_peek(codegen, codegen->toks_pos) - 1;
 
         if (++codegen->toks_pos >= codegen->toks->size) {
             micro_push_err((micro_error_t){
@@ -66,12 +66,16 @@ void micro_codegen_386__call(micro_codegen_t *codegen)
         }
     }
     for (ptrdiff_t i = cur_arg_num - 1, arg_offset = 0; i >= 0; i--,arg_offset++) {
-        micro_codegen_386_expr_parse(arg_expr_starts[i], (micro_codegen_386_storage_info_t){
-            .type = MICRO_ST_STACK,
-            .size = 4,
-            .offset = get_codegen_386_ext(codegen)->top_stack_offset - (arg_offset * 4),
-            .is_unsigned = 0
-        });
+        micro_codegen_386_expr_parse(
+            codegen,
+            arg_expr_starts[i],
+            (micro_codegen_386_storage_info_t){
+                .type = MICRO_ST_STACK,
+                .size = 4,
+                .offset = get_codegen_386_ext(codegen)->top_stack_offset - (arg_offset * 4),
+                .is_unsigned = 0
+            }
+        );
     }
 
     micro_addr_le_t call_addr = micro_imm_le_gen(fun_ident_info->fun_info.offset - (codegen->outbuf->size + 5));

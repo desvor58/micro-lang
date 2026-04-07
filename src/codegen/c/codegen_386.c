@@ -50,7 +50,7 @@ void micro_codegen_386(micro_codegen_t *codegen) {
         size_t micro_pos_save = codegen->toks_pos;
         codegen->toks_pos = ((micro_goto_ref_t*)ref_it->val)->code_ref;
 
-        micro_token_t tok_lbl = __micro_peek(1);
+        micro_token_t tok_lbl = __micro_peek(codegen, 1);
         if (tok_lbl.type != MICRO_TT_IDENT) {
             micro_push_err((micro_error_t){
                 .msg = "Expected label name",
