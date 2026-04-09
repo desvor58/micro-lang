@@ -7,11 +7,15 @@ micro lang - minimalistic IR language usage for [scc](https://github.com/desvor5
 - If you an developer read [compiler description](docs/compiler-description.md)
 
 ## Build micro compiler
-With python:
+With python (not recommended):
 ```
 python tools/build.py
 ```
 Or with make:
 ```
 make
+```
+Debug make compile:
+```
+make MODE=debug
 ```
