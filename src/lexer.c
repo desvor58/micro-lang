@@ -1,4 +1,4 @@
-#include "../lexer.h"
+#include <micro/lexer.h>
 
 char *micro_token_type2str[] = {
     [MICRO_TT_NULL]       = "null",

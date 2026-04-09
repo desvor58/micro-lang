@@ -1,4 +1,4 @@
-#include "../expr_get_atoms.h"
+#include <micro/codegen/386/expr_get_atoms.h>
 
 int __micro_codegen_386_expr_parse_get_lit(micro_codegen_t *codegen, size_t pos, micro_codegen_386_storage_info_t dst)
 {

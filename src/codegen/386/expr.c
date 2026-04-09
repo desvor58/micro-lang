@@ -1,4 +1,4 @@
-#include "../expr.h"
+#include <micro/codegen/386/expr.h>
 
 micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
     [MICRO_TT_PLUS]   = { .operands_num = 2, .handler = micro_codegen_386__op_plus     },

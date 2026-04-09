@@ -1,4 +1,4 @@
-#include "../codegen_386.h"
+#include <micro/codegen/codegen_386.h>
 
 void micro_codegen_386_micro_instruction_parse(micro_codegen_t *codegen)
 {

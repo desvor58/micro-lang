@@ -1,4 +1,4 @@
-#include "../common.h"
+#include <micro/common.h>
 
 micro_error_t *micro_err_stk;
 size_t         micro_err_stk_size;

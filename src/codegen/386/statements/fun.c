@@ -1,4 +1,4 @@
-#include "../../statements.h"
+#include <micro/codegen/386/statements.h>
 
 void micro_codegen_386__fun(micro_codegen_t *codegen)
 {
@@ -145,17 +145,9 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
         }
         
         micro_imm_le_t addr = micro_imm_le_gen(ident_info->lbl_info.offset - (((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref + 4));
-        printf("defer_ref:%X, lbl:%X, addr:%X\n",
-            (((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref),
-            ident_info->lbl_info.offset,
-            addr.val);
 
         for (int i = 0; i < 4; i++) {
             codegen->outbuf->arr[((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref + i] = addr.bytes[i];
-        }
-
-        for (int i = 0; i < 4; i++) {
-            printf("%X\0", addr.bytes[i]);
         }
 
         codegen->toks_pos = micro_pos_save;

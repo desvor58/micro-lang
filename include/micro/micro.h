@@ -1,7 +1,6 @@
 #ifndef MICRO_H
 #define MICRO_H
 
-#include "args.h"
 #include "common.h"
 #include "lexer.h"
 

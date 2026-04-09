@@ -1,4 +1,4 @@
-#include "../../statements.h"
+#include <micro/codegen/386/statements.h>
 
 void micro_codegen_386__goto(micro_codegen_t *codegen)
 {

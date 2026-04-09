@@ -1,4 +1,4 @@
-#include "../codegen.h"
+#include <micro/codegen/codegen.h>
 
 void micro_codegen_outbuf_init(micro_codegen_outbuf_t *outbuf)
 {

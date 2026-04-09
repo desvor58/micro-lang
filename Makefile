@@ -1,13 +1,12 @@
 CC := gcc
 CFLAGS := -Wall -Wno-format -Wno-missing-braces -std=c99 -Iinclude
 
-SRC_TARGETS := src/c/*.c  \
-			   src/codegen/386/c/*.c  \
-			   src/codegen/386/c/statements/*.c  \
-			   src/codegen/386/c/expr_get_atoms/*.c  \
-			   src/codegen/c/*.c  \
-			   src/asm/*.c  \
-			   src/main.c
+SRC_TARGETS := src/*.c                             \
+			   src/codegen/*.c                     \
+			   src/codegen/386/*.c                 \
+			   src/codegen/386/statements/*.c      \
+			   src/codegen/386/expr_get_atoms/*.c  \
+			   src/asm/*.c
 
 SRCS := $(wildcard $(SRC_TARGETS))
 

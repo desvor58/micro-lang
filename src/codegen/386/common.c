@@ -1,4 +1,4 @@
-#include "../common.h"
+#include <micro/codegen/386/common.h>
 
 micro_codegen_386_size micro_mt_size[] = {
     [MICRO_MT_NULL] = MICRO_SZ_8,

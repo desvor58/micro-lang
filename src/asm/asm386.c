@@ -1,4 +1,4 @@
-#include "asm386.h"
+#include <micro/asm/asm386.h>
 
 __micro_asm386_instruction_t __micro_asm_instruction_stack[MICRO_INSTRUCTION_STACK_SIZE];
 u8 __micro_asm_instruction_stack_top = 0;

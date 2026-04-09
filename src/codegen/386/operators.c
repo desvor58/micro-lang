@@ -1,4 +1,4 @@
-#include "../operators.h"
+#include <micro/codegen/386/operators.h>
 
 int micro_codegen_386__op_plus(micro_codegen_t *codegen, size_t operand_offset, micro_codegen_386_storage_info_t dst)
 {
