@@ -47,12 +47,12 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
         param_info.storage_info = (micro_codegen_386_storage_info_t) {
             .type = MICRO_ST_STACK,
             .size = micro_mt_size[param_info.type],
-            .offset = + 4 + (param_num * 4 + micro_mt_size[param_info.type]),
+            .offset = + 4 + (param_num * 4 + micro_sz_real_size[micro_mt_size[param_info.type]]),
             .is_unsigned = micro_mtisunsigned(param_info.type)
         };
 
         micro_codegen_386_ident_info_t *ident_info = malloc(sizeof(micro_codegen_386_ident_info_t));
-        ident_info->type = IT_VAR;
+        ident_info->type = MICRO_IT_VAR;
         ident_info->var_info = param_info;
 
         sct_string_t *str_name = sct_string_create();
@@ -112,9 +112,9 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
     }
     size_t i = 0;
     size_t micro_pos_acc = codegen->toks_pos;
-    foreach (ref_it, get_codegen_386_ext(codegen)->goto_refs) {
+    foreach (ref_it, ((micro_codegen_386_ext_t*)codegen->ext)->defer_addr_refs) {
         size_t micro_pos_save = codegen->toks_pos;
-        codegen->toks_pos = ((micro_goto_ref_t*)ref_it->val)->code_ref;
+        codegen->toks_pos = ((micro_defer_addr_ref_t*)ref_it->val)->code_ref;
 
         micro_token_t tok_lbl = __micro_peek(codegen, 1);
         if (tok_lbl.type != MICRO_TT_IDENT) {
@@ -129,13 +129,13 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
         micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(get_codegen_386_ext(codegen)->idents, tok_lbl.val);
         if (!ident_info) {
             micro_push_err((micro_error_t){
-                .msg = "Undeclared label name",
+                .msg = "Undefined label name",
                 .line_ref = tok_lbl.line_ref,
                 .chpos_ref = tok_lbl.chpos_ref
             });
             goto err_exit;
         }
-        if (ident_info->type != IT_LBL) {
+        if (ident_info->type != MICRO_IT_LBL) {
             micro_push_err((micro_error_t){
                 .msg = "Expected label name",
                 .line_ref = tok_lbl.line_ref,
@@ -144,12 +144,22 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
             goto err_exit;
         }
         
-        micro_addr_le_t addr = micro_imm_le_gen(ident_info->lbl_info.offset - (((micro_goto_ref_t*)ref_it->val)->outbuf_ref + 5));
-        asm386_jmpL32(addr);
-        asm_put_instructions_to_addr(codegen, ((micro_goto_ref_t*)ref_it->val)->outbuf_ref);
-        
+        micro_imm_le_t addr = micro_imm_le_gen(ident_info->lbl_info.offset - (((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref + 4));
+        printf("defer_ref:%X, lbl:%X, addr:%X\n",
+            (((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref),
+            ident_info->lbl_info.offset,
+            addr.val);
+
+        for (int i = 0; i < 4; i++) {
+            codegen->outbuf->arr[((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref + i] = addr.bytes[i];
+        }
+
+        for (int i = 0; i < 4; i++) {
+            printf("%X\0", addr.bytes[i]);
+        }
+
         codegen->toks_pos = micro_pos_save;
-        get_codegen_386_ext(codegen)->goto_refs = sct_list_full_delete(get_codegen_386_ext(codegen)->goto_refs, i);
+        get_codegen_386_ext(codegen)->defer_addr_refs = sct_list_full_delete(get_codegen_386_ext(codegen)->defer_addr_refs, i);
         i++;
     }
     codegen->toks_pos = micro_pos_acc;
@@ -182,7 +192,7 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
     asm_put_instructions(codegen);
 
     micro_codegen_386_ident_info_t *fun_ident = malloc(sizeof(micro_codegen_386_ident_info_t));
-    fun_ident->type = IT_FUN;
+    fun_ident->type = MICRO_IT_FUN;
     fun_ident->fun_info = fun_info;
 
     micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(get_codegen_386_ext(codegen)->idents, tok_ident.val, fun_ident);

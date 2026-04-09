@@ -32,7 +32,7 @@ void micro_codegen_386__static_var(micro_codegen_t *codegen)
         .is_unsigned = micro_mtisunsigned(var_info.type)
     };
     micro_codegen_386_ident_info_t *ident_info = malloc(sizeof(micro_codegen_386_ident_info_t));
-    ident_info->type = IT_VAR;
+    ident_info->type = MICRO_IT_VAR;
     ident_info->var_info = var_info;
 
     micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(get_codegen_386_ext(codegen)->idents, var_info.name, ident_info);
@@ -46,8 +46,8 @@ void micro_codegen_386__static_var(micro_codegen_t *codegen)
     }
 
     if (__micro_peek(codegen, 3).type == MICRO_TT_SEMICOLON) {
-        for (size_t i = 0; i < micro_mt_size[var_info.type]; i++) {
-            sct_string_push_back(codegen->outbuf, 0);
+        for (size_t i = 0; i < micro_sz_real_size[micro_mt_size[var_info.type]]; i++) {
+            micro_codegen_outbuf_push(codegen->outbuf, 0);
         }
         codegen->toks_pos += 3;
         return;
@@ -78,7 +78,7 @@ void micro_codegen_386__static_var(micro_codegen_t *codegen)
         
         micro_imm_le_t imm_val = micro_imm_le_gen(strtoll(__micro_peek(codegen, 3).val, (char**)0, 10));
         for (size_t i = 0; i < (micro_mt_size[lit_type] == MICRO_SZ_32 ? 4 : micro_mt_size[lit_type] == MICRO_SZ_16 ? 2 : 1); i++) {
-            sct_string_push_back(codegen->outbuf, imm_val.bytes[i]);
+            micro_codegen_outbuf_push(codegen->outbuf, imm_val.bytes[i]);
         }
         codegen->toks_pos += 4;
     }

@@ -91,8 +91,8 @@ int main(int argc, char **argv)
                 return 2;
             }
 
-            FILE *outfile = fopen(args->outfile, "w");
-            fwrite(codegen.outbuf->str, sizeof(char), codegen.outbuf->size, outfile);
+            FILE *outfile = fopen(args->outfile, "wb");
+            fwrite(codegen.outbuf->arr, sizeof(char), codegen.outbuf->size, outfile);
             fclose(outfile);
         micro_codegen_386_deinit(&codegen);
         micro_free_tok_vec(&toks);

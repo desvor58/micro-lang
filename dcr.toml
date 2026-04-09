@@ -11,4 +11,7 @@ cflags   = ["-Wall", "-Wextra", "-Wno-format", "-Wno-missing-braces", "-Iinclude
 [build.windows]
 ldflags = ["-Llib", "-lsct-win"]
 
+[build.linux]
+ldflags = ["-Llib", "-lsct-elf"]
+
 [dependencies]

@@ -31,7 +31,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
         });
         goto err_exit;
     }
-    if (ident_info->type != IT_VAR) {
+    if (ident_info->type != MICRO_IT_VAR) {
         micro_push_err((micro_error_t){
             .msg = "Expected variable",
             .line_ref = tok_dst.line_ref,

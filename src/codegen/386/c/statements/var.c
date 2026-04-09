@@ -31,10 +31,10 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
         .offset = get_codegen_386_ext(codegen)->top_stack_offset
     };
     micro_codegen_386_ident_info_t *ident_info = malloc(sizeof(micro_codegen_386_ident_info_t));
-    ident_info->type = IT_VAR;
+    ident_info->type = MICRO_IT_VAR;
     ident_info->var_info = var_info;
 
-    get_codegen_386_ext(codegen)->top_stack_offset -= micro_mt_size[var_info.type];
+    get_codegen_386_ext(codegen)->top_stack_offset -= micro_sz_real_size[micro_mt_size[var_info.type]];
 
     micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(get_codegen_386_ext(codegen)->idents, var_info.name, ident_info);
     if (old_ident_info) {

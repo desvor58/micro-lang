@@ -28,13 +28,19 @@ LDFLAGS := -Llib -l$(SCT_LIB_FILE)
 OBJS := $(addprefix obj/o, $(addsuffix .o, $(NUMS)))
 VPATH := $(sort $(dir $(SRCS)))
 
+MODE ?= release
+
+ifeq ($(MODE), debug)
+	CFLAGS += -O0
+else
+	CFLAGS += -O3
+endif
+
 all: micro
 
 micro: $(OBJS)
 	@echo $(OBJS) > obj/o.list
 	$(CC) -o bin/$@ @obj/o.list $(LDFLAGS)
-
-debug: clean micro
 
 define GEN_RULE
 $(word $(1),$(OBJS)): $(word $(1),$(SRCS))

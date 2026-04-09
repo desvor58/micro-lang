@@ -6,6 +6,12 @@
 #include <stddef.h>
 #include <string.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+# define ATTRIBUTE_CONST __attribute__((const))
+#else
+# define ATTRIBUTE_CONST
+#endif
+
 // size by which error stack will be extended on each overflow
 #define MICRO_ERROR_STACK_EXTEND_SIZE 4
 // size by which tokens vector will be extended on each overflow
@@ -18,6 +24,8 @@
 #define MICRO_MAX_INPUT_CODE_SIZE 48 * 1024
 // size of buffer for writing instructions before __micro_asm_instructions_put()
 #define MICRO_INSTRUCTION_STACK_SIZE 16
+// size by which outbuf will be extended on each overflow
+#define MICRO_OUTBUF_EXTEND_SIZE 196
 
 typedef int8_t   i8;
 typedef uint8_t  u8;
@@ -37,14 +45,14 @@ typedef struct {
     u8  bytes[4];
 } micro_imm_be_t, micro_addr_be_t;
 
-micro_imm_be_t micro_imm_be_gen(i32 val);
+ATTRIBUTE_CONST micro_imm_be_t micro_imm_be_gen(i32 val);
 
 typedef struct {
     i32 val;
     u8  bytes[4];
 } micro_imm_le_t, micro_addr_le_t;
 
-micro_imm_le_t micro_imm_le_gen(i32 val);
+ATTRIBUTE_CONST micro_imm_le_t micro_imm_le_gen(i32 val);
 
 extern micro_error_t *micro_err_stk;
 extern size_t         micro_err_stk_size;

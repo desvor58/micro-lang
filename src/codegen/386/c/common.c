@@ -12,6 +12,12 @@ micro_codegen_386_size micro_mt_size[] = {
     [MICRO_MT_PTR]  = MICRO_SZ_32
 };
 
+size_t micro_sz_real_size[] = {
+    [MICRO_SZ_8]  = 1,
+    [MICRO_SZ_16] = 2,
+    [MICRO_SZ_32] = 4,
+};
+
 micro_codegen_386_micro_type micro_str2mt(char *str)
 {
     if (!strcmp(str, "i8"))  return MICRO_MT_I8;
@@ -94,7 +100,7 @@ micro_codegen_386_micro_type micro_gettype(micro_codegen_t *codegen, micro_token
             });
             return MICRO_MT_NULL;
         }
-        if (ident_info->type == IT_VAR) {
+        if (ident_info->type == MICRO_IT_VAR) {
             if (ident_info->var_info.type == expected) {
                 return expected;
             }
@@ -118,7 +124,7 @@ void __micro_dbg_print_idents(micro_codegen_t *codegen)
         if (!ident_info) {
             exit(1);
         }
-        if (ident_info->type == IT_VAR) {
+        if (ident_info->type == MICRO_IT_VAR) {
             micro_codegen_386_var_info_t var_info = ident_info->var_info;
             printf("%s:{\n  type:%u,\n  storage_info:{\n    type:%u,\n    size:%u,\n    offset:%d,\n    isunssigned:%d\n  }\n}\n",
                    var_info.name,
@@ -128,7 +134,7 @@ void __micro_dbg_print_idents(micro_codegen_t *codegen)
                    var_info.storage_info.offset,
                    var_info.storage_info.is_unsigned);
         }
-        if (ident_info->type == IT_FUN) {
+        if (ident_info->type == MICRO_IT_FUN) {
             micro_codegen_386_fun_info_t fun_info = ident_info->fun_info;
             printf("%s:{\n  ret_type:%u,\n  offset:%u,\n  agrs:{\n",
                    fun_info.name,
@@ -146,7 +152,7 @@ void __micro_dbg_print_idents(micro_codegen_t *codegen)
             }
             printf("}\n");
         }
-        if (ident_info->type == IT_LBL) {
+        if (ident_info->type == MICRO_IT_LBL) {
             micro_codegen_386_lbl_info_t lbl_info = ident_info->lbl_info;
             printf("%s:{\n  offset:%d\n}\n",
                    lbl_info.name,

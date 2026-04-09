@@ -41,7 +41,7 @@ void micro_codegen_386__call(micro_codegen_t *codegen)
         });
         goto err_exit;
     }
-    if (fun_ident_info->type != IT_FUN) {
+    if (fun_ident_info->type != MICRO_IT_FUN) {
         micro_push_err((micro_error_t){
             .msg = "Expected function name",
             .line_ref = tok_fun_name.line_ref,
@@ -92,7 +92,7 @@ void micro_codegen_386__call(micro_codegen_t *codegen)
             });
             goto err_exit;
         }
-        if (dst_var_ident_info->type != IT_VAR) {
+        if (dst_var_ident_info->type != MICRO_IT_VAR) {
             micro_push_err((micro_error_t){
                 .msg = "Expected variable name",
                 .line_ref = tok_dst_var_name.line_ref,

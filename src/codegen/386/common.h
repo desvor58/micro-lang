@@ -27,7 +27,7 @@ typedef struct {
     sct_hashmap_t *idents;
     // Ty: string_t
     sct_list_pair_t *local_var_list;
-    sct_list_pair_t *goto_refs;
+    sct_list_pair_t *defer_addr_refs;
 } micro_codegen_386_ext_t;
 
 #define get_codegen_386_ext(cg) ((micro_codegen_386_ext_t*)(cg)->ext)
@@ -67,6 +67,7 @@ typedef enum {
 #define micro_mtisunsigned(mt) (mt == MICRO_MT_U8 || mt == MICRO_MT_U16 || mt == MICRO_MT_U32 || mt == MICRO_MT_PTR)
 
 extern micro_codegen_386_size micro_mt_size[];
+extern size_t                 micro_sz_real_size[];
 
 micro_codegen_386_micro_type micro_str2mt(char *str);
 
@@ -108,9 +109,9 @@ typedef struct {
 } micro_codegen_386_lbl_info_t;
 
 typedef enum {
-    IT_VAR,
-    IT_FUN,
-    IT_LBL,
+    MICRO_IT_VAR,
+    MICRO_IT_FUN,
+    MICRO_IT_LBL,
 } micro_codegen_386_ident_type;
 
 typedef struct {
@@ -125,7 +126,7 @@ typedef struct {
 typedef struct {
     size_t code_ref;
     size_t outbuf_ref;
-} micro_goto_ref_t;
+} micro_defer_addr_ref_t;
 
 micro_token_t __micro_peek(micro_codegen_t *codegen, size_t offset);
 
