@@ -12,6 +12,8 @@
 - **Compilation speed** > Execution speed
 - **Compiler simplicity** (< 3000 lines of code)
 
+-----------------
+
 ### 💡 example code
 **C** code:
 ```
@@ -42,6 +44,8 @@ end_rec:
     ret n;
 end
 ```
+
+-----------------
 
 ### 🏛️ Compiler architecture now
 If you use **micro** as a compiler
