@@ -67,6 +67,10 @@ void asm386_cmpR8R8(asm386_reg reg1, asm386_reg reg2);
 
 void asm386_setzR8(asm386_reg reg);
 void asm386_setnzR8(asm386_reg reg);
+void asm386_setgR8(asm386_reg reg);
+void asm386_setgeR8(asm386_reg reg);
+void asm386_setlR8(asm386_reg reg);
+void asm386_setleR8(asm386_reg reg);
 
 void asm386_movzxR32R8(asm386_reg reg1, asm386_reg reg2);
 void asm386_movzxR16R8(asm386_reg reg1, asm386_reg reg2);

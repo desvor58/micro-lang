@@ -34,6 +34,10 @@ void asm386_cmpR8R8(asm386_reg reg1, asm386_reg reg2)   { __micro_write_instr(  
 
 void asm386_setzR8(asm386_reg reg)  { __micro_write_instr(0x0F, 0x94, 0xC0 | (reg)) }
 void asm386_setnzR8(asm386_reg reg) { __micro_write_instr(0x0F, 0x95, 0xC0 | (reg)) }
+void asm386_setgR8(asm386_reg reg)  { __micro_write_instr(0x0F, 0x9F, 0xC0 | (reg)) }
+void asm386_setgeR8(asm386_reg reg) { __micro_write_instr(0x0F, 0x9D, 0xC0 | (reg)) }
+void asm386_setlR8(asm386_reg reg)  { __micro_write_instr(0x0F, 0x9C, 0xC0 | (reg)) }
+void asm386_setleR8(asm386_reg reg) { __micro_write_instr(0x0F, 0x9E, 0xC0 | (reg)) }
 
 void asm386_movzxR32R8(asm386_reg reg1, asm386_reg reg2) { __micro_write_instr(      0x0F, 0xB6, 0b11000000 | ((reg1) << 3) | (reg2)) }
 void asm386_movzxR16R8(asm386_reg reg1, asm386_reg reg2) { __micro_write_instr(0x66, 0x0F, 0xB6, 0b11000000 | ((reg1) << 3) | (reg2)) }

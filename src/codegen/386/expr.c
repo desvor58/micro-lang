@@ -1,13 +1,18 @@
 #include <micro/codegen/386/expr.h>
 
 micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
-    [MICRO_TT_PLUS]   = { .operands_num = 2, .handler = micro_codegen_386__op_plus     },
-    [MICRO_TT_MINUS]  = { .operands_num = 2, .handler = micro_codegen_386__op_minus    },
-    [MICRO_TT_STAR]   = { .operands_num = 2, .handler = micro_codegen_386__op_multiply },
-    [MICRO_TT_SLASH]  = { .operands_num = 2, .handler = micro_codegen_386__op_division },
-    [MICRO_TT_TILDE]  = { .operands_num = 1, .handler = micro_codegen_386__op_negate   },
-    [MICRO_TT_DOLLAR] = { .operands_num = 1, .handler = micro_codegen_386__op_deref    },
-    [MICRO_TT_EQ]     = { .operands_num = 2, .handler = micro_codegen_386__op_eq       },
+    [MICRO_TT_PLUS]        = { .operands_num = 2, .handler = micro_codegen_386__op_plus        },
+    [MICRO_TT_MINUS]       = { .operands_num = 2, .handler = micro_codegen_386__op_minus       },
+    [MICRO_TT_STAR]        = { .operands_num = 2, .handler = micro_codegen_386__op_multiply    },
+    [MICRO_TT_SLASH]       = { .operands_num = 2, .handler = micro_codegen_386__op_division    },
+    [MICRO_TT_TILDE]       = { .operands_num = 1, .handler = micro_codegen_386__op_negate      },
+    [MICRO_TT_DOLLAR]      = { .operands_num = 1, .handler = micro_codegen_386__op_deref       },
+    [MICRO_TT_EQ]          = { .operands_num = 2, .handler = micro_codegen_386__op_eq          },
+    [MICRO_TT_NOT_EQ]      = { .operands_num = 2, .handler = micro_codegen_386__op_not_eq      },
+    [MICRO_TT_GREAT]       = { .operands_num = 2, .handler = micro_codegen_386__op_great       },
+    [MICRO_TT_LESS]        = { .operands_num = 2, .handler = micro_codegen_386__op_less        },
+    [MICRO_TT_GREAT_OR_EQ] = { .operands_num = 2, .handler = micro_codegen_386__op_great_or_eq },
+    [MICRO_TT_LESS_OR_EQ]  = { .operands_num = 2, .handler = micro_codegen_386__op_less_or_eq  },
 };
 
 size_t micro_expr_peek(micro_codegen_t *codegen, size_t pos)

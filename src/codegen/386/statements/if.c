@@ -24,32 +24,32 @@ void micro_codegen_386__if(micro_codegen_t *codegen)
 
     micro_codegen_386_storage_info_t storage_info = ident->var_info.storage_info;
     switch (storage_info.type) {
-        case MICRO_ST_DATASEG:
+        case MICRO_ST_DATASEG: {
             void (*static_var_test_tbl[])(micro_addr_le_t, micro_imm_le_t) = {
                 [MICRO_SZ_8]  = asm386_testM8I8,
                 [MICRO_SZ_16] = asm386_testM16I16,
                 [MICRO_SZ_32] = asm386_testM32I32,
             };
             static_var_test_tbl[storage_info.size](micro_imm_le_gen(storage_info.offset), micro_imm_le_gen(0));
-        break;
+        } break;
 
-        case MICRO_ST_STACK:
+        case MICRO_ST_STACK: {
             void (*local_var_test_tbl[])(micro_addr_le_t, micro_imm_le_t) = {
                 [MICRO_SZ_8]  = asm386_testS32I8,
                 [MICRO_SZ_16] = asm386_testS32I16,
                 [MICRO_SZ_32] = asm386_testS32I32,
             };
             local_var_test_tbl[storage_info.size](micro_imm_le_gen(storage_info.offset), micro_imm_le_gen(0));
-        break;
+        } break;
 
-        case MICRO_ST_REG:
+        case MICRO_ST_REG: {
             void (*reg_var_test_tbl[])(asm386_reg, asm386_reg) = {
                 [MICRO_SZ_8]  = asm386_testR8R8,
                 [MICRO_SZ_16] = asm386_testR16R16,
                 [MICRO_SZ_32] = asm386_testR32R32,
             };
             reg_var_test_tbl[storage_info.size]((asm386_reg)storage_info.offset, (asm386_reg)storage_info.offset);
-        break;
+        } break;
     }
     asm_put_instructions(codegen);
 

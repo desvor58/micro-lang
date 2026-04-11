@@ -10,7 +10,7 @@
 
 ### 🎯 Project Goals
 - **Compilation speed** > Execution speed
-- **Compiler simplicity** (< 3000 lines of code)
+- **Compiler simplicity** (< 2500 lines of code now, < 5000 line of code at 1.0.0 version)
 
 -----------------
 
@@ -98,13 +98,17 @@ Binary (Or object file)
 ### 🏗️ Building
 With make:
 ```
-make
+make CC=<comp>
 ```
 Debug make compile:
 ```
-make MODE=debug
+make CC=<comp> MODE=debug
 ```
-Or [**dcr**](https://github.com/dexoron/dcr):
+Now work with gcc and clang, maybe tcc.
+
+-----------------
+
+With [**dcr**](https://github.com/dexoron/dcr):
 ```
 dcr build --release
 ```

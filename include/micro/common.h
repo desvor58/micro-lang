@@ -7,9 +7,11 @@
 #include <string.h>
 
 #if defined(__GNUC__) || defined(__clang__)
-# define ATTRIBUTE_CONST __attribute__((const))
+# define MICRO_ATTRIBUTE_CONST __attribute__((const))
+#elif defined(_MSC_VER)
+# define MICRO_ATTRIBUTE_CONST __declspec(noalias)
 #else
-# define ATTRIBUTE_CONST
+# define MICRO_ATTRIBUTE_CONST
 #endif
 
 // size by which error stack will be extended on each overflow
@@ -45,14 +47,16 @@ typedef struct {
     u8  bytes[4];
 } micro_imm_be_t, micro_addr_be_t;
 
-ATTRIBUTE_CONST micro_imm_be_t micro_imm_be_gen(i32 val);
+MICRO_ATTRIBUTE_CONST
+micro_imm_be_t micro_imm_be_gen(i32 val);
 
 typedef struct {
     i32 val;
     u8  bytes[4];
 } micro_imm_le_t, micro_addr_le_t;
 
-ATTRIBUTE_CONST micro_imm_le_t micro_imm_le_gen(i32 val);
+MICRO_ATTRIBUTE_CONST
+micro_imm_le_t micro_imm_le_gen(i32 val);
 
 extern micro_error_t *micro_err_stk;
 extern size_t         micro_err_stk_size;

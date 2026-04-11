@@ -46,6 +46,10 @@ typedef struct {
                          || (tok).type == MICRO_TT_TILDE        \
                          || (tok).type == MICRO_TT_EQ           \
                          || (tok).type == MICRO_TT_NOT_EQ       \
+                         || (tok).type == MICRO_TT_GREAT        \
+                         || (tok).type == MICRO_TT_LESS         \
+                         || (tok).type == MICRO_TT_GREAT_OR_EQ  \
+                         || (tok).type == MICRO_TT_LESS_OR_EQ   \
                          || (tok).type == MICRO_TT_APOSTROPHE)  \
 
 typedef enum {

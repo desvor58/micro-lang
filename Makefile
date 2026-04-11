@@ -1,4 +1,4 @@
-CC := gcc
+CC ?= gcc
 CFLAGS := -Wall -Wno-format -Wno-missing-braces -std=c99 -Iinclude
 
 SRC_TARGETS := src/*.c                             \
@@ -23,6 +23,11 @@ endif
 NUMS := $(strip $(NUMS))
 
 LDFLAGS := -Llib -l$(SCT_LIB_FILE)
+
+ifeq ($(CC),clang)
+	LDFLAGS += --target=x86_64-w64-windows-gnu
+	CFLAGS += --target=x86_64-w64-windows-gnu
+endif
 
 OBJS := $(addprefix obj/o, $(addsuffix .o, $(NUMS)))
 VPATH := $(sort $(dir $(SRCS)))

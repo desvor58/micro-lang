@@ -17,6 +17,10 @@ char *micro_token_type2str[] = {
     [MICRO_TT_TILDE]       = "tilde",
     [MICRO_TT_EQ]          = "eq",
     [MICRO_TT_NOT_EQ]      = "not eq",
+    [MICRO_TT_GREAT]       = "great",
+    [MICRO_TT_LESS]        = "less",
+    [MICRO_TT_GREAT_OR_EQ] = "great or eq",
+    [MICRO_TT_LESS_OR_EQ]  = "less or eq",
 
     [MICRO_TT_TYPE_NAME]   = "type name",
     [MICRO_TT_IDENT]       = "ident",
@@ -278,11 +282,27 @@ void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
         __micro_single_chlex('#', MICRO_TT_HASH)       else
         __micro_single_chlex('`', MICRO_TT_APOSTROPHE) else
         __micro_single_chlex('=', MICRO_TT_EQ)         else
+        __micro_single_chlex('>', MICRO_TT_GREAT)      else
+        __micro_single_chlex('<', MICRO_TT_LESS)       else
         __micro_single_chlex('~', MICRO_TT_TILDE)
         
         if (text[pos] == '!' && text[pos + 1] == '=') {
             micro_push_tok(toks, (micro_token_t){
                 .type = MICRO_TT_NOT_EQ,
+                .line_ref = line,
+                .chpos_ref = chpos,
+            });
+        }
+        if (text[pos] == '>' && text[pos + 1] == '=') {
+            micro_push_tok(toks, (micro_token_t){
+                .type = MICRO_TT_GREAT_OR_EQ,
+                .line_ref = line,
+                .chpos_ref = chpos,
+            });
+        }
+        if (text[pos] == '<' && text[pos + 1] == '=') {
+            micro_push_tok(toks, (micro_token_t){
+                .type = MICRO_TT_LESS_OR_EQ,
                 .line_ref = line,
                 .chpos_ref = chpos,
             });
