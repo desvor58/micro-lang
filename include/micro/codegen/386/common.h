@@ -44,6 +44,8 @@ typedef struct {
                          || (tok).type == MICRO_TT_HASH         \
                          || (tok).type == MICRO_TT_DOLLAR       \
                          || (tok).type == MICRO_TT_TILDE        \
+                         || (tok).type == MICRO_TT_EQ           \
+                         || (tok).type == MICRO_TT_NOT_EQ       \
                          || (tok).type == MICRO_TT_APOSTROPHE)  \
 
 typedef enum {
@@ -124,7 +126,8 @@ typedef struct {
 } micro_codegen_386_ident_info_t;
 
 typedef struct {
-    size_t code_ref;
+    char  *lbl_name;
+    size_t lbl_code_ref;
     size_t outbuf_ref;
 } micro_defer_addr_ref_t;
 

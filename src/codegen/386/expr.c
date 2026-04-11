@@ -7,6 +7,7 @@ micro_codegen_386_operator_info_t micro_codegen_386_ops_table[] = {
     [MICRO_TT_SLASH]  = { .operands_num = 2, .handler = micro_codegen_386__op_division },
     [MICRO_TT_TILDE]  = { .operands_num = 1, .handler = micro_codegen_386__op_negate   },
     [MICRO_TT_DOLLAR] = { .operands_num = 1, .handler = micro_codegen_386__op_deref    },
+    [MICRO_TT_EQ]     = { .operands_num = 2, .handler = micro_codegen_386__op_eq       },
 };
 
 size_t micro_expr_peek(micro_codegen_t *codegen, size_t pos)

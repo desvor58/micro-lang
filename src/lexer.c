@@ -1,38 +1,40 @@
 #include <micro/lexer.h>
 
 char *micro_token_type2str[] = {
-    [MICRO_TT_NULL]       = "null",
-    [MICRO_TT_PLUS]       = "plus",
-    [MICRO_TT_MINUS]      = "minus",
-    [MICRO_TT_STAR]       = "star",
-    [MICRO_TT_SLASH]      = "slash",
-    [MICRO_TT_DOT]        = "dot",
-    [MICRO_TT_COMA]       = "coma",
-    [MICRO_TT_COLON]      = "colon",
-    [MICRO_TT_SEMICOLON]  = "semicolon",
-    [MICRO_TT_AMPERSAND]  = "ampersand",
-    [MICRO_TT_DOLLAR]     = "dollar",
-    [MICRO_TT_HASH]       = "hash",
-    [MICRO_TT_APOSTROPHE] = "apostrophe",
-    [MICRO_TT_TILDE]      = "tilde",
+    [MICRO_TT_NULL]        = "null",
+    [MICRO_TT_PLUS]        = "plus",
+    [MICRO_TT_MINUS]       = "minus",
+    [MICRO_TT_STAR]        = "star",
+    [MICRO_TT_SLASH]       = "slash",
+    [MICRO_TT_DOT]         = "dot",
+    [MICRO_TT_COMA]        = "coma",
+    [MICRO_TT_COLON]       = "colon",
+    [MICRO_TT_SEMICOLON]   = "semicolon",
+    [MICRO_TT_AMPERSAND]   = "ampersand",
+    [MICRO_TT_DOLLAR]      = "dollar",
+    [MICRO_TT_HASH]        = "hash",
+    [MICRO_TT_APOSTROPHE]  = "apostrophe",
+    [MICRO_TT_TILDE]       = "tilde",
+    [MICRO_TT_EQ]          = "eq",
+    [MICRO_TT_NOT_EQ]      = "not eq",
 
-    [MICRO_TT_TYPE_NAME]  = "type name",
-    [MICRO_TT_IDENT]      = "ident",
-    [MICRO_TT_LIT_INT]    = "lit int",
-    [MICRO_TT_LIT_FLOAT]  = "lit float",
-    [MICRO_TT_LIT_STR]    = "lit str",
+    [MICRO_TT_TYPE_NAME]   = "type name",
+    [MICRO_TT_IDENT]       = "ident",
+    [MICRO_TT_LIT_INT]     = "lit int",
+    [MICRO_TT_LIT_FLOAT]   = "lit float",
+    [MICRO_TT_LIT_STR]     = "lit str",
 
-    [MICRO_TT_KW_VAR]     = "var",
-    [MICRO_TT_KW_FUN]     = "fun",
-    [MICRO_TT_KW_SET]     = "set",
-    [MICRO_TT_KW_IF]      = "if",
-    [MICRO_TT_KW_ELSE]    = "else",
-    [MICRO_TT_KW_WHILE]   = "while",
-    [MICRO_TT_KW_START]   = "start",
-    [MICRO_TT_KW_END]     = "end",
-    [MICRO_TT_KW_RET]     = "ret",
-    [MICRO_TT_KW_CALL]    = "call",
-    [MICRO_TT_KW_GOTO]    = "goto",
+    [MICRO_TT_KW_VAR]      = "var",
+    [MICRO_TT_KW_FUN]      = "fun",
+    [MICRO_TT_KW_SET]      = "set",
+    [MICRO_TT_KW_IF]       = "if",
+    [MICRO_TT_KW_ELSE]     = "else",
+    [MICRO_TT_KW_WHILE]    = "while",
+    [MICRO_TT_KW_START]    = "start",
+    [MICRO_TT_KW_END]      = "end",
+    [MICRO_TT_KW_RET]      = "ret",
+    [MICRO_TT_KW_CALL]     = "call",
+    [MICRO_TT_KW_GOTO]     = "goto",
 };
 
 void micro_create_tok_vec(micro_tok_vec_t *vec)
@@ -275,7 +277,16 @@ void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
         __micro_single_chlex('$', MICRO_TT_DOLLAR)     else
         __micro_single_chlex('#', MICRO_TT_HASH)       else
         __micro_single_chlex('`', MICRO_TT_APOSTROPHE) else
+        __micro_single_chlex('=', MICRO_TT_EQ)         else
         __micro_single_chlex('~', MICRO_TT_TILDE)
+        
+        if (text[pos] == '!' && text[pos + 1] == '=') {
+            micro_push_tok(toks, (micro_token_t){
+                .type = MICRO_TT_NOT_EQ,
+                .line_ref = line,
+                .chpos_ref = chpos,
+            });
+        }
         
         pos++;
         chpos++;

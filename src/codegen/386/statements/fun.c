@@ -113,20 +113,9 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
     size_t i = 0;
     size_t micro_pos_acc = codegen->toks_pos;
     foreach (ref_it, ((micro_codegen_386_ext_t*)codegen->ext)->defer_addr_refs) {
-        size_t micro_pos_save = codegen->toks_pos;
-        codegen->toks_pos = ((micro_defer_addr_ref_t*)ref_it->val)->code_ref;
+        micro_token_t tok_lbl = codegen->toks->toks[((micro_defer_addr_ref_t*)ref_it->val)->lbl_code_ref];
 
-        micro_token_t tok_lbl = __micro_peek(codegen, 1);
-        if (tok_lbl.type != MICRO_TT_IDENT) {
-            micro_push_err((micro_error_t){
-                .msg = "Expected label name",
-                .line_ref = tok_lbl.line_ref,
-                .chpos_ref = tok_lbl.chpos_ref
-            });
-            goto err_exit;
-        }
-
-        micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(get_codegen_386_ext(codegen)->idents, tok_lbl.val);
+        micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(get_codegen_386_ext(codegen)->idents, ((micro_defer_addr_ref_t*)ref_it->val)->lbl_name);
         if (!ident_info) {
             micro_push_err((micro_error_t){
                 .msg = "Undefined label name",
@@ -150,7 +139,6 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
             codegen->outbuf->arr[((micro_defer_addr_ref_t*)ref_it->val)->outbuf_ref + i] = addr.bytes[i];
         }
 
-        codegen->toks_pos = micro_pos_save;
         get_codegen_386_ext(codegen)->defer_addr_refs = sct_list_full_delete(get_codegen_386_ext(codegen)->defer_addr_refs, i);
         i++;
     }

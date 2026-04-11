@@ -11,7 +11,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .line_ref = tok_dst.line_ref,
             .chpos_ref = tok_dst.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
     if ((tok_src.type != MICRO_TT_IDENT && !micro_tokislit(tok_src) && !micro_tokisop(tok_src)) || tok_src.type == MICRO_TT_NULL) {
         micro_push_err((micro_error_t){
@@ -19,7 +19,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .line_ref = tok_src.line_ref,
             .chpos_ref = tok_src.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
     
     micro_codegen_386_ident_info_t *ident_info = sct_hashmap_get(get_codegen_386_ext(codegen)->idents, tok_dst.val);
@@ -29,7 +29,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .line_ref = tok_dst.line_ref,
             .chpos_ref = tok_dst.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
     if (ident_info->type != MICRO_IT_VAR) {
         micro_push_err((micro_error_t){
@@ -37,7 +37,7 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .line_ref = tok_dst.line_ref,
             .chpos_ref = tok_dst.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
 
     if (micro_gettype(codegen, tok_src, ident_info->var_info.type) == MICRO_MT_NULL) {
@@ -46,12 +46,12 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .line_ref = tok_dst.line_ref,
             .chpos_ref = tok_dst.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
 
     int expr_end_offset = micro_codegen_386_expr_parse(codegen, codegen->toks_pos + 2, ident_info->var_info.storage_info);
     if (!expr_end_offset) {
-        goto err_exit;
+        goto exit;
     }
 
     if (codegen->toks->toks[codegen->toks_pos + 2 + expr_end_offset].type != MICRO_TT_SEMICOLON) {
@@ -61,9 +61,8 @@ void micro_codegen_386__set(micro_codegen_t *codegen)
             .chpos_ref = tok_dst.chpos_ref
         });
     }
-    return;
 
-err_exit:
+exit:
     while (codegen->toks_pos < codegen->toks->size && codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON) {
         codegen->toks_pos++;
     }

@@ -23,6 +23,8 @@ typedef enum {
     MICRO_TT_HASH,
     MICRO_TT_APOSTROPHE,
     MICRO_TT_TILDE,
+    MICRO_TT_EQ,
+    MICRO_TT_NOT_EQ,
 
     MICRO_TT_TYPE_NAME,
     MICRO_TT_IDENT,

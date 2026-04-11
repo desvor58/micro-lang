@@ -21,6 +21,9 @@ void micro_codegen_386_micro_instruction_parse(micro_codegen_t *codegen)
     if (codegen->toks->toks[codegen->toks_pos].type == MICRO_TT_KW_GOTO) {
         micro_codegen_386__goto(codegen);
     } else
+    if (codegen->toks->toks[codegen->toks_pos].type == MICRO_TT_KW_IF) {
+        micro_codegen_386__if(codegen);
+    } else
     if (codegen->toks->toks[codegen->toks_pos].type == MICRO_TT_IDENT) {
         if (codegen->toks_pos == codegen->toks->size - 1) {
             micro_push_err((micro_error_t){
@@ -38,7 +41,14 @@ void micro_codegen_386_micro_instruction_parse(micro_codegen_t *codegen)
             ident_info->type = MICRO_IT_LBL;
             ident_info->lbl_info = lbl_info;
             sct_hashmap_set(get_codegen_386_ext(codegen)->idents, codegen->toks->toks[codegen->toks_pos].val, ident_info);
+            codegen->toks_pos++;
         }
+    } else {
+        micro_push_err((micro_error_t){
+            .msg = "Undefined instruction",
+            .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
+            .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref,
+        });
     }
 }
 
@@ -49,7 +59,7 @@ void micro_codegen_386(micro_codegen_t *codegen)
     }
     foreach (ref_it, ((micro_codegen_386_ext_t*)codegen->ext)->defer_addr_refs) {
         size_t micro_pos_save = codegen->toks_pos;
-        codegen->toks_pos = ((micro_defer_addr_ref_t*)ref_it->val)->code_ref;
+        codegen->toks_pos = ((micro_defer_addr_ref_t*)ref_it->val)->lbl_code_ref;
 
         micro_token_t tok_lbl = __micro_peek(codegen, 1);
         if (tok_lbl.type != MICRO_TT_IDENT) {

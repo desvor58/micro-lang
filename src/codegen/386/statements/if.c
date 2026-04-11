@@ -51,8 +51,29 @@ void micro_codegen_386__if(micro_codegen_t *codegen)
             reg_var_test_tbl[storage_info.size]((asm386_reg)storage_info.offset, (asm386_reg)storage_info.offset);
         break;
     }
+    asm_put_instructions(codegen);
 
-    
+    i32 o = asm386_jzL32(micro_imm_le_gen(0));
+    micro_defer_addr_ref_t *ref = malloc(sizeof(micro_defer_addr_ref_t));
+    ref->outbuf_ref = codegen->outbuf->size + o;
+
+    while (codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_COLON) {
+        codegen->toks_pos++;
+    }
+    if (codegen->toks->toks[++codegen->toks_pos].type != MICRO_TT_IDENT) {
+        micro_push_err((micro_error_t){
+            .msg = "Expected label",
+            .line_ref = codegen->toks->toks[codegen->toks_pos].line_ref,
+            .chpos_ref = codegen->toks->toks[codegen->toks_pos].chpos_ref,
+        });
+        return;
+    }
+
+    ref->lbl_name = codegen->toks->toks[codegen->toks_pos].val;
+    ref->lbl_code_ref = codegen->toks_pos;
+
+    sct_list_push_back(get_codegen_386_ext(codegen)->defer_addr_refs, ref);
+    asm_put_instructions(codegen);
     
 err_exit:
     while (codegen->toks_pos < codegen->toks->size && codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON) {
