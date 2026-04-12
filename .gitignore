@@ -1,11 +1,11 @@
 *.exe
 *.o
-.vscode/
 test.*
 bin/
 .vscode/
 target/
 obj/
+!.vscode/
 
 tests/bin/
 tests/log/
