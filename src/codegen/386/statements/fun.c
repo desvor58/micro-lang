@@ -58,10 +58,6 @@ void micro_codegen_386__fun(micro_codegen_t *codegen)
         sct_string_t *str_name = sct_string_create();
         sct_string_cat(str_name, "%s", param_info.name);
         sct_list_push_back(get_codegen_386_ext(codegen)->local_var_list, str_name);
-
-        foreach (name_it, get_codegen_386_ext(codegen)->idents->keys) {
-            printf("%s\n", (char*)name_it->val);
-        }
         
         // vector_micro_codegen_386_var_info_t_push_back(fun_info->args, *param_info);
         micro_codegen_386_ident_info_t *old_ident_info = sct_hashmap_set(get_codegen_386_ext(codegen)->idents, tok_param_ident.val, ident_info);

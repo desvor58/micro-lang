@@ -11,7 +11,7 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
             .line_ref = tok_type.line_ref,
             .chpos_ref = tok_type.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
     if (tok_name.type != MICRO_TT_IDENT || tok_name.type == MICRO_TT_NULL) {
         micro_push_err((micro_error_t){
@@ -19,7 +19,7 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
             .line_ref = tok_name.line_ref,
             .chpos_ref = tok_name.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
 
     micro_codegen_386_var_info_t var_info = {0};
@@ -43,7 +43,7 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
             .line_ref = tok_name.line_ref,
             .chpos_ref = tok_name.chpos_ref
         });
-        goto err_exit;
+        goto exit;
     }
 
     sct_string_t *str_name = sct_string_create();
@@ -63,7 +63,7 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
                 .chpos_ref = tok_name.chpos_ref
             });
             codegen->toks_pos += 3;
-            return;
+            goto exit;
         }
 
         micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(codegen, 3), var_info.type);
@@ -73,10 +73,7 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
                 .line_ref = tok_name.line_ref,
                 .chpos_ref = tok_name.chpos_ref
             });
-            while (codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON && codegen->toks_pos < codegen->toks->size) {
-                codegen->toks_pos++;
-            }
-            return;
+            goto exit;
         }
 
         void (*instr_tbl[])(micro_addr_le_t, micro_imm_le_t) = {
@@ -90,9 +87,8 @@ void micro_codegen_386__var(micro_codegen_t *codegen)
 
         codegen->toks_pos += 4;
     }
-    return;
 
-err_exit:
+exit:
     while (codegen->toks_pos < codegen->toks->size && codegen->toks->toks[codegen->toks_pos].type != MICRO_TT_SEMICOLON) {
         codegen->toks_pos++;
     }
