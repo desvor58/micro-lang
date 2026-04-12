@@ -40,11 +40,11 @@ else
 	CFLAGS += -O3
 endif
 
-all: micro
+all: microc
 
-dbg_build: clean micro
+dbg_build: clean microc
 
-micro: $(OBJS)
+microc: $(OBJS)
 	@echo $(OBJS) > obj/o.list
 	$(CC) -o bin/$@ @obj/o.list $(LDFLAGS)
 

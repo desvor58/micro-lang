@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-static inline int __micro_cond_op_template(micro_codegen_t *                codegen,
+static inline int __micro_cond_op_template(micro_codegen_t                 *codegen,
                                            size_t                           operand_offset,
                                            micro_codegen_386_storage_info_t dst,
                                            void                           (*instr)(asm386_reg))

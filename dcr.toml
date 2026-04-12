@@ -1,5 +1,5 @@
 [package]
-name = "micro"
+name = "microc"
 version = "0.0.1"
 
 [build]

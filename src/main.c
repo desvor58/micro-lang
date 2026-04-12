@@ -29,7 +29,7 @@ micro_args_t micro_args_parse(int argc, char **argv)
     args.outfile[0] = 0;
     args.flags = 0;
 
-    for (size_t i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             if (!strcmp(argv[i], "--output") || !strcmp(argv[i], "-o")) {
                 strcpy(args.outfile, argv[++i]);
