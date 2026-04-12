@@ -53,7 +53,7 @@ int micro_codegen_386_expr_parse(micro_codegen_t *codegen, size_t pos, micro_cod
 
     if (!micro_tokisop(codegen->toks->toks[pos])) {
         micro_push_err((micro_error_t){
-            .msg = "Expected operator",
+            .msg = "Expected expression",
             .line_ref = codegen->toks->toks[pos].line_ref,
             .chpos_ref = codegen->toks->toks[pos].chpos_ref
         });

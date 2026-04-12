@@ -35,12 +35,14 @@ VPATH := $(sort $(dir $(SRCS)))
 MODE ?= release
 
 ifeq ($(MODE), debug)
-	CFLAGS += -O0
+	CFLAGS += -O0 -g
 else
 	CFLAGS += -O3
 endif
 
 all: micro
+
+dbg_build: clean micro
 
 micro: $(OBJS)
 	@echo $(OBJS) > obj/o.list

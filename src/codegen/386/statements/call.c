@@ -71,7 +71,7 @@ void micro_codegen_386__call(micro_codegen_t *codegen)
             arg_expr_starts[i],
             (micro_codegen_386_storage_info_t){
                 .type = MICRO_ST_STACK,
-                .size = 4,
+                .size = MICRO_SZ_32,
                 .offset = get_codegen_386_ext(codegen)->top_stack_offset - (arg_offset * 4),
                 .is_unsigned = 0
             }

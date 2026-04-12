@@ -7,11 +7,10 @@
  *     All documentation in `docs` directory
  **********************************************/
 
-#include <stdio.h>
-#include <micro/micro.h>
-
-#include <string.h>
 #include <micro/common.h>
+#include <micro/micro.h>
+#include <string.h>
+#include <stdio.h>
 
 typedef struct {
     char   inputfile[MICRO_MAX_SYMBOL_SIZE];

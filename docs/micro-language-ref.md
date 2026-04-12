@@ -4,7 +4,7 @@
 2. [Expressions](#expresions)
 3. [Variables (keyword var)](#variables)
 3. [Variables change (keyword set)](#variable-change)
-3. [Functions (keyword fun)](#functuins)
+3. [Functions (keyword fun)](#functions)
 4. [Functions calling (keyword call)](#functions-calling)
 5. [Labels and jumping (keyword goto)](#labels-and-jamping)
 
@@ -40,33 +40,33 @@ All pointers have ptr type
 If micro code builds for 16bits target, i32, u32, f32 and ptr type will be have 2 byte size
 
 
-# Expresions
+# Expressions
 Micro lang use prefix notation like this:
 ```
-+ 5 * 3 2  \ in standart notation: 3 * 2 + 5 \
-* 5 + 3 2  \ in standart notation: 5 * (2 + 3) \
++ 5 * 3 2  \ in standard notation: 3 * 2 + 5 \
+* 5 + 3 2  \ in standard notation: 5 * (2 + 3) \
 ```
 
 ### note
-In this document single literals is a expresion:
+In this document single literals is a expression:
 ```
 + 5 4 \ expression \
-5 \ also expresion \
-"hello, world" \ expresion \
+5 \ also expression \
+"hello, world" \ expression \
 ```
 
 ## Operators
-Micro support +, -, * and / operators - addition, substruction, multipling, divising
+Micro support +, -, * and / operators - addition, subtraction, multiplying, dividing
 
 | operator         | C analog         | description                        |
 |------------------|------------------|------------------------------------|
 | + \<o1> \<o2>    | \<o1> + \<o2>    | adds *o1* and *o2*                 |
 | - \<o1> \<o2>    | \<o1> - \<o2>    | from *o1* subtracts *o2*           |
 | ~ \<o1>          | -\<o1>           | negate <o1>                        |
-| * \<o1> \<o2>    | \<o1> * \<o2>    | mutliply *o1* and *o2*             |
+| * \<o1> \<o2>    | \<o1> * \<o2>    | multiply *o1* and *o2*             |
 | / \<o1> \<o2>    | \<o1> / \<o2>    | divides *o1* by *o2*               |
-| # \<i>           | &\<i>            | get addres of <i>                  |
-| $ \<p>           | *\<p>            | get value (see note 1) by addres   |
+| # \<i>           | &\<i>            | get address of <i>                 |
+| $ \<p>           | *\<p>            | get value (see note 1) by address  |
 | & \<o1> \<o2>    | \<o1> & \<o2>    | bitwise *and* with *o1* and *o2*   |
 | \| \<o1> \<o2>   | \<o1> \| \<o2>   | bitwise *or* with *o1* and *o2*    |
 | ^ \<o1> \<o2>    | \<o1> ^ \<o2>    | bitwise *xor* with *o1* and *o2*   |
@@ -76,6 +76,10 @@ Micro support +, -, * and / operators - addition, substruction, multipling, divi
 | ! \<o1>          | !\<o1>           | logical *not* with *o1*            |
 | == \<o1> \<o2>   | \<o1> == \<o2>   | equals check between *o1* and *o2* |
 | != \<o1> \<o2>   | \<o1> != \<o2>   | not equals check                   |
+| > \<o1> \<o2>    | \<o1> > \<o2>    | *o1* bigger than *o2*              |
+| < \<o1> \<o2>    | \<o1> < \<o2>    | *o1* lesser than *o2*              |
+| >= \<o1> \<o2>   | \<o1> >= \<o2>   | *o1* bigger than *o2* or equals    |
+| <= \<o1> \<o2>   | \<o1> <= \<o2>   | *o1* lesser than *o2* or equals    |
 
 ### notes
 1. value for size of expected type
@@ -90,13 +94,13 @@ or
 ```
 var <type> <name> <init value>;
 ```
-If *init value* not set static variable will be initializate as 0
+If *init value* not set static variable will be initialize as 0
 
 You cant using expression as *init value*!
 
 ---
 
-Variables alocating on stack. *rsp* register stay on a return address:
+Variables allocating on stack. *rsp* register stay on a return address:
 ```
 var i32 a 5;
 var i8  b 4;
@@ -127,25 +131,25 @@ set a + 8 5; \ a = 13 \
 ```
 
 
-# Functuins
-Functions in micro work like "functions" in most assembers: label is specified at the beginning of the function and 'ret' instruction is specified at end:
+# Functions
+Functions in micro work like "functions" in most assemblers: label is specified at the beginning of the function and 'ret' instruction is specified at end:
 ```
 some_function_name:  ; start of function
     add ax, cx       ; some code
     ret              ; end of function
 ```
 
-But these "function" desnt have parametrs and, for example, specified return type in language level, unlike micro
+But these "function" doesn't have parameters and, for example, specified return type in language level, unlike micro
 
 Functions in micro declaration in BNF notation:
 ```
-fun <name> [<param type 1> <param name 1> <param type 2> <param name 2> <param type N> <param name N>] [ret <function return type>] start <body of fuction> end
+fun <name> [<param type 1> <param name 1> <param type 2> <param name 2> <param type N> <param name N>] [ret <function return type>] start <body of function> end
 ```
 note: check the [style guide of function declaration](./good-micro-code-style.md#function-declaration)
 
 # Functions calling
 
-Functions can be called like in an assebler: with 'call' keyword:
+Functions can be called like in an assembler: with 'call' keyword:
 ```
 \ declaration \
 fun test:
