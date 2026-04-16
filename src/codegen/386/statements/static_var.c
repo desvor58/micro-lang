@@ -63,7 +63,7 @@ void micro_codegen_386__static_var(micro_codegen_t *codegen)
             return;
         }
 
-        micro_codegen_386_micro_type lit_type = micro_lit2mt(__micro_peek(codegen, 3), var_info.type);
+        micro_instrgen_micro_type lit_type = micro_lit2mt(__micro_peek(codegen, 3), var_info.type);
         if (lit_type == MICRO_MT_NULL) {
             micro_push_err((micro_error_t){
                 .msg = "Wrong literal type",

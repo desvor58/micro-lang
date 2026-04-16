@@ -20,11 +20,11 @@ typedef enum {
 } micro_codegen_ext_type;
 
 typedef struct {
-    micro_tok_vec_t       *toks;
-    micro_codegen_outbuf_t  *outbuf;
-    size_t                 toks_pos;
-    void                  *ext;
-    micro_codegen_ext_type ext_type;
+    micro_tok_vec_t        *toks;
+    micro_codegen_outbuf_t *outbuf;
+    size_t                  toks_pos;
+    void                   *ext;
+    micro_codegen_ext_type  ext_type;
 } micro_codegen_t;
 
 #endif

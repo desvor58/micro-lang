@@ -1,6 +1,6 @@
 #include <micro/codegen/386/common.h>
 
-micro_codegen_386_size micro_mt_size[] = {
+micro_instrgen_size micro_mt_size[] = {
     [MICRO_MT_NULL] = MICRO_SZ_8,
     [MICRO_MT_I8]   = MICRO_SZ_8,
     [MICRO_MT_U8]   = MICRO_SZ_8,
@@ -18,7 +18,7 @@ size_t micro_sz_real_size[] = {
     [MICRO_SZ_32] = 4,
 };
 
-micro_codegen_386_micro_type micro_str2mt(char *str)
+micro_instrgen_micro_type micro_str2mt(char *str)
 {
     if (!strcmp(str, "i8"))  return MICRO_MT_I8;
     if (!strcmp(str, "u8"))  return MICRO_MT_U8;
@@ -31,7 +31,7 @@ micro_codegen_386_micro_type micro_str2mt(char *str)
     return MICRO_MT_NULL;
 }
 
-micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_micro_type expected)
+micro_instrgen_micro_type micro_lit2mt(micro_token_t lit, micro_instrgen_micro_type expected)
 {
     if (!micro_tokislit(lit)) {
         return MICRO_MT_NULL;
@@ -84,7 +84,7 @@ micro_token_t __micro_get(micro_codegen_t *codegen, size_t offset)
     return codegen->toks->toks[codegen->toks_pos];
 }
 
-micro_codegen_386_micro_type micro_gettype(micro_codegen_t *codegen, micro_token_t tok, micro_codegen_386_micro_type expected)
+micro_instrgen_micro_type micro_gettype(micro_codegen_t *codegen, micro_token_t tok, micro_instrgen_micro_type expected)
 {
     if (micro_tokislit(tok)) {
         return micro_lit2mt(tok, expected);

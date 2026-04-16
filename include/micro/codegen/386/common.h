@@ -15,10 +15,12 @@
 #include <SCT/string.h>
 #include <SCT/vector.h>
 
-#include "../codegen.h"
+#include "../../asm/asm386.h"
 #include "../../common.h"
 #include "../../lexer.h"
-#include "../../asm/asm386.h"
+#include "../codegen.h"
+
+#include "../../instrgen/common.h"
 
 typedef struct {
     int       code_in_function;
@@ -52,32 +54,14 @@ typedef struct {
                          || (tok).type == MICRO_TT_LESS_OR_EQ   \
                          || (tok).type == MICRO_TT_APOSTROPHE)  \
 
-typedef enum {
-    MICRO_MT_NULL = 0,
-    MICRO_MT_I8,
-    MICRO_MT_U8,
-    MICRO_MT_I16,
-    MICRO_MT_U16,
-    MICRO_MT_I32,
-    MICRO_MT_U32,
-    MICRO_MT_F32,
-    MICRO_MT_PTR,
-} micro_codegen_386_micro_type;
-
-typedef enum {
-    MICRO_SZ_8  = 0,
-    MICRO_SZ_16 = 1,
-    MICRO_SZ_32 = 2,
-} micro_codegen_386_size;
-
 #define micro_mtisunsigned(mt) (mt == MICRO_MT_U8 || mt == MICRO_MT_U16 || mt == MICRO_MT_U32 || mt == MICRO_MT_PTR)
 
-extern micro_codegen_386_size micro_mt_size[];
-extern size_t                 micro_sz_real_size[];
+extern micro_instrgen_size micro_mt_size[];
+extern size_t             micro_sz_real_size[];
 
-micro_codegen_386_micro_type micro_str2mt(char *str);
+micro_instrgen_micro_type micro_str2mt(char *str);
 
-micro_codegen_386_micro_type micro_lit2mt(micro_token_t lit, micro_codegen_386_micro_type expected);
+micro_instrgen_micro_type micro_lit2mt(micro_token_t lit, micro_instrgen_micro_type expected);
 
 typedef enum {
     MICRO_ST_STACK,
@@ -91,19 +75,19 @@ typedef struct {
     // if type == MICRO_ST_DATASEG:  start_of_file + org + offset
     // if type == MICRO_ST_REGISTER: offset - num of register
     ptrdiff_t offset;
-    micro_codegen_386_size size;
+    micro_instrgen_size size;
     int is_unsigned;
 } micro_codegen_386_storage_info_t;
 
 typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
-    micro_codegen_386_micro_type type;
+    micro_instrgen_micro_type type;
     micro_codegen_386_storage_info_t storage_info;
 } micro_codegen_386_var_info_t;
 
 typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
-    micro_codegen_386_micro_type ret_type;
+    micro_instrgen_micro_type ret_type;
     // Ty: micro_codegen_386_var_info_t
     sct_vector_t *args;
     size_t offset;
@@ -141,7 +125,7 @@ micro_token_t __micro_get(micro_codegen_t *codegen, size_t offset);
 
 void __micro_dbg_print_idents(micro_codegen_t *codegen);
 
-micro_codegen_386_micro_type micro_gettype(micro_codegen_t *codegen, micro_token_t tok, micro_codegen_386_micro_type expected);
+micro_instrgen_micro_type micro_gettype(micro_codegen_t *codegen, micro_token_t tok, micro_instrgen_micro_type expected);
 
 void micro_codegen_386_micro_instruction_parse(micro_codegen_t *codegen);
 
