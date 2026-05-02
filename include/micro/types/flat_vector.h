@@ -11,6 +11,8 @@ typedef struct {
     size_t __extend_size;
 } micro_flat_vector_t;
 
+#define MICRO_FLAT_VECTOR_STD_EXT_SZ 32
+
 void micro_flat_vector_init(micro_flat_vector_t *vec, size_t type_sz, size_t ext_sz);
 
 void micro_flat_vector_deinit(micro_flat_vector_t *vec);

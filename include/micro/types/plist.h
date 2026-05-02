@@ -6,12 +6,12 @@
 #define foreach(iter_name, list_start) for (sct_list_pair_t *(iter_name) = (list_start); (iter_name) && (iter_name)->val; (iter_name) = (iter_name)->next)
 #define it_data_as(it, ty) ((ty)((it)->data))
 
-typedef struct {
+typedef struct micro_plist_t {
     void          *data;
-    micro_plist_t *next;
+    struct micro_plist_t *next;
 } micro_plist_t;
 
-void micro_plist_init(micro_plist_t *list);
+micro_plist_t *micro_plist_init();
 
 void micro_plist_deinit(micro_plist_t *list, int datafree);
 

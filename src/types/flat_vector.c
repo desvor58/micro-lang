@@ -1,4 +1,4 @@
-#include "flat_vector.h"
+#include <micro/types/flat_vector.h>
 
 void micro_flat_vector_init(micro_flat_vector_t *vec, size_t type_sz, size_t ext_sz)
 {
@@ -30,7 +30,6 @@ void micro_flat_vector_push(micro_flat_vector_t *vec, void *val)
 {
     if (vec->size + 1 >= vec->real_size) {
         __micro_flat_vector_extend(vec);
-        return;
     }
     memcpy(vec->data + vec->size * vec->__type_size, val, vec->__type_size);
     vec->size++;

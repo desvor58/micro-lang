@@ -3,6 +3,8 @@
         "chpos",
         "Desvor",
         "INSTRGEN",
+        "libmicro",
+        "LIBUTIL",
         "microc",
         "movzx",
         "mtisunsigned",
