@@ -1,4 +1,5 @@
 #include <micro/types/plist.h>
+#include <stdio.h>
 
 micro_plist_t *micro_plist_init()
 {
@@ -27,16 +28,19 @@ int micro_plist_push(micro_plist_t *list, void *val)
         return 1;
     }
     micro_plist_t *it = list;
-    while (it && it->data) {
+    for (;;) {
+        if (!it->data) {
+            it->data = val;
+            return 0;
+        }
+        if (!it->next) {
+            it->next = micro_plist_init();
+            it->next->data = val;
+            return 0;
+        }
         it = it->next;
     }
-    if (!it->data) {
-        it->data = val;
-        return 0;
-    }
-    it->next = malloc(sizeof(micro_plist_t));
-    it->next->data = val;
-    return 0;
+    return 1;
 }
 
 void *micro_plist_get(micro_plist_t *list, size_t index)
@@ -45,7 +49,8 @@ void *micro_plist_get(micro_plist_t *list, size_t index)
         return 0;
     }
     micro_plist_t *it = list;
-    for (size_t i = 0; i < index && it && it->data; i++) {
+    for (size_t i = 0; i < index; i++) {
+        if (!it || !it->data) return 0;
         it = it->next;
     }
     return it->data;
@@ -58,7 +63,8 @@ size_t micro_plist_size(micro_plist_t *list)
     }
     micro_plist_t *it = list;
     size_t i = 0;
-    while (it && it->data) {
+    for (;;) {
+        if (!it || !it->data) break;
         it = it->next;
         i++;
     }
