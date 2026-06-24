@@ -24,6 +24,7 @@ typedef enum {
     MICRO_TT_APOSTROPHE,
     MICRO_TT_TILDE,
     MICRO_TT_EQ,
+    MICRO_TT_EXCLAMATION,
     MICRO_TT_NOT_EQ,
     MICRO_TT_GREAT,
     MICRO_TT_LESS,
@@ -65,9 +66,9 @@ typedef struct {
     size_t         real_size;
 } micro_tok_vec_t;
 
-void micro_create_tok_vec(micro_tok_vec_t *vec);
+void micro_tok_vec_init(micro_tok_vec_t *vec);
 void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok);
-void micro_free_tok_vec(micro_tok_vec_t *vec);
+void micro_tok_vec_deinit(micro_tok_vec_t *vec);
 
 #define __micro_single_chlex(ch, tt)  \
     if (text[pos] == (ch)) {  \

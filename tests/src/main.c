@@ -1,7 +1,9 @@
 #include "types.h"
+#include "lexer.h"
 
 static MunitSuite all_suites[] =  {
     types_suite,
+    lexer_suite,
     { NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE }
 };
 

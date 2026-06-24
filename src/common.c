@@ -11,6 +11,11 @@ void micro_init()
     __micro_err_stk_real_size = MICRO_ERROR_STACK_EXTEND_SIZE;
 }
 
+void micro_deinit()
+{
+    free(micro_err_stk);
+}
+
 void micro_push_err(micro_error_t err)
 {
     if (micro_err_stk_size + 1 >= __micro_err_stk_real_size) {
@@ -20,11 +25,6 @@ void micro_push_err(micro_error_t err)
         micro_err_stk = new_errs;
     }
     micro_err_stk[micro_err_stk_size++] = err;
-}
-
-void micro_deinit()
-{
-    free(micro_err_stk);
 }
 
 micro_imm_be_t micro_imm_be_gen(i32 val)

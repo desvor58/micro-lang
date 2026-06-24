@@ -15,6 +15,7 @@ char *micro_token_type2str[] = {
     [MICRO_TT_HASH]        = "hash",
     [MICRO_TT_APOSTROPHE]  = "apostrophe",
     [MICRO_TT_TILDE]       = "tilde",
+    [MICRO_TT_EXCLAMATION] = "exclamation",
     [MICRO_TT_EQ]          = "eq",
     [MICRO_TT_NOT_EQ]      = "not eq",
     [MICRO_TT_GREAT]       = "great",
@@ -41,11 +42,18 @@ char *micro_token_type2str[] = {
     [MICRO_TT_KW_GOTO]     = "goto",
 };
 
-void micro_create_tok_vec(micro_tok_vec_t *vec)
+void micro_tok_vec_init(micro_tok_vec_t *vec)
 {
-    vec->toks = malloc(MICRO_TOKEN_VEC_EXTEND_SIZE * sizeof(micro_token_t));
-    vec->size = 0;
-    vec->real_size = MICRO_TOKEN_VEC_EXTEND_SIZE;
+    *vec = (micro_tok_vec_t){
+        .toks = malloc(MICRO_TOKEN_VEC_EXTEND_SIZE * sizeof(micro_token_t)),
+        .size = 0,
+        .real_size = MICRO_TOKEN_VEC_EXTEND_SIZE,
+    };
+}
+
+void micro_tok_vec_deinit(micro_tok_vec_t *vec)
+{
+    free(vec->toks);
 }
 
 void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok)
@@ -57,11 +65,6 @@ void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok)
         vec->toks = new_toks;
     }
     vec->toks[vec->size++] = tok;
-}
-
-void micro_free_tok_vec(micro_tok_vec_t *vec)
-{
-    free(vec->toks);
 }
 
 void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
@@ -269,21 +272,19 @@ void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
             strcpy(tok.val, buf);
             micro_push_tok(toks, tok);
         } else
-        __micro_single_chlex('+', MICRO_TT_PLUS)       else
-        __micro_single_chlex('-', MICRO_TT_MINUS)      else
-        __micro_single_chlex('*', MICRO_TT_STAR)       else
-        __micro_single_chlex('/', MICRO_TT_SLASH)      else
-        __micro_single_chlex('.', MICRO_TT_DOT)        else
-        __micro_single_chlex(',', MICRO_TT_COMA)       else
-        __micro_single_chlex(':', MICRO_TT_COLON)      else
-        __micro_single_chlex(';', MICRO_TT_SEMICOLON)  else
-        __micro_single_chlex('&', MICRO_TT_AMPERSAND)  else
-        __micro_single_chlex('$', MICRO_TT_DOLLAR)     else
-        __micro_single_chlex('#', MICRO_TT_HASH)       else
-        __micro_single_chlex('`', MICRO_TT_APOSTROPHE) else
-        __micro_single_chlex('=', MICRO_TT_EQ)         else
-        __micro_single_chlex('>', MICRO_TT_GREAT)      else
-        __micro_single_chlex('<', MICRO_TT_LESS)       else
+        __micro_single_chlex('+', MICRO_TT_PLUS)        else
+        __micro_single_chlex('-', MICRO_TT_MINUS)       else
+        __micro_single_chlex('*', MICRO_TT_STAR)        else
+        __micro_single_chlex('/', MICRO_TT_SLASH)       else
+        __micro_single_chlex('.', MICRO_TT_DOT)         else
+        __micro_single_chlex(',', MICRO_TT_COMA)        else
+        __micro_single_chlex(':', MICRO_TT_COLON)       else
+        __micro_single_chlex(';', MICRO_TT_SEMICOLON)   else
+        __micro_single_chlex('&', MICRO_TT_AMPERSAND)   else
+        __micro_single_chlex('$', MICRO_TT_DOLLAR)      else
+        __micro_single_chlex('#', MICRO_TT_HASH)        else
+        __micro_single_chlex('`', MICRO_TT_APOSTROPHE)  else
+        __micro_single_chlex('=', MICRO_TT_EQ)          else
         __micro_single_chlex('~', MICRO_TT_TILDE)
         
         if (text[pos] == '!' && text[pos + 1] == '=') {
@@ -308,8 +309,13 @@ void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks)
             });
         }
         
+        __micro_single_chlex('!', MICRO_TT_EXCLAMATION) else
+        __micro_single_chlex('>', MICRO_TT_GREAT)       else
+        __micro_single_chlex('<', MICRO_TT_LESS)
+        
         pos++;
         chpos++;
     }
-err_exit:;
+err_exit:
+    free(buf);
 }
