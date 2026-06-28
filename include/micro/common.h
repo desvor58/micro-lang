@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <SCT/common.h>
+
 #if defined(__GNUC__) || defined(__clang__)
 # define MICRO_ATTRIBUTE_CONST __attribute__((const))
 #elif defined(_MSC_VER)
@@ -19,7 +21,7 @@
 // size by which tokens vector will be extended on each overflow
 #define MICRO_TOKEN_VEC_EXTEND_SIZE 32
 // max size of symbols
-#define MICRO_MAX_SYMBOL_SIZE 128
+#define MICRO_MAX_SYMBOL_SIZE 64
 // max errors and warnings message size
 #define MICRO_MAX_ERROR_MESSAGE_SIZE 256
 // size of buffer for reading input file
@@ -29,12 +31,23 @@
 // size by which outbuf will be extended on each overflow
 #define MICRO_OUTBUF_EXTEND_SIZE 196
 
-typedef int8_t   i8;
-typedef uint8_t  u8;
-typedef int16_t  i16;
-typedef uint16_t u16;
-typedef int32_t  i32;
-typedef uint32_t u32;
+typedef enum {
+    MICRO_TYPE_NULL = 0,
+    MICRO_TYPE_I8,
+    MICRO_TYPE_U8,
+    MICRO_TYPE_I16,
+    MICRO_TYPE_U16,
+    MICRO_TYPE_I32,
+    MICRO_TYPE_U32,
+    MICRO_TYPE_F32,
+    MICRO_TYPE_PTR,
+} micro_type_t;
+
+typedef enum {
+    MICRO_SIZE_8  = 0,
+    MICRO_SIZE_16 = 1,
+    MICRO_SIZE_32 = 2,
+} micro_size_t;
 
 typedef struct {
     char msg[MICRO_MAX_ERROR_MESSAGE_SIZE];
@@ -60,7 +73,7 @@ micro_imm_le_t micro_imm_le_gen(i32 val);
 
 extern micro_error_t *micro_err_stk;
 extern size_t         micro_err_stk_size;
-extern size_t       __micro_err_stk_real_size;
+extern size_t        _micro_err_stk_real_size;
 
 void micro_init();
 

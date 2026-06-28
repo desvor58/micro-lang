@@ -1,86 +1,73 @@
 #ifndef MICRO_LEXER_H
 #define MICRO_LEXER_H
 
-#include <malloc.h>
-#include <string.h>
-#include <stdio.h>
 #include <ctype.h>
-#include "common.h"
+
+#include <micro/common.h>
+#include <SCT/vector.h>
 
 typedef enum {
-    MICRO_TT_NULL,
+    MICRO_TOK_NULL,
 
-    MICRO_TT_PLUS,
-    MICRO_TT_MINUS,
-    MICRO_TT_STAR,
-    MICRO_TT_SLASH,
-    MICRO_TT_DOT,
-    MICRO_TT_COMA,
-    MICRO_TT_COLON,
-    MICRO_TT_SEMICOLON,
-    MICRO_TT_AMPERSAND,
-    MICRO_TT_DOLLAR,
-    MICRO_TT_HASH,
-    MICRO_TT_APOSTROPHE,
-    MICRO_TT_TILDE,
-    MICRO_TT_EQ,
-    MICRO_TT_EXCLAMATION,
-    MICRO_TT_NOT_EQ,
-    MICRO_TT_GREAT,
-    MICRO_TT_LESS,
-    MICRO_TT_GREAT_OR_EQ,
-    MICRO_TT_LESS_OR_EQ,
+    MICRO_TOK_PLUS,
+    MICRO_TOK_MINUS,
+    MICRO_TOK_STAR,
+    MICRO_TOK_SLASH,
+    MICRO_TOK_DOT,
+    MICRO_TOK_COMA,
+    MICRO_TOK_COLON,
+    MICRO_TOK_SEMICOLON,
+    MICRO_TOK_AMPERSAND,
+    MICRO_TOK_DOLLAR,
+    MICRO_TOK_HASH,
+    MICRO_TOK_APOSTROPHE,
+    MICRO_TOK_TILDE,
+    MICRO_TOK_EQ,
+    MICRO_TOK_EXCLAMATION,
+    MICRO_TOK_NOT_EQ,
+    MICRO_TOK_GREAT,
+    MICRO_TOK_LESS,
+    MICRO_TOK_GREAT_OR_EQ,
+    MICRO_TOK_LESS_OR_EQ,
 
-    MICRO_TT_TYPE_NAME,
-    MICRO_TT_IDENT,
+    MICRO_TOK_TYPE_NAME,
+    MICRO_TOK_IDENT,
 
-    MICRO_TT_LIT_INT,
-    MICRO_TT_LIT_FLOAT,
-    MICRO_TT_LIT_STR,
+    MICRO_TOK_LIT_INT,
+    MICRO_TOK_LIT_FLOAT,
+    MICRO_TOK_LIT_STR,
 
-    MICRO_TT_KW_VAR,
-    MICRO_TT_KW_FUN,
-    MICRO_TT_KW_SET,
-    MICRO_TT_KW_IF,
-    MICRO_TT_KW_ELSE,
-    MICRO_TT_KW_WHILE,
-    MICRO_TT_KW_START,
-    MICRO_TT_KW_END,
-    MICRO_TT_KW_RET,
-    MICRO_TT_KW_CALL,
-    MICRO_TT_KW_GOTO,
-} micro_token_type;
+    MICRO_TOK_KW_FUN,
+    MICRO_TOK_KW_SET,
+    MICRO_TOK_KW_IF,
+    MICRO_TOK_KW_ELSE,
+    MICRO_TOK_KW_WHILE,
+    MICRO_TOK_KW_START,
+    MICRO_TOK_KW_END,
+    MICRO_TOK_KW_RET,
+    MICRO_TOK_KW_CALL,
+    MICRO_TOK_KW_GOTO,
+} micro_token_type_t;
 
 extern char *micro_token_type2str[];
 
 typedef struct {
-    micro_token_type type;
-    char       val[MICRO_MAX_SYMBOL_SIZE];
-    size_t     line_ref;
-    size_t     chpos_ref;
+    micro_token_type_t type;
+    char             val[MICRO_MAX_SYMBOL_SIZE];
+    size_t           line_ref;
+    size_t           chpos_ref;
 } micro_token_t;
 
-typedef struct {
-    micro_token_t *toks;
-    size_t         size;
-    size_t         real_size;
-} micro_tok_vec_t;
-
-void micro_tok_vec_init(micro_tok_vec_t *vec);
-void micro_push_tok(micro_tok_vec_t *vec, micro_token_t tok);
-void micro_tok_vec_deinit(micro_tok_vec_t *vec);
-
-#define __micro_single_chlex(ch, tt)  \
+#define _micro_single_chlex(ch, tt)  \
     if (text[pos] == (ch)) {  \
-        micro_token_t tok = {  \
+        sct_vector_push(toks, &(micro_token_t){  \
             .type = tt,  \
             .val = 0,  \
             .line_ref = line,  \
             .chpos_ref = chpos  \
-        };  \
-        micro_push_tok(toks, tok);  \
+        });  \
     }
 
-void micro_tokenize(const char *text, size_t text_size, micro_tok_vec_t *toks);
+void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks);
 
 #endif

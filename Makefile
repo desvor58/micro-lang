@@ -6,8 +6,9 @@ TEST_LDFLAGS := -Llib -lmicro
 LIBUTIL_FMT = ar rcs $(1) $(2)
 
 SRC_TARGETS := src/*.c                             \
-			   src/types/*.c					   \
-			   src/asm/*.c
+			   src/instrgen/*.c					   \
+			   src/instrgen/statements/*.c
+#			   src/asm/*.c						   \
 # 			   src/codegen/*.c                     \
 # 			   src/codegen/386/*.c                 \
 # 			   src/codegen/386/statements/*.c      \

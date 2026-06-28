@@ -1,9 +1,10 @@
 #ifndef MICRO_H
 #define MICRO_H
 
-#include "common.h"
-#include "lexer.h"
+#include <micro/common.h>
+#include <micro/lexer.h>
+#include <micro/instrgen/instrgen.h>
 
-#include "codegen/codegen_386.h"
+// #include "codegen/codegen_386.h"
 
 #endif
