@@ -3,7 +3,7 @@
 
 #include <micro/common.h>
 #include <micro/lexer.h>
-#include <micro/instrgen/instrgen.h>
+#include <micro/instrgen.h>
 
 // #include "codegen/codegen_386.h"
 

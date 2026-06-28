@@ -1,4 +1,4 @@
-#include <micro/instrgen/instrgen.h>
+#include <micro/instrgen.h>
 
 struct {
     char name[4];
@@ -47,6 +47,10 @@ void micro_instrgen_gen(micro_instrgen_t *instrgen)
         switch (tok->type) {
             case MICRO_TOK_KW_SET:
                 micro_instrgen_parse_set(instrgen);
+                break;
+
+            case MICRO_TOK_KW_RET:
+                micro_instrgen_parse_ret(instrgen);
                 break;
 
             default:

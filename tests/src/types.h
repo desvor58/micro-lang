@@ -2,40 +2,39 @@
 #define TESTS_TYPES_H
 
 #include "../include/munit.h"
-#include <micro/types/flat_vector.h>
-#include <micro/types/plist.h>
+#include <SCT/vector.h>
+#include <SCT/list.h>
 #include <stdio.h>
 
-MunitResult test_flat_vector_int(const MunitParameter params[], void *data)
+MunitResult test_vector_int(const MunitParameter params[], void *data)
 {
-    micro_flat_vector_t vec;
-    micro_flat_vector_init(&vec, sizeof(int), MICRO_FLAT_VECTOR_STD_EXT_SZ);
+    sct_vector_t vec;
+    sct_vector_init(&vec, sizeof(int));
 
     munit_assert_ptr_not_null(vec.data);
-    munit_assert_size(vec.__extend_size, ==, MICRO_FLAT_VECTOR_STD_EXT_SZ);
-    munit_assert_size(vec.__type_size, ==, sizeof(int));
-    munit_assert_size(vec.real_size, ==, MICRO_FLAT_VECTOR_STD_EXT_SZ);
+    munit_assert_size(vec.cap, ==, SCT_VECTOR_ALLOC_SIZE);
     munit_assert_size(vec.size, ==, 0);
+    munit_assert_size(vec._item_size, ==, sizeof(int));
 
     for (size_t i = 0; i < 200; i++) {
         for (size_t j = 0; j < i; j++) {
-            int *Jint = micro_flat_vector_get(&vec, j);
+            int *Jint = sct_vector_get(&vec, j);
             munit_assert_int(*Jint, ==, j);
         }
 
         munit_assert_size(vec.size, ==, i);
 
-        micro_flat_vector_push(&vec, &i);
+        sct_vector_push(&vec, &i);
 
         munit_assert_size(vec.size, ==, i + 1);
 
         for (size_t j = 0; j < i + 1; j++) {
-            int *Jint = micro_flat_vector_get(&vec, j);
+            int *Jint = sct_vector_get(&vec, j);
             munit_assert_int(*Jint, ==, j);
         }
     }
 
-    micro_flat_vector_deinit(&vec);
+    sct_vector_deinit(&vec);
 
     return MUNIT_OK;
 }
@@ -48,7 +47,7 @@ typedef struct {
 
 MunitResult test_flat_vector_struct(const MunitParameter params[], void *data)
 {
-    micro_flat_vector_t vec;
+    sct_vector_t vec;
     micro_flat_vector_init(&vec, sizeof(my_vec_t), MICRO_FLAT_VECTOR_STD_EXT_SZ);
 
     munit_assert_ptr_not_null(vec.data);
@@ -176,7 +175,7 @@ MunitResult test_plist_struct(const MunitParameter params[], void *data)
 
 
 static MunitTest types_tests[] = {
-    { "/flat_vector/int", test_flat_vector_int, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/vector/int", test_vector_int, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/flat_vector/struct", test_flat_vector_struct, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/plist/int", test_plist_int, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/plist/struct", test_plist_struct, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

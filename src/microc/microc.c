@@ -32,11 +32,15 @@ micro_args_t micro_args_parse(int argc, char **argv)
             if (!strcmp(argv[i], "--output") || !strcmp(argv[i], "-o")) {
                 strcpy(args.outfile, argv[++i]);
             } else
-            if (!strcmp(argv[i], "--toks-put") || !strcmp(argv[i], "-Tp")) {
-                args.toks_put = 1;
-            }
-            if (!strcmp(argv[i], "--instrs-put") || !strcmp(argv[i], "-Ip")) {
-                args.instrs_put = 1;
+            if (argv[i][1] == 'P') {
+                for (size_t j = 2; argv[i][j]; j++) {
+                    if (argv[i][j] == 't') {
+                        args.toks_put = 1;
+                    } else
+                    if (argv[i][j] == 'i') {
+                        args.instrs_put = 1;
+                    }
+                }
             }
         } else {
             strcpy(args.inputfile, argv[i]);
@@ -50,6 +54,18 @@ void put_err(char *file, size_t line, size_t chpos, char *msg)
 {
     printf("Error:%s:%lu:%lu: %s\n", file, line, chpos, msg);
 }
+
+char *str_type[] = {
+    [MICRO_TYPE_NULL] = "null",
+    [MICRO_TYPE_I8]   = "i8",
+    [MICRO_TYPE_U8]   = "u8",
+    [MICRO_TYPE_I16]  = "i16",
+    [MICRO_TYPE_U16]  = "u16",
+    [MICRO_TYPE_I32]  = "i32",
+    [MICRO_TYPE_U32]  = "u32",
+    [MICRO_TYPE_F32]  = "f32",
+    [MICRO_TYPE_PTR]  = "ptr"
+};
 
 int main(int argc, char **argv)
 {
@@ -128,8 +144,27 @@ int main(int argc, char **argv)
                 return 3;
             }
             
-            for (size_t i = 0; i < instrgen.instructions.size; i++) {
-                
+            if (args->instrs_put) {
+                for (size_t i = 0; i < instrgen.instructions.size; i++) {
+                    micro_instruction_t *instr = sct_vector_get(&instrgen.instructions, i);
+                    switch (instr->type) {
+                        case MICRO_INSTR_SET:
+                            printf("SET: type:%s, name:'%s'\n", str_type[instr->set.type], instr->set.reg_name);
+                            break;
+
+                        case MICRO_INSTR_DRSET:
+                            printf("DRSET: type:%s, name:'%s'\n", str_type[instr->set.type], instr->set.reg_name);
+                            break;
+
+                        case MICRO_INSTR_RET:
+                            printf("RET\n");
+                            break;
+
+                        default:
+                            puts("wrong instr->type");
+                            break;
+                    }
+                }
             }
         micro_instrgen_deinit(&instrgen);
     micro_deinit();
