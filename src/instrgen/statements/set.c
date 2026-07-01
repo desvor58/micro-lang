@@ -35,7 +35,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     }
 
     micro_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (name_tok->type == MICRO_TOK_HASH) {
+    if (name_tok->type == MICRO_TOK_DOLLAR) {
         is_drset = 1;
         name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     }

@@ -22,7 +22,8 @@ In micro, I recommend sticking to snake_case naming, but micro is an IR language
 I recommend declarate function like this:
 ```
 fun <function name>
-    <param T 1> <param N 1>  <param T N> <param N N>
+    <param T 1> <param N 1>
+    <param T N> <param N N>
     ret <ret type>
 start
     <body>

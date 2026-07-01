@@ -22,6 +22,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
         goto exit;
     }
     if (expr_start_tok->type == MICRO_TOK_SEMICOLON) {
+        instrgen->pos--;
         expr_start_tok = 0;
     }
 

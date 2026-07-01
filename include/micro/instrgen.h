@@ -9,10 +9,6 @@
                                     (tok_type) == MICRO_TOK_MINUS ||  \
                                     (tok_type) == MICRO_TOK_STAR ||  \
                                     (tok_type) == MICRO_TOK_SLASH ||  \
-                                    (tok_type) == MICRO_TOK_DOT ||  \
-                                    (tok_type) == MICRO_TOK_COMA ||  \
-                                    (tok_type) == MICRO_TOK_COLON ||  \
-                                    (tok_type) == MICRO_TOK_SEMICOLON ||  \
                                     (tok_type) == MICRO_TOK_AMPERSAND ||  \
                                     (tok_type) == MICRO_TOK_DOLLAR ||  \
                                     (tok_type) == MICRO_TOK_HASH ||  \
@@ -34,14 +30,17 @@
 
 micro_type_t micro_type_str_parse(const char *str);
 
+size_t micro_scroll_expr(sct_vector_t *toks, size_t i);
+
 typedef enum {
     MICRO_INSTR_SET,
     MICRO_INSTR_DRSET,  // DeRef&SET
     MICRO_INSTR_FUN,
     MICRO_INSTR_RET,
+    MICRO_INSTR_CALL,
+    MICRO_INSTR_LBL,
     MICRO_INSTR_GOTO,
     MICRO_INSTR_IF,
-    MICRO_INSTR_CALL,
 } micro_instruction_type_t;
 
 typedef struct {
@@ -73,12 +72,23 @@ typedef struct {
 } micro_instruction_ret_t;
 
 typedef struct {
+    char ret_reg_name[MICRO_MAX_SYMBOL_SIZE];
+    char fun_name[MICRO_MAX_SYMBOL_SIZE];
+    sct_vector_t arg_exprs;
+} micro_instruction_call_t;
+
+typedef struct {
+    char name[MICRO_MAX_SYMBOL_SIZE];
+} micro_instruction_lbl_t;
+
+typedef struct {
     micro_instruction_type_t type;
     union {
         micro_instruction_set_t   set;
         micro_instruction_drset_t drset;
         micro_instruction_fun_t   fun;
         micro_instruction_ret_t   ret;
+        micro_instruction_call_t  call;
     };
 } micro_instruction_t;
 
@@ -87,6 +97,7 @@ typedef struct {
     sct_vector_t *toks;
     size_t        pos;
     sct_vector_t  instructions;
+    int           code_in_function;
 } micro_instrgen_t;
 
 void micro_instrgen_init(micro_instrgen_t *instrgen, sct_vector_t *toks);
@@ -97,6 +108,10 @@ void micro_instrgen_gen(micro_instrgen_t *instrgen);
 
 void micro_instrgen_parse_set(micro_instrgen_t *instrgen);
 
+void micro_instrgen_parse_fun(micro_instrgen_t *instrgen);
+
 void micro_instrgen_parse_ret(micro_instrgen_t *instrgen);
+
+void micro_instrgen_parse_call(micro_instrgen_t *instrgen);
 
 #endif

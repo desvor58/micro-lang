@@ -3,6 +3,8 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,6 +21,8 @@ typedef float    f32;
 typedef double   f64;
 
 void *amalloc(size_t size);
+
+int sct_format(char *buf, size_t buf_size, const char *fmt, ...);
 
 inline size_t sct_align_up(size_t size)
 {

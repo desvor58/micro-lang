@@ -1,6 +1,7 @@
 #ifndef MICRO_COMMON_H
 #define MICRO_COMMON_H
 
+#include <stdio.h>
 #include <malloc.h>
 #include <inttypes.h>
 #include <stddef.h>

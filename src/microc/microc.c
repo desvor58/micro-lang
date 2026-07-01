@@ -52,7 +52,16 @@ micro_args_t micro_args_parse(int argc, char **argv)
 
 void put_err(char *file, size_t line, size_t chpos, char *msg)
 {
-    printf("Error:%s:%lu:%lu: %s\n", file, line, chpos, msg);
+    printf("Error: %s:%lu:%lu: %s\n", file, line, chpos, msg);
+}
+
+void print_tok(micro_token_t tok)
+{
+    printf("%lu:%lu type:%s, val:%s\n",
+                       tok.line_ref,
+                       tok.chpos_ref,
+                       micro_token_type2str[tok.type],
+                       tok.val);
 }
 
 char *str_type[] = {
@@ -66,6 +75,97 @@ char *str_type[] = {
     [MICRO_TYPE_F32]  = "f32",
     [MICRO_TYPE_PTR]  = "ptr"
 };
+
+u8 _op_args_num[] = {
+    [MICRO_TOK_PLUS]        = 2,
+    [MICRO_TOK_MINUS]       = 2,
+    [MICRO_TOK_STAR]        = 2,
+    [MICRO_TOK_SLASH]       = 2,
+    [MICRO_TOK_AMPERSAND]   = 1,
+    [MICRO_TOK_DOLLAR]      = 1,
+    [MICRO_TOK_HASH]        = 1,
+    [MICRO_TOK_APOSTROPHE]  = 1,
+    [MICRO_TOK_TILDE]       = 1,
+    [MICRO_TOK_EQ]          = 2,
+    [MICRO_TOK_EXCLAMATION] = 1,
+    [MICRO_TOK_NOT_EQ]      = 2,
+    [MICRO_TOK_GREAT]       = 2,
+    [MICRO_TOK_LESS]        = 2,
+    [MICRO_TOK_GREAT_OR_EQ] = 2,
+    [MICRO_TOK_LESS_OR_EQ]  = 2,
+};
+
+size_t print_expr(micro_token_t *start, size_t tab)
+{
+    if (!start) return 0;
+    for (size_t i = 0; i < tab; i++) {
+        putchar(' ');
+    }
+    print_tok(*start);
+    if (_micro_tok_is_lit(start->type) || start->type == MICRO_TOK_IDENT) {
+        return 1;
+    }
+    if (_micro_tok_is_op(start->type)) {
+        u8 num = _op_args_num[start->type];
+        size_t offset = 0;
+        while (num) {
+            offset += print_expr(start + offset + 1, tab);
+            num--;
+        }
+        return offset;
+    }
+    puts("print_expr error!");
+    return 0;
+}
+
+void print_instructions(sct_vector_t *instrs, size_t tab)
+{
+    for (size_t i = 0; i < instrs->size; i++) {
+        micro_instruction_t *instr = sct_vector_get(instrs, i);
+        for (size_t i = 0; i < tab; i++) {
+            putchar(' ');
+        }
+        switch (instr->type) {
+            case MICRO_INSTR_SET:
+                printf("SET: type:%s, name:'%s'\n", str_type[instr->set.type], instr->set.reg_name);
+                print_expr(instr->set.val_expr, tab + 5);
+                break;
+
+            case MICRO_INSTR_DRSET:
+                printf("DRSET: type:%s, name:'%s'\n", str_type[instr->drset.type], instr->drset.reg_name);
+                print_expr(instr->set.val_expr, tab + 5);
+                break;
+
+            case MICRO_INSTR_FUN:
+                printf("FUN: ret_type:%s, name:'%s'\n", str_type[instr->fun.ret_type], instr->fun.name);
+                printf("     args:\n");
+                for (size_t i = 0; i < instr->fun.args.size; i++) {
+                    micro_instruction_fun_arg_t *arg = sct_vector_get(&instr->fun.args, i);
+                    printf("       type:%s, name:'%s'\n", str_type[arg->type], arg->name);
+                }
+                printf("     body:\n");
+                print_instructions(&instr->fun.body, tab + 7);
+                break;
+
+            case MICRO_INSTR_RET:
+                printf("RET\n");
+                print_expr(instr->ret.val_expr, tab + 5);
+                break;
+
+            case MICRO_INSTR_CALL:
+                printf("CALL: res_reg:'%s', fun:'%s'\n", instr->call.ret_reg_name, instr->call.fun_name);
+                printf("      args:\n");
+                for (size_t j = 0; j < instr->call.arg_exprs.size; j++) {
+                    print_expr(*(micro_token_t**)sct_vector_get(&instr->call.arg_exprs, j), tab + 6);
+                }
+                break;
+
+            default:
+                puts("wrong instr->type");
+                break;
+        }
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -121,12 +221,8 @@ int main(int argc, char **argv)
         if (args->toks_put) {
             for (size_t i = 0; i < toks.size; i++) {
                 micro_token_t tok = *(micro_token_t*)sct_vector_get(&toks, i);
-                printf("%lu. %lu:%lu type:%s, val:%s\n",
-                       i,
-                       tok.line_ref,
-                       tok.chpos_ref,
-                       micro_token_type2str[tok.type],
-                       tok.val);
+                printf("%lu. ", i);
+                print_tok(tok);
             }
         }
 
@@ -145,26 +241,7 @@ int main(int argc, char **argv)
             }
             
             if (args->instrs_put) {
-                for (size_t i = 0; i < instrgen.instructions.size; i++) {
-                    micro_instruction_t *instr = sct_vector_get(&instrgen.instructions, i);
-                    switch (instr->type) {
-                        case MICRO_INSTR_SET:
-                            printf("SET: type:%s, name:'%s'\n", str_type[instr->set.type], instr->set.reg_name);
-                            break;
-
-                        case MICRO_INSTR_DRSET:
-                            printf("DRSET: type:%s, name:'%s'\n", str_type[instr->set.type], instr->set.reg_name);
-                            break;
-
-                        case MICRO_INSTR_RET:
-                            printf("RET\n");
-                            break;
-
-                        default:
-                            puts("wrong instr->type");
-                            break;
-                    }
-                }
+                print_instructions(&instrgen.instructions, 0);
             }
         micro_instrgen_deinit(&instrgen);
     micro_deinit();

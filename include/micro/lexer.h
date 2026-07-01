@@ -53,9 +53,9 @@ extern char *micro_token_type2str[];
 
 typedef struct {
     micro_token_type_t type;
-    char             val[MICRO_MAX_SYMBOL_SIZE];
-    size_t           line_ref;
-    size_t           chpos_ref;
+    char               val[MICRO_MAX_SYMBOL_SIZE];
+    size_t             line_ref;
+    size_t             chpos_ref;
 } micro_token_t;
 
 #define _micro_single_chlex(ch, tt)  \
