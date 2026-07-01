@@ -89,6 +89,7 @@ typedef struct {
         micro_instruction_fun_t   fun;
         micro_instruction_ret_t   ret;
         micro_instruction_call_t  call;
+        micro_instruction_lbl_t   lbl;
     };
 } micro_instruction_t;
 
@@ -113,5 +114,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen);
 void micro_instrgen_parse_ret(micro_instrgen_t *instrgen);
 
 void micro_instrgen_parse_call(micro_instrgen_t *instrgen);
+
+void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen);
 
 #endif

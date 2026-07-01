@@ -160,6 +160,10 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
                 }
                 break;
 
+            case MICRO_INSTR_LBL:
+                printf("LBL '%s'\n", instr->lbl.name);
+                break;
+
             default:
                 puts("wrong instr->type");
                 break;
