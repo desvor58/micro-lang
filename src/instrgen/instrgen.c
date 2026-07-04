@@ -103,6 +103,10 @@ void micro_instrgen_gen(micro_instrgen_t *instrgen)
                 micro_instrgen_parse_lbl(instrgen);
                 break;
 
+            case MICRO_TOK_KW_GOTO:
+                micro_instrgen_parse_goto(instrgen);
+                break;
+
             case MICRO_TOK_KW_END:
                 if (!instrgen->code_in_function) {
                     micro_push_err((micro_error_t){

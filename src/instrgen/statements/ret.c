@@ -11,6 +11,15 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
         });
         goto exit;
     }
+    
+    if (!instrgen->code_in_function) {
+        micro_push_err((micro_error_t){
+            .msg = "'ret' instruction can be only in function body",
+            .line_ref = ret_tok ? ret_tok->line_ref : 0,
+            .chpos_ref = ret_tok ? ret_tok->chpos_ref : 0
+        });
+        goto exit;
+    }
 
     micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!expr_start_tok || (expr_start_tok->type != MICRO_TOK_SEMICOLON && !_micro_tok_is_expr_start(expr_start_tok->type))) {

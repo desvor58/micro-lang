@@ -14,6 +14,15 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
         goto exit;
     }
 
+    if (!instrgen->code_in_function) {
+        micro_push_err((micro_error_t){
+            .msg = "'set' instruction can be only in function body",
+            .line_ref = set_tok ? set_tok->line_ref : 0,
+            .chpos_ref = set_tok ? set_tok->chpos_ref : 0
+        });
+        goto exit;
+    }
+
     micro_token_t *type_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!type_tok || type_tok->type != MICRO_TOK_TYPE_NAME) {
         micro_push_err((micro_error_t){

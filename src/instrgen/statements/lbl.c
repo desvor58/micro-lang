@@ -11,6 +11,15 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
         });
         return;
     }
+
+    if (!instrgen->code_in_function) {
+        micro_push_err((micro_error_t){
+            .msg = "label can be defined only in function body",
+            .line_ref = name_tok ? name_tok->line_ref : 0,
+            .chpos_ref = name_tok ? name_tok->chpos_ref : 0
+        });
+        return;
+    }
     
     micro_token_t *colon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!colon_tok || colon_tok->type != MICRO_TOK_COLON) {

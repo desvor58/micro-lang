@@ -12,6 +12,15 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
         goto exit;
     }
 
+    if (!instrgen->code_in_function) {
+        micro_push_err((micro_error_t){
+            .msg = "'call' instruction can be only in function body",
+            .line_ref = call_tok ? call_tok->line_ref : 0,
+            .chpos_ref = call_tok ? call_tok->chpos_ref : 0
+        });
+        goto exit;
+    }
+
     micro_token_t *ret_reg_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!ret_reg_tok || ret_reg_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){

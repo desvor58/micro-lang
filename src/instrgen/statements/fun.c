@@ -12,6 +12,15 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
         goto exit;
     }
 
+    if (instrgen->code_in_function) {
+        micro_push_err((micro_error_t){
+            .msg = "'fun' instruction can be only in function body",
+            .line_ref = fun_tok ? fun_tok->line_ref : 0,
+            .chpos_ref = fun_tok ? fun_tok->chpos_ref : 0
+        });
+        goto exit;
+    }
+
     micro_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!name_tok || name_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){

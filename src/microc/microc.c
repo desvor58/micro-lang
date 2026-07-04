@@ -154,7 +154,7 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
 
             case MICRO_INSTR_CALL:
                 printf("CALL: res_reg:'%s', fun:'%s'\n", instr->call.ret_reg_name, instr->call.fun_name);
-                printf("      args:\n");
+                printf("       args:\n");
                 for (size_t j = 0; j < instr->call.arg_exprs.size; j++) {
                     print_expr(*(micro_token_t**)sct_vector_get(&instr->call.arg_exprs, j), tab + 6);
                 }
@@ -162,6 +162,10 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
 
             case MICRO_INSTR_LBL:
                 printf("LBL '%s'\n", instr->lbl.name);
+                break;
+
+            case MICRO_INSTR_GOTO:
+                printf("GOTO '%s'\n", instr->goto_lbl.lbl);
                 break;
 
             default:

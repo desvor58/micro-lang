@@ -82,6 +82,10 @@ typedef struct {
 } micro_instruction_lbl_t;
 
 typedef struct {
+    char lbl[MICRO_MAX_SYMBOL_SIZE];
+} micro_instruction_goto_t;
+
+typedef struct {
     micro_instruction_type_t type;
     union {
         micro_instruction_set_t   set;
@@ -90,6 +94,7 @@ typedef struct {
         micro_instruction_ret_t   ret;
         micro_instruction_call_t  call;
         micro_instruction_lbl_t   lbl;
+        micro_instruction_goto_t  goto_lbl;
     };
 } micro_instruction_t;
 
@@ -116,5 +121,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen);
 void micro_instrgen_parse_call(micro_instrgen_t *instrgen);
 
 void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen);
+
+void micro_instrgen_parse_goto(micro_instrgen_t *instrgen);
 
 #endif
