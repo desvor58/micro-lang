@@ -24,4 +24,6 @@ void *sct_vector_pop(sct_vector_t *vec);
 
 void sct_vector_erase(sct_vector_t *vec, size_t index);
 
+void sct_vector_insert(sct_vector_t *vec, size_t index, void *item);
+
 #endif
