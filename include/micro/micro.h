@@ -4,7 +4,6 @@
 #include <micro/common.h>
 #include <micro/lexer.h>
 #include <micro/instrgen.h>
-
-// #include "codegen/codegen_386.h"
+#include <micro/codegen/386/codegen386.h>
 
 #endif

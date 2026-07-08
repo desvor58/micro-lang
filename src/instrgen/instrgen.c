@@ -73,6 +73,7 @@ void micro_instrgen_init(micro_instrgen_t *instrgen, sct_vector_t *toks)
 void micro_instrgen_deinit(micro_instrgen_t *instrgen)
 {
     sct_vector_deinit(&instrgen->instructions);
+    sct_arena_deinit(&instrgen->arena);
 }
 
 void micro_instrgen_gen(micro_instrgen_t *instrgen)
