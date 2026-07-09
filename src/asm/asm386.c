@@ -5,7 +5,7 @@ sct_vector_t micro_asm386_instr_stack;
 #define  _micro_write_instr(...) do {  \
     u8 I[] = { __VA_ARGS__ };  \
     for (size_t i = 0; i < sizeof(I)/sizeof(*I); i++) {  \
-        sct_vector_push(&micro_asm386_instr_stack, I[i]);  \
+        sct_vector_push(&micro_asm386_instr_stack, &I[i]);  \
     }  \
 } while (0)
 

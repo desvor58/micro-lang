@@ -7,11 +7,11 @@ LIBUTIL_FMT = ar rcs $(1) $(2)
 
 SRC_TARGETS := src/*.c                             \
 			   src/instrgen/*.c					   \
-			   src/instrgen/statements/*.c
-#			   src/asm/*.c						   \
-# 			   src/codegen/*.c                     \
-# 			   src/codegen/386/*.c                 \
-# 			   src/codegen/386/statements/*.c      \
+			   src/instrgen/statements/*.c		   \
+			   src/asm/*.c						   \
+ 			   src/codegen/*.c                     \
+ 			   src/codegen/386/*.c                 \
+ 			   src/codegen/386/lowering/*.c      \
 # 			   src/codegen/386/expr_get_atoms/*.c
 SRCS := $(wildcard $(SRC_TARGETS))
 

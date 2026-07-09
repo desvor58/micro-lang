@@ -2,13 +2,21 @@
 
 int lowering(micro_codegen_t *codegen)
 {
-    for (;;) {
+    int res = 0;
+
+    while (codegen->pos < codegen->instrs->size) {
         micro_instruction_t *instr = sct_vector_get(codegen->instrs, codegen->pos);
 
         switch (instr->type) {
+            case MICRO_INSTR_FUN:
+                res |= lowering_fun(codegen, instr);
+                break;
+
             case MICRO_INSTR_SET:
-                lowering_set(codegen, instr);
+                res |= lowering_set(codegen, instr);
                 break;
         }
+
+        codegen->pos++;
     }
 }

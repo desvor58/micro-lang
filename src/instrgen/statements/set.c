@@ -87,6 +87,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
 
         instr = (micro_instruction_t){
             .type = MICRO_INSTR_SET,
+            .start_tok = set_tok,
             .set = set_instr
         };
     }

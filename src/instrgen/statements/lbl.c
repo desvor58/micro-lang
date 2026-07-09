@@ -36,6 +36,7 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_LBL,
+        .start_tok = name_tok,
         .lbl = lbl
     });
 }

@@ -3,7 +3,6 @@
 
 #include <micro/common.h>
 #include <micro/instrgen.h>
-#include <micro/asm/asm386.h>
 
 typedef struct _micro_codegen_t micro_codegen_t;
 

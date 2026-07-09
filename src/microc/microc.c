@@ -251,6 +251,15 @@ int main(int argc, char **argv)
             if (args->instrs_put) {
                 print_instructions(&instrgen.instructions, 0);
             }
+
+            micro_codegen_t codegen;
+            micro_codegen386_init(&codegen);
+                codegen.emit(&codegen, &instrgen.instructions);
+
+                FILE *outfile = fopen(args->outfile, "wb");
+                fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);
+                fclose(outfile);
+            micro_codegen386_deinit(&codegen);
         micro_instrgen_deinit(&instrgen);
     micro_deinit();
 

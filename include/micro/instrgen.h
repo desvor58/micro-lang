@@ -87,6 +87,7 @@ typedef struct {
 
 typedef struct {
     micro_instruction_type_t type;
+    micro_token_t           *start_tok;
     union {
         micro_instruction_set_t   set;
         micro_instruction_drset_t drset;

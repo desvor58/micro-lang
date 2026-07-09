@@ -74,6 +74,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_CALL,
+        .start_tok = call_tok,
         .call = call_instr
     });
 

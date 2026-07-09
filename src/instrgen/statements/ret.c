@@ -37,6 +37,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_RET,
+        .start_tok = ret_tok,
         .ret = {
             .val_expr = expr_start_tok
         }
