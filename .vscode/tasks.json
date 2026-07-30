@@ -5,7 +5,7 @@
             "label": "C/C++: gcc.exe сборка активного файла",
             "command": "make",
             "args": [
-                "dbg_build",
+                "microc",
                 "CC=gcc",
                 "MODE=debug"
             ],

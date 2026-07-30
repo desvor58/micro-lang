@@ -43,21 +43,37 @@ u8 op_args_num[] = {
     [MICRO_TOK_LESS_OR_EQ]  = 2,
 };
 
-size_t micro_scroll_expr(sct_vector_t *toks, size_t i)
+size_t micro_scroll_expr(sct_vector_t *toks, size_t pos)
 {
-    micro_token_t *tok = sct_vector_get(toks, i);
+    micro_token_t *tok = sct_vector_get(toks, pos);
+    if (!tok) {
+        micro_token_t *err_tok = sct_vector_get(toks, toks->size - 1);
+        micro_push_err((micro_error_t){
+            .msg = "Expected expression",
+            .line_ref = err_tok->line_ref,
+            .chpos_ref = err_tok->chpos_ref
+        });
+        return 0;
+    }
     if (_micro_tok_is_lit(tok->type) || tok->type == MICRO_TOK_IDENT) {
         return 1;
     }
     if (_micro_tok_is_op(tok->type)) {
         u8 num = op_args_num[tok->type];
-        size_t offset = 0;
+        size_t offset = 1;
         while (num) {
-            offset += micro_scroll_expr(toks, i + offset + 1);
+            size_t doffset = micro_scroll_expr(toks, pos + offset);
+            if (!doffset) return 0;
+            offset += doffset;
             num--;
         }
         return offset;
     }
+    micro_push_err((micro_error_t){
+        .msg = "Expected expression",
+        .line_ref = tok->line_ref,
+        .chpos_ref = tok->chpos_ref
+    });
     return 0;
 }
 

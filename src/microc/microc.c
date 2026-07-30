@@ -16,6 +16,13 @@ typedef struct {
     char outfile[MICRO_MAX_SYMBOL_SIZE];
     u8   toks_put   : 1;
     u8   instrs_put : 1;
+    enum {
+        STOPAFTER_NONE,
+        STOPAFTER_FILE_READ,
+        STOPAFTER_LEXER,
+        STOPAFTER_INSTRGEN,
+        STOPAFTER_OPTIMIZER,
+    } stop_at;
 } micro_args_t;
 
 
@@ -26,6 +33,7 @@ micro_args_t micro_args_parse(int argc, char **argv)
     args.outfile[0] = 0;
     args.toks_put = 0;
     args.instrs_put = 0;
+    args.stop_at = STOPAFTER_NONE;
 
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
@@ -40,6 +48,22 @@ micro_args_t micro_args_parse(int argc, char **argv)
                     if (argv[i][j] == 'i') {
                         args.instrs_put = 1;
                     }
+                }
+            } else
+            if (argv[i][1] == 'S') {
+                if (argv[i][2] == 'r') {
+                    args.stop_at = STOPAFTER_FILE_READ;
+                } else
+                if (argv[i][2] == 'l') {
+                    args.stop_at = STOPAFTER_LEXER;
+                } else
+                if (argv[i][2] == 'i') {
+                    args.stop_at = STOPAFTER_INSTRGEN;
+                } else
+                if (argv[i][2] == 'o') {
+                    args.stop_at = STOPAFTER_OPTIMIZER;
+                } else {
+                    printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'o')", argv[i][2]);
                 }
             }
         } else {
@@ -122,7 +146,7 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
 {
     for (size_t i = 0; i < instrs->size; i++) {
         micro_instruction_t *instr = sct_vector_get(instrs, i);
-        for (size_t i = 0; i < tab; i++) {
+        for (size_t j = 0; j < tab; j++) {
             putchar(' ');
         }
         switch (instr->type) {
@@ -139,8 +163,8 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
             case MICRO_INSTR_FUN:
                 printf("FUN: ret_type:%s, name:'%s'\n", str_type[instr->fun.ret_type], instr->fun.name);
                 printf("     args:\n");
-                for (size_t i = 0; i < instr->fun.args.size; i++) {
-                    micro_instruction_fun_arg_t *arg = sct_vector_get(&instr->fun.args, i);
+                for (size_t j = 0; j < instr->fun.args.size; j++) {
+                    micro_instruction_fun_arg_t *arg = sct_vector_get(&instr->fun.args, j);
                     printf("       type:%s, name:'%s'\n", str_type[arg->type], arg->name);
                 }
                 printf("     body:\n");
@@ -157,6 +181,7 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
                 printf("       args:\n");
                 for (size_t j = 0; j < instr->call.arg_exprs.size; j++) {
                     print_expr(*(micro_token_t**)sct_vector_get(&instr->call.arg_exprs, j), tab + 6);
+                    puts("");
                 }
                 break;
 
@@ -211,6 +236,8 @@ int main(int argc, char **argv)
     }
     fclose(infile);
 
+    if (args->stop_at == STOPAFTER_FILE_READ) return 0;
+
     micro_init();
         sct_vector_t toks;
         sct_vector_init(&toks, sizeof(micro_token_t));
@@ -234,6 +261,8 @@ int main(int argc, char **argv)
             }
         }
 
+        if (args->stop_at == STOPAFTER_LEXER) return 0;
+
         micro_instrgen_t instrgen;
         micro_instrgen_init(&instrgen, &toks);
             micro_instrgen_gen(&instrgen);
@@ -252,9 +281,17 @@ int main(int argc, char **argv)
                 print_instructions(&instrgen.instructions, 0);
             }
 
+            if (args->stop_at == STOPAFTER_INSTRGEN) return 0;
+
             micro_codegen_t codegen;
             micro_codegen386_init(&codegen);
                 codegen.emit(&codegen, &instrgen.instructions);
+                for (size_t i = 0; i < micro_err_stk_size; i++) {
+                    put_err(args->inputfile,
+                            micro_err_stk[i].line_ref,
+                            micro_err_stk[i].chpos_ref,
+                            micro_err_stk[i].msg);
+                }
 
                 FILE *outfile = fopen(args->outfile, "wb");
                 fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);

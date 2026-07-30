@@ -211,6 +211,7 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             strcpy(tok.val, buf);
             sct_vector_push(toks, &tok);
             pos--;
+            chpos--;
         } else
         if (text[pos] == '"') {
             size_t tok_start_chpos = chpos;

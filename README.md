@@ -1,10 +1,10 @@
 # µ micro-lang
-> **Minimalistic. Lightweight. No AST. No SAA. Just optimizations.**
+> **Minimalistic. Lightweight. No AST. No SSA. Just optimizations.**
 
-**micro** it's an experiment in the shape of IR code. Liner code, spiritually referencing C.
+**micro** it's an experiment in the shape of IR code. Linear code, spiritually referencing C.
 
 ### ✨ Core philosophy
-- **Flat**: Code is a liner list of instructions, witch grouped to functions.
+- **Flat**: Code is a linear list of instructions, which grouped to functions.
 - **No AST**: The parser convert your text to list of instruction info. Or You can generate it, if you using micro as a library.
 - **Blazing fast compilation**: No time wasted no node allocations, recursive traversals, or tree transformations.
 
@@ -117,7 +117,15 @@ Debug [**dcr**](https://github.com/dexoron/dcr) compile:
 dcr build --debug
 ```
 
+> [!BUILDING WITHOUT GCC OR LLVM] \
+> makefile using ```gcc-ar``` by default for LTO in ```release``` mode for ```CC=gcc``` and ```llvm-ar``` for ```CC=clang```. \
+> If you do not have GCC or llvm on your machine change ```AR := gcc-ar``` to ```AR := ar``` and delete ```-flto``` flag from 13 and 14 lines.
+
+> [!NO STRICT ALIASING]  \
+> micro using compile flag ```-fno-strict-aliasing```.  \
+> If the compiler used to build micro does not support this flag then ```MODE=release``` version will not work
+
 ## 📜 Docs
-- You can read about sintax of *micro* at [**language reference**](docs/micro-language-ref.md)
+- You can read about syntax of *micro* at [**language reference**](docs/micro-language-ref.md)
 - About code style you can read at [**style reference**](docs/good-micro-code-style.md)
-- If you an developer read [**compiler description**](docs/compiler-description.md)
+- If you are a developer read [**compiler description**](docs/compiler-description.md)

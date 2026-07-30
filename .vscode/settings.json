@@ -14,6 +14,7 @@
         "setle",
         "setnz",
         "setz",
-        "tokislit"
+        "tokislit",
+        "vecslice"
     ]
 }

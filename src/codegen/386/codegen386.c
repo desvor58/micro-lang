@@ -17,13 +17,18 @@ void micro_codegen386_init(micro_codegen_t *codegen)
     micro_codegen386_ext_t *ext = amalloc(sizeof(micro_codegen386_ext_t));
     *ext = (micro_codegen386_ext_t){};
     codegen->ext = ext;
-    _micro_codegen386_ext(codegen)->in_function = 0;
+    ext->in_function = 0;
+    ext->ebp_top_offset = -4;
+    sct_hashmap_init(&ext->idents, sizeof(micro_codegen386_ident_t));
+    memset(ext->used_regs, 0, sizeof(ext->used_regs));
 }
 
 void micro_codegen386_deinit(micro_codegen_t *codegen)
 {
     sct_vector_deinit(&codegen->outbuf);
     micro_asm386_deinit();
+
+    sct_hashmap_deinit(&_micro_codegen386_ext(codegen)->idents);
     
     free(codegen->ext);
 }

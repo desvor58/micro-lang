@@ -21,7 +21,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
         goto exit;
     }
 
-    micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+    micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!expr_start_tok || (expr_start_tok->type != MICRO_TOK_SEMICOLON && !_micro_tok_is_expr_start(expr_start_tok->type))) {
         micro_push_err((micro_error_t){
             .msg = "Expected expression",
@@ -30,9 +30,23 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
         });
         goto exit;
     }
+
     if (expr_start_tok->type == MICRO_TOK_SEMICOLON) {
-        instrgen->pos--;
         expr_start_tok = 0;
+    } else {
+        size_t expr_offset = micro_scroll_expr(instrgen->toks, instrgen->pos);
+        if (!expr_offset) {
+            goto exit;
+        }
+        micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_offset);
+        if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
+            micro_push_err((micro_error_t) {
+                .msg = "Expected ';'",
+                .line_ref = semicolon_tok ? semicolon_tok->line_ref : 0,
+                .chpos_ref = semicolon_tok ? semicolon_tok->chpos_ref : 0
+            });
+            goto exit;
+        }
     }
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){

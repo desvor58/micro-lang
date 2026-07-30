@@ -12,6 +12,10 @@ int lowering(micro_codegen_t *codegen)
                 res |= lowering_fun(codegen, instr);
                 break;
 
+            case MICRO_INSTR_RET:
+                res |= lowering_ret(codegen, instr);
+                break;
+
             case MICRO_INSTR_SET:
                 res |= lowering_set(codegen, instr);
                 break;
@@ -19,4 +23,5 @@ int lowering(micro_codegen_t *codegen)
 
         codegen->pos++;
     }
+    return 0;
 }

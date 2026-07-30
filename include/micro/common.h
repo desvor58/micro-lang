@@ -11,10 +11,16 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 # define MICRO_ATTRIBUTE_CONST __attribute__((const))
+# define likely(x)   __builtin_expect(!!(x), 1)
+# define unlikely(x) __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER)
 # define MICRO_ATTRIBUTE_CONST __declspec(noalias)
+# define likely(x)   (x)
+# define unlikely(x) (x)
 #else
 # define MICRO_ATTRIBUTE_CONST
+# define likely(x)   (x)
+# define unlikely(x) (x)
 #endif
 
 // size by which error stack will be extended on each overflow

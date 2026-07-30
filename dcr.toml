@@ -6,7 +6,10 @@ version = "dev-0"
 language = "c"
 standard = "c99"
 compiler = "gcc"
-cflags   = ["-Wall", "-Wextra", "-Wno-format", "-Wno-missing-braces", "-Iinclude"]
+cflags   = ["-Wall", "-Wextra", "-Wshadow", "-Wpointer-arith",
+            "-Wno-format", "-Wno-missing-braces", "-Wno-unused-parameter",
+            "-fno-strict-aliasing",
+            "-Iinclude"]
 
 [build.x86_64-pc-windows-msvc]
 ldflags = ["-Llib", "-lsct-win"]

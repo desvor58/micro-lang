@@ -1,85 +1,87 @@
 CC ?= gcc
-CFLAGS := -Wall -Wno-format -Wno-missing-braces -std=c99 -Iinclude
-TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
-TEST_FLAGS ?= --iterations 5
-TEST_LDFLAGS := -Llib -lmicro
-LIBUTIL_FMT = ar rcs $(1) $(2)
+CFLAGS := -Wall -Wextra -Wshadow -Wpointer-arith  \
+          -Wno-format -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable  -Wno-switch  \
+          -fno-strict-aliasing  \
+          -std=c99 -Iinclude
+LDFLAGS :=
+MODE ?= release
+AR := gcc-ar
 
-SRC_TARGETS := src/*.c                             \
-			   src/instrgen/*.c					   \
-			   src/instrgen/statements/*.c		   \
-			   src/asm/*.c						   \
- 			   src/codegen/*.c                     \
- 			   src/codegen/386/*.c                 \
- 			   src/codegen/386/lowering/*.c      \
-# 			   src/codegen/386/expr_get_atoms/*.c
-SRCS := $(wildcard $(SRC_TARGETS))
+ifeq ($(MODE),debug)
+    CFLAGS += -O0 -g
+else
+    CFLAGS += -O3 -flto
+    LDFLAGS += -flto
+endif
 
 ifeq ($(OS),Windows_NT)
-	NUMS := $(shell for /l %%i in (1,1,$(words $(SRCS))) do @echo | set /p=%%i )
-	CLEAN_CMD := del /q
-	MKDIR_CMD = if not exist "$(1)" mkdir "$(1)"
-	SCT_LIB_FILE := sct-win
+    RM_DIR = if exist "$(subst /,\,$(1))" rmdir /s /q "$(subst /,\,$(1))"
+    RM_FILE = if exist "$(subst /,\,$(1))" del /q /f "$(subst /,\,$(1))"
+    FIX_PATH = $(subst /,\,$(1))
+    MKDIR = if not exist "$(call FIX_PATH,$(1))" mkdir "$(call FIX_PATH,$(1))"
+    SCT_LIB_FILE := sct-win
+    EXE_EXT := .exe
 else
-	NUMS := $(shell seq 1 $(words $(SRCS)))
-	CLEAN_CMD := rm -rf
-	MKDIR_CMD = mkdir -p "$(1)"
-	SCT_LIB_FILE := sct-elf
+    RM_DIR = rm -rf "$(1)"
+    RM_FILE = rm -f "$(1)"
+    FIX_PATH = $(1)
+    MKDIR = mkdir -p "$(1)"
+    SCT_LIB_FILE := sct-elf
+    EXE_EXT :=
 endif
-
-NUMS := $(strip $(NUMS))
-
-LDFLAGS := -Llib -l$(SCT_LIB_FILE)
 
 ifeq ($(CC),clang)
-	LDFLAGS += --target=x86_64-w64-windows-gnu
-	CFLAGS += --target=x86_64-w64-windows-gnu
-	TEST_LDFLAGS += --target=x86_64-w64-windows-gnu
-	TEST_CFLAGS += --target=x86_64-w64-windows-gnu
+    TARGET_FLAGS := --target=x86_64-w64-windows-gnu
+    CFLAGS += $(TARGET_FLAGS)
+    LDFLAGS += $(TARGET_FLAGS) -fuse-ld=lld
+    AR := llvm-ar
 endif
 
-OBJS := $(addprefix obj/o, $(addsuffix .o, $(NUMS)))
-VPATH := $(sort $(dir $(SRCS)))
+SRC_TARGETS := src/*.c \
+               src/instrgen/*.c \
+               src/instrgen/statements/*.c \
+               src/asm/*.c \
+               src/codegen/*.c \
+               src/codegen/386/*.c \
+               src/codegen/386/lowering/*.c
 
-MODE ?= release
+SRCS := $(wildcard $(SRC_TARGETS))
 
-ifeq ($(MODE), debug)
-	CFLAGS += -O0 -g
-else
-	CFLAGS += -O3
-endif
+SRCS := $(filter-out src/microc/microc.c, $(SRCS))
+OBJS := $(patsubst src/%.c, obj/%.o, $(SRCS))
+
+TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
+MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
+TEST_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
+
+.PHONY: all libmicro microc test clean
 
 all: microc
 
-dbg_build: clean microc
-
 libmicro: $(OBJS)
-	@echo $(OBJS) > obj/o.list
-	$(call LIBUTIL_FMT,"lib/libmicro.a","@obj/o.list")
+	@$(call MKDIR,lib)
+	$(AR) rcs lib/libmicro.a $(OBJS)
 
-microc: $(OBJS)
-	@echo $(OBJS) > obj/o.list
-	$(CC) $(CFLAGS) -o bin/$@ @obj/o.list src/microc/microc.c $(LDFLAGS)
+microc: $(OBJS) src/microc/microc.c
+	@$(call MKDIR,bin)
+	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
-define GEN_RULE
-$(word $(1),$(OBJS)): $(word $(1),$(SRCS))
-	$(CC) $(CFLAGS) -c $$(<) -o $$(@)
-endef
+test: tests/bin/tests$(EXE_EXT)
+	.$(FIX_PATH,/tests/bin/tests$(EXE_EXT)) $(TEST_FLAGS)
 
-$(foreach i,$(NUMS),$(eval $(call GEN_RULE,$(i))))
+tests/bin/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
+	@$(call MKDIR,tests/bin)
+	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(OBJS) -o tests/bin/tests$(EXE_EXT) $(TEST_LDFLAGS)
 
-test: test_comp
-	./tests/bin/tests $(TEST_FLAGS)
+obj/%.o: src/%.c
+	@$(call MKDIR,$(dir $@))
+	$(CC) $(CFLAGS) -c $< -o $@
 
-test_comp: libmicro
-	$(CC) $(TEST_CFLAGS) -o tests/bin/tests tests/src/munit.c tests/src/main.c $(TEST_LDFLAGS)
-
-.PHONY: clean
 clean:
-	$(CLEAN_CMD) bin
-	$(CLEAN_CMD) obj
-	$(CLEAN_CMD) "tests/bin"
-
-	$(call MKDIR_CMD,bin)
-	$(call MKDIR_CMD,obj)
-	$(call MKDIR_CMD,tests/bin)
+	@$(call RM_DIR,obj)
+	@$(call RM_DIR,bin)
+	@$(call RM_DIR,tests/bin)
+	@$(call RM_FILE,lib/libmicro.a)
+	@$(call MKDIR,bin)
+	@$(call MKDIR,obj)
+	@$(call MKDIR,tests/bin)

@@ -2,7 +2,9 @@
 
 int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 {
-    if (!_micro_codegen386_ext(codegen)->in_function) {
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (!ext->in_function) {
         micro_push_err((micro_error_t){
             .msg = "'set' instruction can be only in function body",
             .line_ref = instr->start_tok->line_ref,
@@ -12,4 +14,5 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
 
     micro_instruction_set_t instr_set = instr->set;
+    return 0;
 }
