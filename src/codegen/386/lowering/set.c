@@ -14,5 +14,9 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
 
     micro_instruction_set_t instr_set = instr->set;
+
+    int space = get_last_free_space(codegen);
+    
+
     return 0;
 }

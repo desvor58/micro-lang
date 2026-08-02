@@ -25,18 +25,42 @@ typedef struct {
     } stop_at;
 } micro_args_t;
 
+void print_usage()
+{
+    printf(
+        "micro-lang dev-0.0.1\n"
+        "dev: Desvor\n"
+        "usage:\n"
+        "    microc [flags] <input file>\n"
+        "flags:\n"
+        "    --help (-h)   - put this menu\n"
+        "    --output (-o) - set output file\n"
+        "    -P            - put some info\n"
+        "      t           - put tokens\n"
+        "      i           - put instructions\n"
+        "    -S            - stop compiling\n"
+        "      r           - stop after reading file\n"
+        "      l           - stop after lexing\n"
+        "      i           - stop after instruction generation\n"
+        "      o           - stop after optimization stage (non supported now)\n"
+    );
+    exit(0);
+}
 
 micro_args_t micro_args_parse(int argc, char **argv)
 {
     micro_args_t args;
     args.inputfile[0] = 0;
-    args.outfile[0] = 0;
+    strcpy(args.outfile, "a");
     args.toks_put = 0;
     args.instrs_put = 0;
     args.stop_at = STOPAFTER_NONE;
 
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
+            if (argv[i][1] == 'h' || !strcmp(argv[i], "--help")) {
+                print_usage();
+            }
             if (!strcmp(argv[i], "--output") || !strcmp(argv[i], "-o")) {
                 strcpy(args.outfile, argv[++i]);
             } else
@@ -65,8 +89,15 @@ micro_args_t micro_args_parse(int argc, char **argv)
                 } else {
                     printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'o')", argv[i][2]);
                 }
+            } else {
+                printf("Error: Undefined flag");
+                print_usage();
             }
         } else {
+            if (args.inputfile[0]) {
+                printf("Error: Input file already set");
+                print_usage();
+            }
             strcpy(args.inputfile, argv[i]);
         }
     }
