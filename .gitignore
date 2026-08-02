@@ -9,4 +9,4 @@ obj/
 tests/bin/
 tests/log/
 
-s.txt
+*.hide.*
