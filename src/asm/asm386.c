@@ -126,7 +126,7 @@ void micro_asm386_addR8R8(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2)   { 
 
 void micro_asm386_addM32I32(micro_addr_le_t addr, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b00000101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
 void micro_asm386_addM16I16(micro_addr_le_t addr, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b00000101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0], (val).bytes[1]                                ); }
-void micro_asm386_addM8I8(micro_addr_le_t addr, micro_imm_le_t val)   { _micro_write_instr(      0x83, 0b00000101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0]                                                ); }
+void micro_asm386_addM8I8(micro_addr_le_t addr, micro_imm_le_t val)   { _micro_write_instr(      0x80, 0b00000101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0]                                                ); }
 
 void micro_asm386_addM32R32(micro_addr_le_t addr, micro_asm386_reg_t reg) { _micro_write_instr(      0x01, 0b00000101 | ((reg) << 3), (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
 void micro_asm386_addM16R16(micro_addr_le_t addr, micro_asm386_reg_t reg) { _micro_write_instr(0x66, 0x01, 0b00000101 | ((reg) << 3), (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
@@ -134,11 +134,11 @@ void micro_asm386_addM8R8(micro_addr_le_t addr, micro_asm386_reg_t reg)   { _mic
 
 void micro_asm386_addS32I32(micro_imm_le_t offset, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b10000101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
 void micro_asm386_addS32I16(micro_imm_le_t offset, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b10000101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0], (val).bytes[1]                                ); }
-void micro_asm386_addS32I8(micro_imm_le_t offset, micro_imm_le_t val)  { _micro_write_instr(      0x83, 0b10000101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0]                                                ); }
+void micro_asm386_addS32I8(micro_imm_le_t offset, micro_imm_le_t val)  { _micro_write_instr(      0x80, 0b10000101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0]                                                ); }
 
 void micro_asm386_addS32R32(micro_imm_le_t offset, micro_asm386_reg_t reg) { _micro_write_instr(      0x01, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
 void micro_asm386_addS32R16(micro_imm_le_t offset, micro_asm386_reg_t reg) { _micro_write_instr(0x66, 0x01, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
-void micro_asm386_addS32R8(micro_imm_le_t offset, micro_asm386_reg_t reg)  { _micro_write_instr(      0x89, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+void micro_asm386_addS32R8(micro_imm_le_t offset, micro_asm386_reg_t reg)  { _micro_write_instr(      0x00, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
 
 void micro_asm386_addR32I32(micro_asm386_reg_t reg, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b11000000 | (reg), (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
 void micro_asm386_addR16I16(micro_asm386_reg_t reg, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b11000000 | (reg), (val).bytes[0], (val).bytes[1]                                ); }
@@ -151,6 +151,30 @@ void micro_asm386_addR8S32(micro_asm386_reg_t reg, micro_imm_le_t offset)  { _mi
 void micro_asm386_subR32R32(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2) { _micro_write_instr(      0x29, 0b11000000 | ((reg2) << 3) | ((reg1))); }
 void micro_asm386_subR16R16(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2) { _micro_write_instr(0x66, 0x29, 0b11000000 | ((reg2) << 3) | ((reg1))); }
 void micro_asm386_subR8R8(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2)   { _micro_write_instr(      0x28, 0b11000000 | ((reg2) << 3) | ((reg1))); }
+
+void micro_asm386_subM32I32(micro_addr_le_t addr, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b00101101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
+void micro_asm386_subM16I16(micro_addr_le_t addr, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b00101101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0], (val).bytes[1]                                ); }
+void micro_asm386_subM8I8(micro_addr_le_t addr, micro_imm_le_t val)   { _micro_write_instr(      0x80, 0b00101101, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3], (val).bytes[0]                                                ); }
+
+void micro_asm386_subM32R32(micro_addr_le_t addr, micro_asm386_reg_t reg) { _micro_write_instr(      0x29, 0b00000101 | ((reg) << 3), (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
+void micro_asm386_subM16R16(micro_addr_le_t addr, micro_asm386_reg_t reg) { _micro_write_instr(0x66, 0x29, 0b00000101 | ((reg) << 3), (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
+void micro_asm386_subM8R8(micro_addr_le_t addr, micro_asm386_reg_t reg)   { _micro_write_instr(      0x28, 0b00000101 | ((reg) << 3), (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
+
+void micro_asm386_subS32I32(micro_imm_le_t offset, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b10101101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
+void micro_asm386_subS32I16(micro_imm_le_t offset, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b10101101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0], (val).bytes[1]                                ); }
+void micro_asm386_subS32I8(micro_imm_le_t offset, micro_imm_le_t val)  { _micro_write_instr(      0x80, 0b10101101, (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3], (val).bytes[0]                                                ); }
+
+void micro_asm386_subS32R32(micro_imm_le_t offset, micro_asm386_reg_t reg) { _micro_write_instr(      0x29, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+void micro_asm386_subS32R16(micro_imm_le_t offset, micro_asm386_reg_t reg) { _micro_write_instr(0x66, 0x29, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+void micro_asm386_subS32R8(micro_imm_le_t offset, micro_asm386_reg_t reg)  { _micro_write_instr(      0x28, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+
+void micro_asm386_subR32I32(micro_asm386_reg_t reg, micro_imm_le_t val) { _micro_write_instr(      0x81, 0b11101000 | (reg), (val).bytes[0], (val).bytes[1], (val).bytes[2], (val).bytes[3]); }
+void micro_asm386_subR16I16(micro_asm386_reg_t reg, micro_imm_le_t val) { _micro_write_instr(0x66, 0x81, 0b11101000 | (reg), (val).bytes[0], (val).bytes[1]                                ); }
+void micro_asm386_subR8I8(micro_asm386_reg_t reg, micro_imm_le_t val)   { _micro_write_instr(      0x80, 0b11101000 | (reg), (val).bytes[0]                                                ); }
+
+void micro_asm386_subR32S32(micro_asm386_reg_t reg, micro_imm_le_t offset) { _micro_write_instr(      0x2B, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+void micro_asm386_subR16S32(micro_asm386_reg_t reg, micro_imm_le_t offset) { _micro_write_instr(0x66, 0x2B, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
+void micro_asm386_subR8S32(micro_asm386_reg_t reg, micro_imm_le_t offset)  { _micro_write_instr(      0x2A, 0b10000101 | ((reg) << 3), (offset).bytes[0], (offset).bytes[1], (offset).bytes[2], (offset).bytes[3]); }
 
 void micro_asm386_mulR32(micro_asm386_reg_t reg) { _micro_write_instr(      0xF7, 0b11100000 | (reg)); }
 void micro_asm386_mulR16(micro_asm386_reg_t reg) { _micro_write_instr(0x66, 0xF7, 0b11100000 | (reg)); }

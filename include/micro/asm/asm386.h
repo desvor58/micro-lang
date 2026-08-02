@@ -159,6 +159,30 @@ void micro_asm386_subR32R32(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2);
 void micro_asm386_subR16R16(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2);
 void micro_asm386_subR8R8(micro_asm386_reg_t reg1, micro_asm386_reg_t reg2);
 
+void micro_asm386_subM32I32(micro_addr_le_t addr, micro_imm_le_t val);
+void micro_asm386_subM16I16(micro_addr_le_t addr, micro_imm_le_t val);
+void micro_asm386_subM8I8(micro_addr_le_t addr, micro_imm_le_t val);
+
+void micro_asm386_subM32R32(micro_addr_le_t addr, micro_asm386_reg_t reg);
+void micro_asm386_subM16R16(micro_addr_le_t addr, micro_asm386_reg_t reg);
+void micro_asm386_subM8R8(micro_addr_le_t addr, micro_asm386_reg_t reg);
+
+void micro_asm386_subS32I32(micro_imm_le_t offset, micro_imm_le_t val);
+void micro_asm386_subS32I16(micro_imm_le_t offset, micro_imm_le_t val);
+void micro_asm386_subS32I8(micro_imm_le_t offset, micro_imm_le_t val);
+
+void micro_asm386_subS32R32(micro_imm_le_t offset, micro_asm386_reg_t reg);
+void micro_asm386_subS32R16(micro_imm_le_t offset, micro_asm386_reg_t reg);
+void micro_asm386_subS32R8(micro_imm_le_t offset, micro_asm386_reg_t reg);
+
+void micro_asm386_subR32I32(micro_asm386_reg_t reg, micro_imm_le_t val);
+void micro_asm386_subR16I16(micro_asm386_reg_t reg, micro_imm_le_t val);
+void micro_asm386_subR8I8(micro_asm386_reg_t reg, micro_imm_le_t val);
+
+void micro_asm386_subR32S32(micro_asm386_reg_t reg, micro_imm_le_t offset);
+void micro_asm386_subR16S32(micro_asm386_reg_t reg, micro_imm_le_t offset);
+void micro_asm386_subR8S32(micro_asm386_reg_t reg, micro_imm_le_t offset);
+
 void micro_asm386_mulR32(micro_asm386_reg_t reg);
 void micro_asm386_mulR16(micro_asm386_reg_t reg);
 void micro_asm386_mulR8(micro_asm386_reg_t reg);

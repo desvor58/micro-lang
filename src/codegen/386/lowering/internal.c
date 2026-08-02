@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "../internal.h"
 #include "expr_ops.h"
 
 int expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm)
@@ -134,6 +134,10 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
 int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (dst.type == MICRO_STORAGE_REG) {
+        ext->used_regs[dst.reg.reg] = 1;
+    }
 
     if (_micro_tok_is_lit(start->type)) {
         char *end;
