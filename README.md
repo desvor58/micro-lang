@@ -108,15 +108,6 @@ Now work with gcc and clang, maybe tcc.
 
 -----------------
 
-With [**dcr**](https://github.com/dexoron/dcr):
-```
-dcr build --release
-```
-Debug [**dcr**](https://github.com/dexoron/dcr) compile:
-```
-dcr build --debug
-```
-
 > [!BUILDING WITHOUT GCC OR LLVM] \
 > makefile using ```gcc-ar``` by default for LTO in ```release``` mode for ```CC=gcc``` and ```llvm-ar``` for ```CC=clang```. \
 > If you do not have GCC or llvm on your machine change ```AR := gcc-ar``` to ```AR := ar``` and delete ```-flto``` flag from 13 and 14 lines.

@@ -1,6 +1,8 @@
 #ifndef MICRO_CODEGEN386_EXPR_OPS_COMMON_H
 #define MICRO_CODEGEN386_EXPR_OPS_COMMON_H
 
+#include "errno.h"
+
 #include "../../internal.h"
 
 typedef void (*opMI_t)(micro_addr_le_t, micro_imm_le_t);
