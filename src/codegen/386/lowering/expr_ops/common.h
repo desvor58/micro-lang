@@ -50,6 +50,7 @@ static int op_expr_to_dst(micro_codegen_t *codegen, micro_codegen386_storage_t d
     if (free_space < 0) {
         expr_dst.type = MICRO_STORAGE_STACK;
         expr_dst.stack.ebp_offset = free_space;
+        ext->max_stack_offset -= 4;
     } else {
         expr_dst.type = MICRO_STORAGE_REG;
         expr_dst.reg.reg = free_space;
@@ -79,6 +80,7 @@ static int op_expr_to_dst(micro_codegen_t *codegen, micro_codegen386_storage_t d
             case MICRO_STORAGE_DATASEC: {
                 if (ext->used_regs[0]) {
                     micro_asm386_movS32R32(micro_imm_le_gen(ext->ebp_top_offset), 0);
+                    ext->max_stack_offset -= 4;
                 }
                 micro_asm386_movR32S32(MICRO_ASM386_REG32_EAX, micro_imm_le_gen(free_space));
                 opMR_tbl[dst.datasec.size](micro_imm_le_gen(dst.datasec.address), MICRO_ASM386_REG32_EAX);
@@ -90,6 +92,7 @@ static int op_expr_to_dst(micro_codegen_t *codegen, micro_codegen386_storage_t d
             case MICRO_STORAGE_STACK:
                 if (ext->used_regs[0]) {
                     micro_asm386_movS32R32(micro_imm_le_gen(ext->ebp_top_offset), 0);
+                    ext->max_stack_offset -= 4;
                 }
                 opRS_tbl[MICRO_SIZE_32](MICRO_ASM386_REG32_EAX, micro_imm_le_gen(free_space));
                 opSR_fn(micro_imm_le_gen(dst.stack.ebp_offset), MICRO_ASM386_REG32_EAX);

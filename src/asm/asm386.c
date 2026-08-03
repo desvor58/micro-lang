@@ -39,6 +39,16 @@ void micro_asm386_put_instructions_to_addr(sct_vector_t *vec, size_t addr)
     micro_asm386_init();
 }
 
+void micro_asm386_insert_instructions_to_addr(sct_vector_t *vec, size_t addr)
+{
+    for (size_t i = 0; i < micro_asm386_instr_stack.size; i++) {
+        sct_vector_insert(vec, addr, sct_vector_get(&micro_asm386_instr_stack, i));
+    }
+
+    micro_asm386_deinit();
+    micro_asm386_init();
+}
+
 void micro_asm386_ret()                      { _micro_write_instr(0xC3); }
 void micro_asm386_call(micro_addr_le_t addr) { _micro_write_instr(0xE8, (addr).bytes[0], (addr).bytes[1], (addr).bytes[2], (addr).bytes[3]); }
 void micro_asm386_prelude()                  { _micro_write_instr(0x55, 0x89, 0xE5); }

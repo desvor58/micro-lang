@@ -67,6 +67,8 @@ typedef struct {
     u8  bytes[4];
 } micro_imm_be_t, micro_addr_be_t;
 
+extern micro_size_t micro_type_to_size[9];
+
 MICRO_ATTRIBUTE_CONST
 micro_imm_be_t micro_imm_be_gen(i32 val);
 

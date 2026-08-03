@@ -4,6 +4,17 @@ micro_error_t *micro_err_stk;
 size_t         micro_err_stk_size;
 size_t        _micro_err_stk_real_size;
 
+micro_size_t micro_type_to_size[] = {
+    [MICRO_TYPE_I8]  = MICRO_SIZE_8,
+    [MICRO_TYPE_U8]  = MICRO_SIZE_8,
+    [MICRO_TYPE_I16] = MICRO_SIZE_16,
+    [MICRO_TYPE_U16] = MICRO_SIZE_16,
+    [MICRO_TYPE_I32] = MICRO_SIZE_32,
+    [MICRO_TYPE_U32] = MICRO_SIZE_32,
+    [MICRO_TYPE_F32] = MICRO_SIZE_32,
+    [MICRO_TYPE_PTR] = MICRO_SIZE_32,
+};
+
 void micro_init()
 {
     micro_err_stk = malloc(MICRO_ERROR_STACK_EXTEND_SIZE * sizeof(micro_error_t));

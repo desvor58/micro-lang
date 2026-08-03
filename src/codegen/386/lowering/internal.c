@@ -87,6 +87,7 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
                 case MICRO_STORAGE_DATASEC:
                     if (ext->used_regs[0]) {
                         micro_asm386_movS32R32(micro_imm_le_gen(ext->ebp_top_offset), 0);
+                        ext->max_stack_offset -= 4;
                     }
                     mov_r_s_tbl[dst_size](0, micro_imm_le_gen(vreg.storage.stack.ebp_offset));
                     mov_m_r_tbl[dst_size](micro_imm_le_gen(dst.datasec.address), 0);
@@ -98,6 +99,7 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
                 case MICRO_STORAGE_STACK:
                     if (ext->used_regs[0]) {
                         micro_asm386_movS32R32(micro_imm_le_gen(ext->ebp_top_offset), 0);
+                        ext->max_stack_offset -= 4;
                     }
                     mov_r_s_tbl[dst_size](0, micro_imm_le_gen(vreg.storage.stack.ebp_offset));
                     mov_s_r_tbl[dst_size](micro_imm_le_gen(dst.stack.ebp_offset), 0);
@@ -179,7 +181,12 @@ int get_last_free_space(micro_codegen_t *codegen)
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     for (int i = 0; i < 8; i++) {
-        if (!ext->used_regs[i]) return i;
+        if (!ext->used_regs[i]) {
+            if (i > 2) {
+                ext->use_callee_save_regs = 1;
+            }
+            return i;
+        }
     }
     return ext->ebp_top_offset;
 }

@@ -49,6 +49,7 @@ typedef struct {
 
 typedef struct {
     char                       name[MICRO_MAX_SYMBOL_SIZE];
+    micro_type_t               type;
     micro_codegen386_storage_t storage;
 } micro_codegen386_ident_vreg_t;
 
@@ -67,8 +68,12 @@ typedef struct {
 } micro_codegen386_ident_t;
 
 typedef struct {
-    int           in_function;
+    struct {
+        u32 in_function : 1;
+        u32 use_callee_save_regs : 1;
+    };
     ptrdiff_t     ebp_top_offset;
+    ptrdiff_t     max_stack_offset;
     sct_hashmap_t idents;
     int           used_regs[8];
 } micro_codegen386_ext_t;

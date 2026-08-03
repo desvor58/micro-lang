@@ -6,7 +6,7 @@
 #include <SCT/vector.h>
 #include <micro/common.h>
 
-extern sct_vector_t micro_micro_asm386_instr_stack;
+extern sct_vector_t micro_asm386_instr_stack;
 
 typedef enum {
     MICRO_ASM386_REG32_EAX = 0,
@@ -44,6 +44,8 @@ void micro_asm386_deinit();
 void micro_asm386_put_instructions(sct_vector_t *vec);
 
 void micro_asm386_put_instructions_to_addr(sct_vector_t *vec, size_t addr);
+
+void micro_asm386_insert_instructions_to_addr(sct_vector_t *vec, size_t addr);
 
 void micro_asm386_ret();
 void micro_asm386_call(micro_addr_le_t addr);
