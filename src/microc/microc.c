@@ -323,6 +323,7 @@ int main(int argc, char **argv)
                             micro_err_stk[i].chpos_ref,
                             micro_err_stk[i].msg);
                 }
+                micro_asm386_emit(&codegen.asm_instrs, &codegen.outbuf);
 
                 FILE *outfile = fopen(args->outfile, "wb");
                 fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);

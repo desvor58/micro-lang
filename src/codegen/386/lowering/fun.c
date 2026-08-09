@@ -6,13 +6,12 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_fun_t instr_fun = instr->fun;
 
-    micro_asm386_prelude();
-    micro_asm386_put_instructions(&codegen->outbuf);
-    size_t sub_imm_addr = micro_asm386_instr_stack.size + 2;
+    push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, {0}, {0});
 
-    micro_asm386_subR32I32(MICRO_ASM386_REG32_ESP, micro_imm_le_gen(0));
-    micro_asm386_put_instructions(&codegen->outbuf);
-    size_t callee_save_addr = micro_asm386_instr_stack.size;
+    size_t sub_instr_addr = codegen->asm_instrs.size;
+
+    push_asm_instr(MICRO_ASM386_INSTR_SUB_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(0) });
+    size_t callee_save_addr = codegen->asm_instrs.size - 1;
 
     ext->ebp_top_offset = -4;
     ext->max_stack_offset = 0;
@@ -21,10 +20,12 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     for (int i = 0; i < 8; i++) {
         ext->used_regs[i] = 0;
     }
+    ext->used_regs[4] = 1;
+    ext->used_regs[5] = 1;
 
     micro_codegen386_ident_fun_t fun = {
         .instr_info = instr_fun,
-        .address = codegen->outbuf.size
+        .address = 0  /* TODO: calculating at asm emitting */
     };
 
     sct_hashmap_add(&ext->idents, instr_fun.name, &(micro_codegen386_ident_t){
@@ -38,26 +39,38 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     codegen->instrs = instrs_save;
     codegen->pos = pos_save;
 
-    micro_imm_le_t imm = micro_imm_le_gen(ext->max_stack_offset);
-
-    for (size_t i = 0; i < 4; i++) {
-        memcpy((void*)(micro_asm386_instr_stack.data + sub_imm_addr * codegen->outbuf._item_size + i), imm.bytes, 4);
-    }
+    micro_imm_le_t imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset));
+    ((micro_asm386_instruction_t*)sct_vector_get(&codegen->asm_instrs, sub_instr_addr))->operand2.imm = imm;
 
     if (ext->use_callee_save_regs) {
-        micro_asm386_pushR32(3);
-        micro_asm386_pushR32(6);
-        micro_asm386_pushR32(7);
-        micro_asm386_insert_instructions_to_addr(&codegen->outbuf, callee_save_addr);
+        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_PUSH_R32,
+            .operand1 = MICRO_ASM386_REG32_EBX
+        });
+        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_PUSH_R32,
+            .operand1 = MICRO_ASM386_REG32_ESI
+        });
+        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_PUSH_R32,
+            .operand1 = MICRO_ASM386_REG32_EDI
+        });
 
-        micro_asm386_popR32(3);
-        micro_asm386_popR32(6);
-        micro_asm386_popR32(7);
-        micro_asm386_put_instructions(&codegen->outbuf);
+        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_POP_R32,
+            .operand1 = MICRO_ASM386_REG32_EBX
+        });
+        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_POP_R32,
+            .operand1 = MICRO_ASM386_REG32_ESI
+        });
+        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+            .opcode = MICRO_ASM386_INSTR_POP_R32,
+            .operand1 = MICRO_ASM386_REG32_EDI
+        });
     }
 
-    micro_asm386_epilogue();
-    micro_asm386_put_instructions(&codegen->outbuf);
+    push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, {0}, {0});
 
     return 0;
 }

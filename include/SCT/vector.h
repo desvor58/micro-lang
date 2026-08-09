@@ -18,6 +18,8 @@ void sct_vector_deinit(sct_vector_t *vec);
 
 void sct_vector_push(sct_vector_t *vec, void *item);
 
+void sct_vector_push_array(sct_vector_t *vec, void *arr, size_t size);
+
 void *sct_vector_get(sct_vector_t *vec, size_t index);
 
 void *sct_vector_pop(sct_vector_t *vec);

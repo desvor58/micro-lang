@@ -3,6 +3,33 @@
 
 #include "common.h"
 
+static inline void minus_set_tbl()
+{
+    opMI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_M8I8;
+    opMI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_M16I16;
+    opMI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_M32I32;
+    
+    opSI_fn = MICRO_ASM386_INSTR_SUB_S32I32;
+
+    opRI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_R8I8;
+    opRI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_R16I16;
+    opRI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_R32I32;
+    
+    opMR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_M8R8;
+    opMR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_M16R16;
+    opMR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_M32R32;
+
+    opRR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_R8R8;
+    opRR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_R16R16;
+    opRR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_R32R32;
+
+    opRS_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_R8S32;
+    opRS_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_R16S32;
+    opRS_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_R32S32;
+
+    opSR_fn = MICRO_ASM386_INSTR_SUB_S32R32;
+}
+
 int op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
@@ -10,30 +37,6 @@ int op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, m
     if (unlikely(start->type != MICRO_TOK_MINUS)) {
         return 0;
     }
-
-    opMI_tbl[MICRO_SIZE_8]  = micro_asm386_subM8I8;
-    opMI_tbl[MICRO_SIZE_16] = micro_asm386_subM16I16;
-    opMI_tbl[MICRO_SIZE_32] = micro_asm386_subM32I32;
-    
-    opSI_fn = micro_asm386_subS32I32;
-
-    opRI_tbl[MICRO_SIZE_8]  = micro_asm386_subR8I8;
-    opRI_tbl[MICRO_SIZE_16] = micro_asm386_subR16I16;
-    opRI_tbl[MICRO_SIZE_32] = micro_asm386_subR32I32;
-    
-    opMR_tbl[MICRO_SIZE_8]  = micro_asm386_subM8R8;
-    opMR_tbl[MICRO_SIZE_16] = micro_asm386_subM16R16;
-    opMR_tbl[MICRO_SIZE_32] = micro_asm386_subM32R32;
-
-    opRR_tbl[MICRO_SIZE_8]  = micro_asm386_subR8R8;
-    opRR_tbl[MICRO_SIZE_16] = micro_asm386_subR16R16;
-    opRR_tbl[MICRO_SIZE_32] = micro_asm386_subR32R32;
-
-    opRS_tbl[MICRO_SIZE_8]  = micro_asm386_subR8S32;
-    opRS_tbl[MICRO_SIZE_16] = micro_asm386_subR16S32;
-    opRS_tbl[MICRO_SIZE_32] = micro_asm386_subR32S32;
-
-    opSR_fn = micro_asm386_subS32R32;
 
     micro_token_t *first_operand = start + 1;
     if (_micro_tok_is_lit(first_operand->type)) {
@@ -48,12 +51,14 @@ int op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, m
 
             expr_lit_parse(codegen, dst, first_lit);
 
+            minus_set_tbl();
             op_lit_to_dst(codegen, dst, second_lit);
             return 3;
         }
         if (_micro_tok_is_op(second_operand->type)) {
             expr_lit_parse(codegen, dst, first_lit);
 
+            minus_set_tbl();
             int expr_offset = op_expr_to_dst(codegen, dst, second_operand);
             if (!expr_offset) return 0;
             
@@ -75,10 +80,12 @@ int op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, m
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
+            minus_set_tbl();
             op_lit_to_dst(codegen, dst, second_lit);
             return 2 + expr_offset;
         }
         if (_micro_tok_is_op(second_operand->type)) {
+            minus_set_tbl();
             int expr2_offset = op_expr_to_dst(codegen, dst, second_operand);
             if (!expr2_offset) return 0;
             return 1 + expr_offset + expr2_offset;

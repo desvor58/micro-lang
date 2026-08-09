@@ -31,6 +31,5 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
         });
         return 1;
     }
-    micro_asm386_put_instructions(&codegen->outbuf);
     return 0;
 }

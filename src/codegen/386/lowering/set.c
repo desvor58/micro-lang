@@ -44,6 +44,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
             dst.type = MICRO_STORAGE_STACK;
             dst.stack.ebp_offset = space;
             ext->max_stack_offset -= 4;
+            ext->ebp_top_offset -= 4;
         } else {
             dst.type = MICRO_STORAGE_REG;
             dst.reg.reg = space;

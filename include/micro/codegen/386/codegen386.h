@@ -68,6 +68,7 @@ typedef struct {
 } micro_codegen386_ident_t;
 
 typedef struct {
+    sct_arena_t arena;
     struct {
         u32 in_function : 1;
         u32 use_callee_save_regs : 1;
