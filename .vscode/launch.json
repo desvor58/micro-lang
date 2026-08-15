@@ -2,28 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "gdb-debug",
-            "type": "cppdbg",
+            "name": "lldb-debug",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/microc", // Путь к вашему исполняемому файлу
+            "program": "${workspaceFolder}/bin/microc.exe",
             "args": [
                 "./test.micro",
                 "-o",
                 "./test.bin"
             ],
-            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "preLaunchTask": "C/C++: gcc.exe сборка активного файла" // Убедитесь, что у вас есть задача сборки
+            "preLaunchTask": "build debug"
         }
     ]
 }

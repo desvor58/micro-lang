@@ -5,6 +5,8 @@
         sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (size));  \
         return  \
 
+sct_hashmap_t lbls;
+
 static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *outbuf)
 {
     switch (instr->opcode) {
@@ -167,11 +169,21 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_PUSH_R16, 2, { 0x66, 0x50 + instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_POP_R32,  1, {       0x58 + instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_POP_R16,  2, { 0x66, 0x58 + instr->operand1.reg });
+
+        case MICRO_ASM386_INSTR_LBL:
+            sct_hashmap_add(&lbls, instr->operand1.lbl_name, &outbuf->size);
+            break;
+        
+        default:
+            puts("undefined instr");
+            break;
     };
 }
 
 void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 {
+    sct_hashmap_init(&lbls, sizeof(size_t));
+
     for (size_t i = 0; i < instrs->size; i++) {
         micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
         if (unlikely(!instr)) {
@@ -182,4 +194,6 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 
     sct_vector_deinit(instrs);
     sct_vector_init(instrs, sizeof(micro_asm386_instruction_t));
+
+    sct_hashmap_deinit(&lbls);
 }

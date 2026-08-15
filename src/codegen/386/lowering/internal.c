@@ -105,6 +105,11 @@ int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_t
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
+    u8 used_regs_save[8];
+    memcpy(used_regs_save, ext->used_regs, sizeof(u8)*8);
+
+    int res = 0;
+
     if (dst.type == MICRO_STORAGE_REG) {
         ext->used_regs[dst.reg.reg] = 1;
     }
@@ -113,7 +118,8 @@ int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_t
         char *end;
         errno = 0;
         i32 lit = strtol(start->val, &end, 10);
-        return expr_lit_parse(codegen, dst, lit);
+        res = expr_lit_parse(codegen, dst, lit);
+        goto exit;
     }
     if (start->type == MICRO_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, start->val);
@@ -123,25 +129,32 @@ int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_t
                 .line_ref = start->line_ref,
                 .chpos_ref = start->chpos_ref
             });
-            return 0;
+            goto exit;
         }
 
         switch (ident->type) {
             case MICRO_IDENT_FUN:
-                return expr_lit_parse(codegen, dst, ident->fun.address);
+                res = expr_lit_parse(codegen, dst, ident->fun.address);
+                goto exit;
 
             case MICRO_IDENT_VREG:
-                return expr_vreg_parse(codegen, dst, ident->vreg);
+                res = expr_vreg_parse(codegen, dst, ident->vreg);
+                goto exit;
 
             case MICRO_IDENT_LBL:
-                return expr_lit_parse(codegen, dst, ident->lbl.address);
+                res = expr_lit_parse(codegen, dst, ident->lbl.address);
+                goto exit;
         };
     }
     if (_micro_tok_is_op(start->type)) {
         op_info_t op_info = op_tbl[start->type];
-        return op_info.handler(codegen, dst, start);
+        res = op_info.handler(codegen, dst, start);
+        goto exit;
     }
-    return 1;
+
+exit:
+    memcpy(ext->used_regs, used_regs_save, sizeof(u8)*8);
+    return res;
 }
 
 int get_last_free_space(micro_codegen_t *codegen)

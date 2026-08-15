@@ -2,8 +2,8 @@
 #define ASM386_H
 
 #include <string.h>
-#include <SCT/string.h>
 #include <SCT/vector.h>
+#include <SCT/hashmap.h>
 #include <micro/common.h>
 
 typedef enum {
@@ -168,6 +168,8 @@ typedef enum {
 
     MICRO_ASM386_INSTR_LEA_R32S32,
     MICRO_ASM386_INSTR_LEA_R16S32,
+
+    MICRO_ASM386_INSTR_LBL,
 } micro_asm386_instruction_type_t;
 
 typedef enum {
@@ -203,6 +205,7 @@ typedef union {
     micro_asm386_reg_t reg;
     micro_imm_le_t     imm;
     micro_addr_le_t    addr;
+    char              *lbl_name;
 } micro_asm386_instruction_operand_t;
 
 typedef struct {

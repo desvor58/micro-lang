@@ -6,6 +6,11 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_fun_t instr_fun = instr->fun;
 
+    // will free in asm emitting
+    char *start_lbl_name = amalloc(sizeof(char) * strlen(instr_fun.name) + 1);
+    strcpy(start_lbl_name, instr_fun.name);
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = start_lbl_name }, {});
+
     push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, {0}, {0});
 
     size_t sub_instr_addr = codegen->asm_instrs.size;

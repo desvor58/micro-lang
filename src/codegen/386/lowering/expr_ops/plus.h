@@ -3,35 +3,31 @@
 
 #include "common.h"
 
-static inline void plus_set_tbl()
-{
-    opMI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_M8I8;
-    opMI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_M16I16;
-    opMI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_M32I32;
-    
-    opSI_fn = MICRO_ASM386_INSTR_ADD_S32I32;
+static const op_tbls_t plus_op_tbls = {
+    .opMI_tbl[MICRO_SIZE_8] = MICRO_ASM386_INSTR_ADD_M8I8,
+    .opMI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_M16I16,
+    .opMI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_M32I32,
 
-    opRI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8I8;
-    opRI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16I16;
-    opRI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32I32;
-}
+    .opSI_fn = MICRO_ASM386_INSTR_ADD_S32I32,
 
-static inline void plus_set_expr_tbl()
-{
-    opMR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_M8R8;
-    opMR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_M16R16;
-    opMR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_M32R32;
+    .opRI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8I8,
+    .opRI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16I16,
+    .opRI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32I32,
 
-    opRR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8R8;
-    opRR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16R16;
-    opRR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32R32;
+    .opMR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_M8R8,
+    .opMR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_M16R16,
+    .opMR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_M32R32,
 
-    opRS_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8S32;
-    opRS_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16S32;
-    opRS_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32S32;
+    .opRR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8R8,
+    .opRR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16R16,
+    .opRR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32R32,
 
-    opSR_fn = MICRO_ASM386_INSTR_ADD_S32R32;
-}
+    .opRS_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_ADD_R8S32,
+    .opRS_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_ADD_R16S32,
+    .opRS_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_ADD_R32S32,
+
+    .opSR_fn = MICRO_ASM386_INSTR_ADD_S32R32,
+};
 
 int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
 {
@@ -55,22 +51,19 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
 
-            plus_set_tbl();
-            op_lit_to_dst(codegen, dst, lit);
-
+            op_lit_to_dst(codegen, &plus_op_tbls, dst, lit);
             return 3;
-        } else
+        }
         if (_micro_tok_is_op(second_operand->type)) {
-            plus_set_expr_tbl();
-            int expr_offset = op_expr_to_dst(codegen, dst, second_operand);
+            int expr_offset = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr_offset) return 0;
             return 2 + expr_offset;
-        } else
+        }
         if (second_operand->type == MICRO_TOK_IDENT) {
             micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
 
             if (ident2->type == MICRO_IDENT_VREG) {
-                op_vreg_to_dst(codegen, dst, ident2->vreg);
+                op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident2->vreg);
                 return 3;
             }
             return 0;
@@ -89,18 +82,23 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
 
             expr_lit_parse(codegen, dst, first_lit);
 
-            plus_set_tbl();
-            op_lit_to_dst(codegen, dst, second_lit);
+            op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
             return 3;
         }
         if (_micro_tok_is_op(second_operand->type)) {
             int expr_offset = expr_parse(codegen, dst, second_operand);
             if (!expr_offset) return 0;
 
-            plus_set_tbl();
-
-            op_lit_to_dst(codegen, dst, first_lit);
+            op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
             return 2 + expr_offset;
+        }
+        if (second_operand->type == MICRO_TOK_IDENT) {
+            micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (ident->type == MICRO_IDENT_VREG) {
+                expr_vreg_parse(codegen, dst, ident->vreg);
+            }
+            op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
+            return 3;
         }
         return 0;
     }
@@ -118,16 +116,20 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
-            plus_set_tbl();
-
-            op_lit_to_dst(codegen, dst, second_lit);
+            op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
             return 2 + expr_offset;
         }
         if (_micro_tok_is_op(second_operand->type)) {
-            plus_set_expr_tbl();
-            int expr2_offset = op_expr_to_dst(codegen, dst, second_operand);
+            int expr2_offset = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr2_offset) return 0;
             return 1 + expr_offset + expr2_offset;
+        }
+        if (second_operand->type == MICRO_TOK_IDENT) {
+            micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (ident->type == MICRO_IDENT_VREG) {
+                op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident->vreg);
+            }
+            return 2 + expr_offset;
         }
     }
     return 0;

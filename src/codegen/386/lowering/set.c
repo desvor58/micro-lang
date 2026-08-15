@@ -71,5 +71,8 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         });
         return 1;
     }
+    if (dst.type == MICRO_STORAGE_REG) {
+        ext->used_regs[dst.reg.reg] = 1;
+    }
     return 0;
 }

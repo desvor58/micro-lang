@@ -43,12 +43,14 @@ SRC_TARGETS := src/*.c \
                src/asm/*.c \
                src/codegen/*.c \
                src/codegen/386/*.c \
-               src/codegen/386/lowering/*.c
+               src/codegen/386/lowering/*.c \
+               src/codegen/386/lowering/expr_ops/*.c \
 
 SRCS := $(wildcard $(SRC_TARGETS))
 
 SRCS := $(filter-out src/microc/microc.c, $(SRCS))
 OBJS := $(patsubst src/%.c, obj/%.o, $(SRCS))
+DEPS := $(OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
 MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
@@ -76,6 +78,8 @@ tests/bin/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
 obj/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(DEPS)
 
 clean:
 	@$(call RM_DIR,obj)
