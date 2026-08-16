@@ -57,7 +57,7 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(ext->ebp_top_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
                         ext->max_stack_offset -= 4;
                     }
-                    push_asm_instr(movRS_tbl[dst_size], { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(ext->ebp_top_offset) });
+                    push_asm_instr(movRS_tbl[dst_size], { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(vreg.storage.stack.ebp_offset) });
                     push_asm_instr(movMR_tbl[dst_size], { .addr = micro_imm_le_gen(dst.datasec.address) }, { .reg = MICRO_ASM386_REG32_EAX });
                     if (ext->used_regs[0]) {
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(ext->ebp_top_offset) });
@@ -69,7 +69,7 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(ext->ebp_top_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
                         ext->max_stack_offset -= 4;
                     }
-                    push_asm_instr(movRS_tbl[dst_size], { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(ext->ebp_top_offset) });
+                    push_asm_instr(movRS_tbl[dst_size], { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(vreg.storage.stack.ebp_offset) });
                     push_asm_instr(movSR_tbl[dst_size], { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
                     if (ext->used_regs[0]) {
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(ext->ebp_top_offset) });

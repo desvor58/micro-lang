@@ -86,9 +86,22 @@ void micro_instrgen_init(micro_instrgen_t *instrgen, sct_vector_t *toks)
     instrgen->code_in_function = 0;
 }
 
+static void instrs_deinit(micro_instrgen_t *instrgen, sct_vector_t *instrs)
+{
+    for (size_t i = 0; i < instrs->size; i++) {
+        micro_instruction_t *instr = sct_vector_get(instrs, i);
+
+        if (instr->type == MICRO_INSTR_FUN) {
+            sct_vector_deinit(&instr->fun.args);
+            instrs_deinit(instrgen, &instr->fun.body);
+        }
+    }
+    sct_vector_deinit(instrs);
+}
+
 void micro_instrgen_deinit(micro_instrgen_t *instrgen)
 {
-    sct_vector_deinit(&instrgen->instructions);
+    instrs_deinit(instrgen, &instrgen->instructions);
     sct_arena_deinit(&instrgen->arena);
 }
 

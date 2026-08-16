@@ -6,8 +6,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_fun_t instr_fun = instr->fun;
 
-    // will free in asm emitting
-    char *start_lbl_name = amalloc(sizeof(char) * strlen(instr_fun.name) + 1);
+    char *start_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1);
     strcpy(start_lbl_name, instr_fun.name);
     push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = start_lbl_name }, {});
 
@@ -37,6 +36,18 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         .type = MICRO_IDENT_FUN,
         .fun  = fun,
     });
+
+    for (size_t i = 0; i < instr_fun.args.size; i++) {
+        micro_instruction_fun_arg_t *arg = sct_vector_get(&instr_fun.args, i);
+        
+        micro_codegen386_ident_t ident = { .type = MICRO_IDENT_VREG };
+        strcpy(ident.vreg.name, arg->name);
+        ident.vreg.type = arg->type;
+        ident.vreg.storage.type = MICRO_STORAGE_STACK;
+        ident.vreg.storage.stack.ebp_offset = 8 + i * 4;
+
+        sct_hashmap_add(&ext->idents, arg->name, &ident);
+    }
 
     sct_vector_t *instrs_save = codegen->instrs;
     size_t pos_save = codegen->pos;

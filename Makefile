@@ -28,6 +28,10 @@ else
     MKDIR = mkdir -p "$(1)"
     SCT_LIB_FILE := sct-elf
     EXE_EXT :=
+
+    ifeq ($(MODE),debug)
+        CFLAGS +=  -fsanitize=address
+    endif
 endif
 
 ifeq ($(CC),clang)

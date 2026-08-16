@@ -1,8 +1,8 @@
 /************************************************
- *               Micro IR language
+ *               Micro IR compiler
  *                   by Desvor
  * 
- *    Language created for Simple C Compiler,
+ *    Compiler created for Simple C Compiler,
  *     you can use it for your own compilers.
  *     All documentation in `docs` directory
  **********************************************/
@@ -10,6 +10,12 @@
 #include <micro/micro.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef _WIN32
+# define _CRTDBG_MAP_ALLOC
+# include <stdlib.h>
+# include <crtdbg.h>
+#endif
 
 typedef struct {
     char inputfile[MICRO_MAX_SYMBOL_SIZE];
@@ -442,8 +448,6 @@ int main(int argc, char **argv)
     micro_args_t *args = (micro_args_t*)malloc(sizeof(micro_args_t));
 
     *args = micro_args_parse(argc, argv);
-    // strcpy(args->inputfile, "../test.micro");
-    // strcpy(args->outfile,  "../test.bin");
 
     if (args->inputfile[0] == 0) {
         puts("Error: Expected input file name");
@@ -479,6 +483,8 @@ int main(int argc, char **argv)
         sct_vector_t toks;
         sct_vector_init(&toks, sizeof(micro_token_t));
         micro_tokenize(text, text_size, &toks);
+
+        free(text);
 
         for (size_t i = 0; i < micro_err_stk_size; i++) {
             put_err(args->inputfile,
@@ -541,7 +547,10 @@ int main(int argc, char **argv)
                 fclose(outfile);
             micro_codegen386_deinit(&codegen);
         micro_instrgen_deinit(&instrgen);
+        sct_vector_deinit(&toks);
     micro_deinit();
+
+    free(args);
 
     return 0;
 }
