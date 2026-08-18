@@ -3,9 +3,23 @@
 #define instr_handle(instr, size, ...)  \
     case instr:  \
         sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (size));  \
-        return  \
+        return
+
+#define instr_handle_lbl(instr, S, N, ...)  \
+    case instr:  \
+        sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (S));  \
+        sct_vector_push(outbuf, &(deferred_lbl_t){ .addr = outbuf->size, .lbl_name = (N) });  \
+        sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);  \
+        return
 
 sct_hashmap_t lbls;
+
+typedef struct {
+    size_t addr;
+    char  *lbl_name;
+} deferred_lbl_t;
+
+sct_vector_t deferred_lbls;
 
 static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *outbuf)
 {
@@ -45,6 +59,8 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_MOV_R32MR32, 2, {       0x8B, 0b00000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_MOV_R16MR16, 3, { 0x66, 0x8B, 0b00000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_MOV_R8MR8,   2, {       0x8A, 0b00000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
+
+        instr_handle_lbl(MICRO_ASM386_INSTR_MOV_R32L32, 2, instr->operand2.lbl_name, { 0xB8 + instr->operand1.reg });
 
         instr_handle(MICRO_ASM386_INSTR_ADD_R32R32, 2, {       0x01, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_ADD_R16R16, 3, { 0x66, 0x01, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
@@ -172,17 +188,18 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
         case MICRO_ASM386_INSTR_LBL:
             sct_hashmap_add(&lbls, instr->operand1.lbl_name, &outbuf->size);
-            break;
+            return;
         
         default:
             puts("undefined instr");
-            break;
+            return;
     };
 }
 
 void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 {
     sct_hashmap_init(&lbls, sizeof(size_t));
+    sct_vector_init(&deferred_lbls, sizeof(deferred_lbl_t));
 
     for (size_t i = 0; i < instrs->size; i++) {
         micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
@@ -192,6 +209,23 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
         emit_instr(instr, outbuf);
     }
 
+    for (size_t i = 0; i < deferred_lbls.size; i++) {
+        deferred_lbl_t *dlbl = sct_vector_get(&deferred_lbls, i);
+
+        size_t *lbl_val = sct_hashmap_get(&lbls, dlbl->lbl_name);
+        if (!lbl_val) {
+            puts("Internal asm error: undefined label");
+            return;
+        }
+
+        micro_imm_le_t lbl_imm = micro_imm_le_gen(*lbl_val);
+        sct_vector_set(outbuf, dlbl->addr,     &lbl_imm.bytes[0]);
+        sct_vector_set(outbuf, dlbl->addr + 1, &lbl_imm.bytes[1]);
+        sct_vector_set(outbuf, dlbl->addr + 2, &lbl_imm.bytes[2]);
+        sct_vector_set(outbuf, dlbl->addr + 3, &lbl_imm.bytes[3]);
+    }
+
+    sct_vector_deinit(&deferred_lbls);
     sct_vector_deinit(instrs);
     sct_vector_init(instrs, sizeof(micro_asm386_instruction_t));
 

@@ -37,6 +37,12 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         .fun  = fun,
     });
 
+    sct_vector_t save_idents;
+    sct_vector_init(&save_idents, sizeof(char*));
+    for (size_t i = 0; i < ext->idents.keys.size; i++) {
+        sct_vector_push(&save_idents, sct_vector_get(&ext->idents.keys, i));
+    }
+
     for (size_t i = 0; i < instr_fun.args.size; i++) {
         micro_instruction_fun_arg_t *arg = sct_vector_get(&instr_fun.args, i);
         
@@ -54,6 +60,22 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         codegen->emit(codegen, &instr_fun.body);
     codegen->instrs = instrs_save;
     codegen->pos = pos_save;
+
+    for (size_t i = 0; i < ext->idents.keys.size; i++) {
+        char *ident_name = *(char**)sct_vector_get(&ext->idents.keys, i);
+        printf("ident:%s\n", ident_name);
+        for (size_t j = 0; j < save_idents.size; j++) {
+            char *save_name = *(char**)sct_vector_get(&save_idents, j);
+            printf("save:%s\n", save_name);
+            if (strcmp(ident_name, save_name)) {
+                puts("ok");
+                sct_hashmap_remove(&ext->idents, ident_name);
+            }
+        }
+    }
+    puts("END");
+
+    sct_vector_deinit(&save_idents);
 
     micro_imm_le_t imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset));
     ((micro_asm386_instruction_t*)sct_vector_get(&codegen->asm_instrs, sub_instr_addr))->operand2.imm = imm;
