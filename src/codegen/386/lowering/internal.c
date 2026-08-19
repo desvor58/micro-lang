@@ -31,24 +31,19 @@ int expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32
     return 0;
 }
 
-int expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t fun)
+int expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    puts("1");
-
     switch (dst.type) {
         case MICRO_STORAGE_DATASEC:
-            puts("datasec");
             return 0;
 
         case MICRO_STORAGE_STACK:
-            puts("stack");
             return 0;
 
         case MICRO_STORAGE_REG:
-            puts("reg");
-            push_asm_instr(MICRO_ASM386_INSTR_MOV_R32L32, dst.reg.reg, fun.instr_info.name);
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_R32L32, { .reg = dst.reg.reg }, { .lbl_name = fun->instr_info.name });
             return 1;
     }
     return 0;
@@ -157,7 +152,7 @@ int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_t
 
         switch (ident->type) {
             case MICRO_IDENT_FUN:
-                res = expr_fun_parse(codegen, dst, ident->fun);
+                res = expr_fun_parse(codegen, dst, &ident->fun);
                 goto exit;
 
             case MICRO_IDENT_VREG:

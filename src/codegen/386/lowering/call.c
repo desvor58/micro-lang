@@ -15,7 +15,17 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_call_t instr_call = instr->call;
 
-    micro_codegen386_ident_fun_t *fun = sct_hashmap_get(&ext->idents, instr_call.fun_name);
+    micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_call.fun_name);
+    micro_codegen386_ident_fun_t *fun = &ident->fun;
+
+    size_t stack_cleanup_offset = 0;
+
+    for (size_t i = 0; i < 3; i++) {
+        if (ext->used_regs[i]) {
+            push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = i }, {});
+            stack_cleanup_offset += 4;
+        }
+    }
     
     int free_space = get_last_free_space(codegen);
     micro_codegen386_storage_t arg_dst = {
@@ -47,7 +57,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         return 1;
     }
 
-    for (int i = instr_call.arg_exprs.size - 1; i > 0; i++) {
+    for (int i = instr_call.arg_exprs.size - 1; i >= 0; i--) {
         micro_instruction_fun_arg_t *arg = sct_vector_get(&fun->instr_info.args, i);
         arg_dst.reg.size = micro_type_to_size[arg->type];
 
@@ -55,7 +65,12 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         int expr_size = expr_parse(codegen, arg_dst, *arg_start_tok);
         
         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = arg_dst.reg.reg }, {});
+        stack_cleanup_offset += 4;
     }
+
+    push_asm_instr(MICRO_ASM386_INSTR_CALL_L32, { .lbl_name = fun->instr_info.name }, {});
+
+    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(stack_cleanup_offset) });
 
     return 0;
 }

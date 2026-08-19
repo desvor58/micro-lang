@@ -171,6 +171,8 @@ typedef enum {
     MICRO_ASM386_INSTR_LEA_R32S32,
     MICRO_ASM386_INSTR_LEA_R16S32,
 
+    MICRO_ASM386_INSTR_CALL_L32,
+
     MICRO_ASM386_INSTR_LBL,
 } micro_asm386_instruction_type_t;
 

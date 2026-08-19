@@ -395,6 +395,8 @@ static const asm_fmt_t asm_tbl[] = {
 
     [MICRO_ASM386_INSTR_LEA_R32S32]  = A("leaR32S32",   'R', 32, 'V', 0),
     [MICRO_ASM386_INSTR_LEA_R16S32]  = A("leaR16S32",   'R', 16, 'V', 0),
+
+    [MICRO_ASM386_INSTR_CALL_L32]    = A1("lbl", 'L', 0),
     
     [MICRO_ASM386_INSTR_LBL]         = A1("lbl", 'L', 0),
 };
@@ -414,6 +416,14 @@ void put_asm(micro_codegen_t *codegen)
 
         if (instr->opcode == MICRO_ASM386_INSTR_LBL) {
             printf("%s:\n", instr->operand1.lbl_name);
+            continue;
+        }
+        if (instr->opcode == MICRO_ASM386_INSTR_MOV_R32L32) {
+            printf("movR32L32 %s, %s\n", reg32[instr->operand1.reg], instr->operand2.lbl_name);
+            continue;
+        }
+        if (instr->opcode == MICRO_ASM386_INSTR_CALL_L32) {
+            printf("callL32 %s\n", instr->operand1.lbl_name);
             continue;
         }
 

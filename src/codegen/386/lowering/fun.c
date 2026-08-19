@@ -118,6 +118,8 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         });
     }
 
+    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset)) });
+
     push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, {0}, {0});
 
     return 0;
