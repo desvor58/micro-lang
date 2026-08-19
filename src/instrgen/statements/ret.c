@@ -34,11 +34,11 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
     if (expr_start_tok->type == MICRO_TOK_SEMICOLON) {
         expr_start_tok = 0;
     } else {
-        size_t expr_offset = micro_scroll_expr(instrgen->toks, instrgen->pos);
-        if (!expr_offset) {
+        size_t expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
+        if (!expr_size) {
             goto exit;
         }
-        micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_offset);
+        micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_size);
         if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
             micro_push_err((micro_error_t) {
                 .err = MICRO_ERROR_EXPECTED_SEMICOLON,

@@ -22,6 +22,7 @@ void micro_codegen386_init(micro_codegen_t *codegen)
     ext->use_callee_save_regs = 0;
     ext->ebp_top_offset = -4;
     ext->max_stack_offset = 0;
+    ext->curent_function_label = "";
     sct_hashmap_init(&ext->idents, sizeof(micro_codegen386_ident_t));
     memset(ext->used_regs, 0, sizeof(ext->used_regs));
 }

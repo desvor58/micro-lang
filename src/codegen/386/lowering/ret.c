@@ -43,21 +43,29 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
         }
     }
 
-    int expr_parse_offset = expr_parse(codegen, (micro_codegen386_storage_t){
-        .type = MICRO_STORAGE_REG,
-        .reg = {
-            .reg = MICRO_ASM386_REG32_EAX,
-            .size = MICRO_SIZE_32
-        }
-    }, instr_ret.val_expr);
+    if (instr_ret.val_expr) {
+        size_t expr_size = expr_parse(codegen, (micro_codegen386_storage_t){
+            .type = MICRO_STORAGE_REG,
+            .reg = {
+                .reg = MICRO_ASM386_REG32_EAX,
+                .size = MICRO_SIZE_32
+            }
+        }, instr_ret.val_expr);
 
-    if (!expr_parse_offset) {
-        micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_EXPR_PARSE,
-            .line_ref = instr_ret.val_expr->line_ref,
-            .chpos_ref = instr_ret.val_expr->chpos_ref
-        });
-        return 1;
+        if (!expr_size) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_EXPR_PARSE,
+                .line_ref = instr_ret.val_expr->line_ref,
+                .chpos_ref = instr_ret.val_expr->chpos_ref
+            });
+            return 1;
+        }
     }
+
+    char *end_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_label) + 1 + 4);
+    strcpy(end_lbl_name, ext->curent_function_label);
+    strcat(end_lbl_name, ".end");
+    push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = end_lbl_name }, {});
+    
     return 0;
 }

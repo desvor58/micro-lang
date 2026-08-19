@@ -68,11 +68,11 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
             goto exit;
         }
         sct_vector_push(&call_instr.arg_exprs, &tok);
-        size_t expr_offset = micro_scroll_expr(instrgen->toks, instrgen->pos);
-        if (!expr_offset) {
+        size_t expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
+        if (!expr_size) {
             goto exit;
         }
-        instrgen->pos += expr_offset;
+        instrgen->pos += expr_size;
         tok = sct_vector_get(instrgen->toks, instrgen->pos);
     }
 

@@ -1,7 +1,7 @@
 #include "../internal.h"
 #include "expr_ops.h"
 
-int expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm)
+size_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -31,7 +31,7 @@ int expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32
     return 0;
 }
 
-int expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun)
+size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -49,7 +49,7 @@ int expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mic
     return 0;
 }
 
-int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg)
+size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -119,7 +119,7 @@ int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
     return 0;
 }
 
-int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
+size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 

@@ -44,12 +44,12 @@ int asmopting(micro_codegen_t *codegen);
 
 int label_resulting(micro_codegen_t *codegen);
 
-
-int expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
-int expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg);
+size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
+size_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
+size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg);
 
 // return offset to next token after expr or 0 if err
-int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start);
+size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start);
 
 // return number of register or ebp offset, do not change ebp_offset
 int get_last_free_space(micro_codegen_t *codegen);

@@ -25,6 +25,8 @@ sct_vector_t deferred_lbls;
 
 static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *outbuf)
 {
+    u8 t;
+
     switch (instr->opcode) {
         instr_handle(MICRO_ASM386_INSTR_MOV_R32R32, 2, {       0x8B, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_MOV_R16R16, 3, { 0x66, 0x8B, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
@@ -179,6 +181,18 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_JNZ_S32,  6, { 0x0F, 0x85, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_JMP_S32,  5, { 0xE9, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
 
+        case MICRO_ASM386_INSTR_JMP_L32:
+            t = 0xE9;
+            sct_vector_push(outbuf, &t);
+            sct_vector_push(&deferred_lbls, &(deferred_lbl_t){
+                .addr = outbuf->size,
+                .lbl_name = instr->operand1.lbl_name,
+                .is_rel_offset = 1,
+                .rel_pos = outbuf->size + 4,
+            });
+            sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);
+            return;
+
         instr_handle(MICRO_ASM386_INSTR_XCHG_R32R32, 2, {       0x87, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_XCHG_R16R16, 3, { 0x66, 0x87, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_XCHG_R8R8,   2, {       0x86, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
@@ -189,7 +203,7 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_POP_R16,  2, { 0x66, 0x58 + instr->operand1.reg });
 
         case MICRO_ASM386_INSTR_CALL_L32:
-            u8 t = 0xE8;
+            t = 0xE8;
             sct_vector_push(outbuf, &t);
             sct_vector_push(&deferred_lbls, &(deferred_lbl_t){
                 .addr = outbuf->size,

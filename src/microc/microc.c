@@ -331,6 +331,7 @@ static const asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_MOV_R32S32]  = A("movR32S32",   'R', 32, 'V', 0),
     [MICRO_ASM386_INSTR_MOV_R16S32]  = A("movR16S32",   'R', 16, 'V', 0),
     [MICRO_ASM386_INSTR_MOV_R8S32]   = A("movR8S32",    'R', 8,  'V', 0),
+    [MICRO_ASM386_INSTR_MOV_R32L32]  = A("movR32L32",   'R', 32, 'L', 0),
 
     [MICRO_ASM386_INSTR_ADD_R32R32]  = A("addR32R32",   'R', 32, 'R', 32),
     [MICRO_ASM386_INSTR_ADD_R16R16]  = A("addR16R16",   'R', 16, 'R', 16),
@@ -374,6 +375,8 @@ static const asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_JZ_S32]      = A1("jzS32",      'V', 0),
     [MICRO_ASM386_INSTR_JNZ_S32]     = A1("jnzS32",     'V', 0),
     [MICRO_ASM386_INSTR_JMP_S32]     = A1("jmpS32",     'V', 0),
+
+    [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),
     [MICRO_ASM386_INSTR_XCHG_R16R16] = A("xchgR16R16",  'R', 16, 'R', 16),
@@ -462,21 +465,19 @@ void put_asm(micro_codegen_t *codegen)
             continue;
         }
 
+        char tab[] = "    ";
+
         if (instr->opcode == MICRO_ASM386_INSTR_LBL) {
             printf("%s:\n", instr->operand1.lbl_name);
             continue;
         }
-        if (instr->opcode == MICRO_ASM386_INSTR_MOV_R32L32) {
-            printf("movR32L32 %s, %s\n", reg32[instr->operand1.reg], instr->operand2.lbl_name);
-            continue;
-        }
         if (instr->opcode == MICRO_ASM386_INSTR_CALL_L32) {
-            printf("callL32 %s\n", instr->operand1.lbl_name);
+            printf("%scallL32 %s\n", tab, instr->operand1.lbl_name);
             continue;
         }
 
         const asm_fmt_t *fmt = &asm_tbl[instr->opcode];
-        printf("%s", fmt->name);
+        printf("%s%s", tab, fmt->name);
 
         const u8 kinds[2] = { fmt->kind1, fmt->kind2 };
         const u8 sizes[2] = { fmt->size1, fmt->size2 };

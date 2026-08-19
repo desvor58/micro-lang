@@ -62,7 +62,9 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         sct_hashmap_add(&ext->idents, instr_set.reg_name, &new_ident);
     }
 
-    int expr_size = expr_parse(codegen, dst, instr_set.val_expr);
+    if (!instr_set.val_expr) return 0;
+
+    size_t expr_size = expr_parse(codegen, dst, instr_set.val_expr);
     if (!expr_size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPR_PARSE,

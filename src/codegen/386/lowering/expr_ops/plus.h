@@ -42,7 +42,8 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
         if (ident->type == MICRO_IDENT_VREG) {
-            expr_vreg_parse(codegen, dst, ident->vreg);
+            int ok = expr_vreg_parse(codegen, dst, ident->vreg);
+            if (!ok) return 0;
         }
         
         micro_token_t *second_operand = start + 2;
@@ -55,9 +56,9 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             return 3;
         }
         if (_micro_tok_is_op(second_operand->type)) {
-            int expr_offset = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
-            if (!expr_offset) return 0;
-            return 2 + expr_offset;
+            int expr_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
+            if (!expr_size) return 0;
+            return 2 + expr_size;
         }
         if (second_operand->type == MICRO_TOK_IDENT) {
             micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
@@ -80,22 +81,24 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
-            expr_lit_parse(codegen, dst, first_lit);
+            int ok = expr_lit_parse(codegen, dst, first_lit);
+            if (!ok) return 0;
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
             return 3;
         }
         if (_micro_tok_is_op(second_operand->type)) {
-            int expr_offset = expr_parse(codegen, dst, second_operand);
-            if (!expr_offset) return 0;
+            int expr_size = expr_parse(codegen, dst, second_operand);
+            if (!expr_size) return 0;
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
-            return 2 + expr_offset;
+            return 2 + expr_size;
         }
         if (second_operand->type == MICRO_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
-                expr_vreg_parse(codegen, dst, ident->vreg);
+                int ok = expr_vreg_parse(codegen, dst, ident->vreg);
+                if (!ok) return 0;
             }
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
             return 3;
@@ -103,33 +106,33 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         return 0;
     }
     if (_micro_tok_is_op(first_operand->type)) {
-        int expr_offset = expr_parse(codegen, dst, first_operand);
-        if (!expr_offset) return 0;
+        int expr_size = expr_parse(codegen, dst, first_operand);
+        if (!expr_size) return 0;
 
         if (dst.type == MICRO_STORAGE_REG) {
             ext->used_regs[dst.reg.reg] = 1;
         }
 
-        micro_token_t *second_operand = start + expr_offset + 1;
+        micro_token_t *second_operand = start + expr_size + 1;
         if (_micro_tok_is_lit(second_operand->type)) {
             char *end;
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
-            return 2 + expr_offset;
+            return 2 + expr_size;
         }
         if (_micro_tok_is_op(second_operand->type)) {
-            int expr2_offset = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
-            if (!expr2_offset) return 0;
-            return 1 + expr_offset + expr2_offset;
+            int expr2_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
+            if (!expr2_size) return 0;
+            return 1 + expr_size + expr2_size;
         }
         if (second_operand->type == MICRO_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident->vreg);
             }
-            return 2 + expr_offset;
+            return 2 + expr_size;
         }
     }
     return 0;

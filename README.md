@@ -1,5 +1,5 @@
 # µ micro-lang
-> **Minimalistic. Lightweight. No AST. No SSA. Just optimizations.**
+> **Minimalistic. Lightweight. No SSA. No AST. Just compile.**
 
 **micro** it's an experiment in the shape of IR code. Linear code, spiritually referencing C.
 
