@@ -1,8 +1,8 @@
 #include <micro/common.h>
 
 micro_error_t *micro_err_stk;
-size_t         micro_err_stk_size;
-size_t        _micro_err_stk_real_size;
+size_t              micro_err_stk_size;
+size_t             _micro_err_stk_real_size;
 
 micro_size_t micro_type_to_size[] = {
     [MICRO_TYPE_I8]  = MICRO_SIZE_8,

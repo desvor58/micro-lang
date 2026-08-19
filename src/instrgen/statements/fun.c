@@ -5,7 +5,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
     micro_token_t *fun_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!fun_tok || fun_tok->type != MICRO_TOK_KW_FUN) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'fun' keyword",
+            .err = MICRO_ERROR_EXPECTED_FUN_KW,
             .line_ref = fun_tok ? fun_tok->line_ref : 0,
             .chpos_ref = fun_tok ? fun_tok->chpos_ref : 0
         });
@@ -14,7 +14,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
 
     if (instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'fun' instruction can be only in function body",
+            .err = MICRO_ERROR_FUN_INSIDE_FUNCTION,
             .line_ref = fun_tok ? fun_tok->line_ref : 0,
             .chpos_ref = fun_tok ? fun_tok->chpos_ref : 0
         });
@@ -24,7 +24,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
     micro_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!name_tok || name_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected function name",
+            .err = MICRO_ERROR_EXPECTED_FUN_NAME,
             .line_ref = name_tok ? name_tok->line_ref : 0,
             .chpos_ref = name_tok ? name_tok->chpos_ref : 0
         });
@@ -41,7 +41,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
         micro_token_t *arg_type_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
         if (!arg_type_tok || arg_type_tok->type != MICRO_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
-                .msg = "Expected argument type",
+                .err = MICRO_ERROR_EXPECTED_ARG_TYPE,
                 .line_ref = arg_type_tok ? arg_type_tok->line_ref : 0,
                 .chpos_ref = arg_type_tok ? arg_type_tok->chpos_ref : 0
             });
@@ -51,7 +51,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
         micro_token_t *arg_name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
         if (!arg_name_tok || arg_name_tok->type != MICRO_TOK_IDENT) {
             micro_push_err((micro_error_t){
-                .msg = "Expected argument name",
+                .err = MICRO_ERROR_EXPECTED_ARG_NAME,
                 .line_ref = arg_name_tok ? arg_name_tok->line_ref : 0,
                 .chpos_ref = arg_name_tok ? arg_name_tok->chpos_ref : 0
             });
@@ -71,7 +71,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
         micro_token_t *ret_type_tok = sct_vector_get(instrgen->toks, ++instrgen->pos);
         if (!ret_type_tok || ret_type_tok->type != MICRO_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
-                .msg = "Expected function return type",
+                .err = MICRO_ERROR_EXPECTED_RET_TYPE,
                 .line_ref = ret_type_tok ? ret_type_tok->line_ref : 0,
                 .chpos_ref = ret_type_tok ? ret_type_tok->chpos_ref : 0
             });
@@ -87,7 +87,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
     tok = sct_vector_get(instrgen->toks, ++instrgen->pos);
     if (!tok || tok->type != MICRO_TOK_KW_START) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'start' keyword",
+            .err = MICRO_ERROR_EXPECTED_START_KW,
             .line_ref = tok ? tok->line_ref : 0,
             .chpos_ref = tok ? tok->chpos_ref : 0
         });
@@ -97,7 +97,7 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
     for (;;) {
         if (!tok) {
             micro_push_err((micro_error_t){
-                .msg = "Expected 'end' keyword at end of file",
+                .err = MICRO_ERROR_EXPECTED_END_KW,
                 .line_ref = 0,
                 .chpos_ref = 0
             });

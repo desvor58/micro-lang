@@ -63,7 +63,7 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 chpos++;
                 if (pos >= text_size) {
                     micro_push_err((micro_error_t){
-                        .msg = "Expected closing '\\' character for comment",
+                        .err = MICRO_ERROR_EXPECTED_COMMENT_CLOSE,
                         .line_ref = line,
                         .chpos_ref = chpos
                     });
@@ -223,7 +223,7 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 
                 if (pos >= text_size) {
                     micro_push_err((micro_error_t){
-                        .msg = "Expected closing '\"' character for the string literal",
+                        .err = MICRO_ERROR_EXPECTED_STRING_CLOSE,
                         .line_ref = line,
                         .chpos_ref = chpos
                     });

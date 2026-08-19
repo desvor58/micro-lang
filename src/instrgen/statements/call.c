@@ -5,7 +5,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
     micro_token_t *call_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!call_tok || call_tok->type != MICRO_TOK_KW_CALL) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'call' keyword",
+            .err = MICRO_ERROR_EXPECTED_CALL_KW,
             .line_ref = call_tok ? call_tok->line_ref : 0,
             .chpos_ref = call_tok ? call_tok->chpos_ref : 0
         });
@@ -14,7 +14,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
 
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'call' instruction can be only in function body",
+            .err = MICRO_ERROR_CALL_OUTSIDE_FUNCTION,
             .line_ref = call_tok ? call_tok->line_ref : 0,
             .chpos_ref = call_tok ? call_tok->chpos_ref : 0
         });
@@ -24,7 +24,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
     micro_token_t *ret_reg_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!ret_reg_tok || ret_reg_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected register name for result or '_'",
+            .err = MICRO_ERROR_EXPECTED_RESULT_REG,
             .line_ref = ret_reg_tok ? ret_reg_tok->line_ref : 0,
             .chpos_ref = ret_reg_tok ? ret_reg_tok->chpos_ref : 0
         });
@@ -34,7 +34,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
     micro_token_t *fun_name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!fun_name_tok || fun_name_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected calling function name",
+            .err = MICRO_ERROR_EXPECTED_FUN_NAME,
             .line_ref = fun_name_tok ? fun_name_tok->line_ref : 0,
             .chpos_ref = fun_name_tok ? fun_name_tok->chpos_ref : 0
         });
@@ -50,7 +50,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
     for (;;) {
         if (!tok) {
             micro_push_err((micro_error_t){
-                .msg = "Expected ';'",
+                .err = MICRO_ERROR_EXPECTED_SEMICOLON,
                 .line_ref = 0,
                 .chpos_ref = 0
             });
@@ -61,7 +61,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
         }
         if (!_micro_tok_is_expr_start(tok->type)) {
             micro_push_err((micro_error_t){
-                .msg = "Expected expression",
+                .err = MICRO_ERROR_EXPECTED_EXPRESSION,
                 .line_ref = tok->line_ref,
                 .chpos_ref = tok->chpos_ref
             });

@@ -6,7 +6,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'call' instruction can be only in function body",
+            .err = MICRO_ERROR_CALL_OUTSIDE_FUNCTION,
             .line_ref = instr->start_tok->line_ref,
             .chpos_ref = instr->start_tok->chpos_ref
         });
@@ -16,6 +16,14 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     micro_instruction_call_t instr_call = instr->call;
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_call.fun_name);
+    if (!ident || ident->type != MICRO_IDENT_FUN) {
+        micro_push_err((micro_error_t){
+            .err = MICRO_ERROR_UNDEFINED_FUN,
+            .line_ref = instr->start_tok->line_ref,
+            .chpos_ref = instr->start_tok->chpos_ref
+        });
+        return 1;
+    }
     micro_codegen386_ident_fun_t *fun = &ident->fun;
 
     size_t stack_cleanup_offset = 0;
@@ -42,7 +50,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (instr_call.arg_exprs.size < fun->instr_info.args.size) {
         micro_push_err((micro_error_t){
-            .msg = "Too few arguments for calling",
+            .err = MICRO_ERROR_TOO_FEW_ARGS,
             .line_ref = instr->start_tok->line_ref,
             .chpos_ref = instr->start_tok->chpos_ref
         });
@@ -50,7 +58,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
     if (instr_call.arg_exprs.size > fun->instr_info.args.size) {
         micro_push_err((micro_error_t){
-            .msg = "Too much arguments for calling",
+            .err = MICRO_ERROR_TOO_MANY_ARGS,
             .line_ref = instr->start_tok->line_ref,
             .chpos_ref = instr->start_tok->chpos_ref
         });
@@ -75,7 +83,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     micro_codegen386_ident_t *res_ident = sct_hashmap_get(&ext->idents, instr_call.ret_reg_name);
     if (!res_ident) {
         micro_push_err((micro_error_t){
-            .msg = "Undefined ident",
+            .err = MICRO_ERROR_UNDEFINED_IDENT,
             .line_ref = instr->start_tok[1].line_ref,
             .chpos_ref = instr->start_tok[1].chpos_ref
         });
@@ -83,7 +91,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
     if (res_ident->type != MICRO_IDENT_VREG) {
         micro_push_err((micro_error_t){
-            .msg = "Expected vreg as result value save identifier",
+            .err = MICRO_ERROR_EXPECTED_VREG_RESULT,
             .line_ref = instr->start_tok[1].line_ref,
             .chpos_ref = instr->start_tok[1].chpos_ref
         });
@@ -91,7 +99,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
     if (res_ident->vreg.type != fun->instr_info.ret_type) {
         micro_push_err((micro_error_t){
-            .msg = "result value save vreg and function return type mismatch",
+            .err = MICRO_ERROR_RESULT_TYPE_MISMATCH,
             .line_ref = instr->start_tok[1].line_ref,
             .chpos_ref = instr->start_tok[1].chpos_ref
         });

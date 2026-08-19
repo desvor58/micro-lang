@@ -143,7 +143,7 @@ int expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_t
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, start->val);
         if (!ident) {
             micro_push_err((micro_error_t){
-                .msg = "Undefined identifier",
+                .err = MICRO_ERROR_UNDEFINED_IDENT,
                 .line_ref = start->line_ref,
                 .chpos_ref = start->chpos_ref
             });

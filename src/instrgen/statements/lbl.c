@@ -5,7 +5,7 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
     micro_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!name_tok || name_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected ident for label",
+            .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
             .line_ref = name_tok ? name_tok->line_ref : 0,
             .chpos_ref = name_tok ? name_tok->chpos_ref : 0
         });
@@ -14,7 +14,7 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
 
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "label can be defined only in function body",
+            .err = MICRO_ERROR_LABEL_OUTSIDE_FUNCTION,
             .line_ref = name_tok ? name_tok->line_ref : 0,
             .chpos_ref = name_tok ? name_tok->chpos_ref : 0
         });
@@ -24,7 +24,7 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
     micro_token_t *colon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!colon_tok || colon_tok->type != MICRO_TOK_COLON) {
         micro_push_err((micro_error_t){
-            .msg = "Expected ':'",
+            .err = MICRO_ERROR_EXPECTED_COLON,
             .line_ref = colon_tok ? colon_tok->line_ref : 0,
             .chpos_ref = colon_tok ? colon_tok->chpos_ref : 0
         });

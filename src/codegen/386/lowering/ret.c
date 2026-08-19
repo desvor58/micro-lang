@@ -6,7 +6,7 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'ret' instruction can be only in function body",
+            .err = MICRO_ERROR_RET_OUTSIDE_FUNCTION,
             .line_ref = instr->start_tok->line_ref,
             .chpos_ref = instr->start_tok->chpos_ref
         });
@@ -53,7 +53,7 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (!expr_parse_offset) {
         micro_push_err((micro_error_t){
-            .msg = "expression parse error",
+            .err = MICRO_ERROR_EXPR_PARSE,
             .line_ref = instr_ret.val_expr->line_ref,
             .chpos_ref = instr_ret.val_expr->chpos_ref
         });

@@ -107,7 +107,7 @@ static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, m
 
     if (unlikely(vreg.storage.type == MICRO_STORAGE_DATASEC)) {
         micro_push_err((micro_error_t){
-            .msg = "err",
+            .err = MICRO_ERROR_EXPR_PARSE,
             .line_ref = 0,
             .chpos_ref = 0
         });

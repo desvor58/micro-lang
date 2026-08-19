@@ -29,8 +29,6 @@
 #define MICRO_TOKEN_VEC_EXTEND_SIZE 32
 // max size of symbols
 #define MICRO_MAX_SYMBOL_SIZE 64
-// max errors and warnings message size
-#define MICRO_MAX_ERROR_MESSAGE_SIZE 256
 // size of buffer for reading input file
 #define MICRO_MAX_INPUT_CODE_SIZE 48 * 1024
 // size of buffer for writing instructions before __micro_asm_instructions_put()
@@ -56,10 +54,58 @@ typedef enum {
     MICRO_SIZE_32 = 2,
 } micro_size_t;
 
+typedef enum {
+    MICRO_ERROR_NONE = 0,
+
+    MICRO_ERROR_EXPECTED_COMMENT_CLOSE,
+    MICRO_ERROR_EXPECTED_STRING_CLOSE,
+
+    MICRO_ERROR_EXPECTED_EXPRESSION,
+    MICRO_ERROR_EXPECTED_SEMICOLON,
+    MICRO_ERROR_EXPECTED_TYPE_NAME,
+    MICRO_ERROR_UNDEFINED_TYPE_NAME,
+    MICRO_ERROR_UNEXPECTED_TOKEN,
+    MICRO_ERROR_UNEXPECTED_END_KW,
+
+    MICRO_ERROR_EXPECTED_SET_KW,
+    MICRO_ERROR_EXPECTED_FUN_KW,
+    MICRO_ERROR_EXPECTED_RET_KW,
+    MICRO_ERROR_EXPECTED_CALL_KW,
+    MICRO_ERROR_EXPECTED_GOTO_KW,
+    MICRO_ERROR_EXPECTED_START_KW,
+    MICRO_ERROR_EXPECTED_END_KW,
+
+    MICRO_ERROR_EXPECTED_FUN_NAME,
+    MICRO_ERROR_EXPECTED_ARG_TYPE,
+    MICRO_ERROR_EXPECTED_ARG_NAME,
+    MICRO_ERROR_EXPECTED_RET_TYPE,
+    MICRO_ERROR_EXPECTED_VREG_NAME,
+    MICRO_ERROR_EXPECTED_RESULT_REG,
+    MICRO_ERROR_EXPECTED_LABEL_NAME,
+    MICRO_ERROR_EXPECTED_COLON,
+
+    MICRO_ERROR_SET_OUTSIDE_FUNCTION,
+    MICRO_ERROR_FUN_INSIDE_FUNCTION,
+    MICRO_ERROR_RET_OUTSIDE_FUNCTION,
+    MICRO_ERROR_CALL_OUTSIDE_FUNCTION,
+    MICRO_ERROR_GOTO_OUTSIDE_FUNCTION,
+    MICRO_ERROR_LABEL_OUTSIDE_FUNCTION,
+
+    MICRO_ERROR_UNDEFINED_IDENT,
+    MICRO_ERROR_UNDEFINED_FUN,
+    MICRO_ERROR_EXPECTED_VREG_RESULT,
+    MICRO_ERROR_RESULT_TYPE_MISMATCH,
+    MICRO_ERROR_TOO_FEW_ARGS,
+    MICRO_ERROR_TOO_MANY_ARGS,
+    MICRO_ERROR_IDENT_NOT_VREG,
+    MICRO_ERROR_VREG_TYPE_MISMATCH,
+    MICRO_ERROR_EXPR_PARSE,
+} micro_error_type_t;
+
 typedef struct {
-    char msg[MICRO_MAX_ERROR_MESSAGE_SIZE];
-    size_t line_ref;
-    size_t chpos_ref;
+    micro_error_type_t err;
+    size_t             line_ref;
+    size_t             chpos_ref;
 } micro_error_t;
 
 typedef struct {
@@ -81,8 +127,8 @@ MICRO_ATTRIBUTE_CONST
 micro_imm_le_t micro_imm_le_gen(i32 val);
 
 extern micro_error_t *micro_err_stk;
-extern size_t         micro_err_stk_size;
-extern size_t        _micro_err_stk_real_size;
+extern size_t              micro_err_stk_size;
+extern size_t             _micro_err_stk_real_size;
 
 void micro_init();
 

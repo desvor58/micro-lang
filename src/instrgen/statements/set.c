@@ -7,7 +7,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     micro_token_t *set_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!set_tok || set_tok->type != MICRO_TOK_KW_SET) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'set' keyword",
+            .err = MICRO_ERROR_EXPECTED_SET_KW,
             .line_ref = set_tok ? set_tok->line_ref : 0,
             .chpos_ref = set_tok ? set_tok->chpos_ref : 0
         });
@@ -16,7 +16,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
 
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'set' instruction can be only in function body",
+            .err = MICRO_ERROR_SET_OUTSIDE_FUNCTION,
             .line_ref = set_tok ? set_tok->line_ref : 0,
             .chpos_ref = set_tok ? set_tok->chpos_ref : 0
         });
@@ -26,7 +26,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     micro_token_t *type_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!type_tok || type_tok->type != MICRO_TOK_TYPE_NAME) {
         micro_push_err((micro_error_t){
-            .msg = "Expected type name",
+            .err = MICRO_ERROR_EXPECTED_TYPE_NAME,
             .line_ref = type_tok ? type_tok->line_ref : 0,
             .chpos_ref = type_tok ? type_tok->chpos_ref : 0
         });
@@ -36,7 +36,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     micro_type_t type = micro_type_str_parse(type_tok->val);
     if (!type) {
         micro_push_err((micro_error_t){
-            .msg = "Undefined type name",
+            .err = MICRO_ERROR_UNDEFINED_TYPE_NAME,
             .line_ref = type_tok ? type_tok->line_ref : 0,
             .chpos_ref = type_tok ? type_tok->chpos_ref : 0
         });
@@ -51,7 +51,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
 
     if (!name_tok || name_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected virtual register name",
+            .err = MICRO_ERROR_EXPECTED_VREG_NAME,
             .line_ref = name_tok ? name_tok->line_ref : 0,
             .chpos_ref = name_tok ? name_tok->chpos_ref : 0
         });
@@ -61,7 +61,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!expr_start_tok || !_micro_tok_is_expr_start(expr_start_tok->type)) {
         micro_push_err((micro_error_t){
-            .msg = "Expected expression",
+            .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .line_ref = expr_start_tok ? expr_start_tok->line_ref : 0,
             .chpos_ref = expr_start_tok ? expr_start_tok->chpos_ref : 0
         });
@@ -75,7 +75,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_offset);
     if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
         micro_push_err((micro_error_t) {
-            .msg = "Expected ';'",
+            .err = MICRO_ERROR_EXPECTED_SEMICOLON,
             .line_ref = semicolon_tok ? semicolon_tok->line_ref : 0,
             .chpos_ref = semicolon_tok ? semicolon_tok->chpos_ref : 0
         });

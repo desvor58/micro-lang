@@ -49,7 +49,7 @@ size_t micro_scroll_expr(sct_vector_t *toks, size_t pos)
     if (!tok) {
         micro_token_t *err_tok = sct_vector_get(toks, toks->size - 1);
         micro_push_err((micro_error_t){
-            .msg = "Expected expression",
+            .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .line_ref = err_tok->line_ref,
             .chpos_ref = err_tok->chpos_ref
         });
@@ -70,7 +70,7 @@ size_t micro_scroll_expr(sct_vector_t *toks, size_t pos)
         return offset;
     }
     micro_push_err((micro_error_t){
-        .msg = "Expected expression",
+        .err = MICRO_ERROR_EXPECTED_EXPRESSION,
         .line_ref = tok->line_ref,
         .chpos_ref = tok->chpos_ref
     });
@@ -140,7 +140,7 @@ void micro_instrgen_gen(micro_instrgen_t *instrgen)
             case MICRO_TOK_KW_END:
                 if (!instrgen->code_in_function) {
                     micro_push_err((micro_error_t){
-                        .msg = "Unexpected 'end' keyword not in function",
+                        .err = MICRO_ERROR_UNEXPECTED_END_KW,
                         .line_ref = tok->line_ref,
                         .chpos_ref = tok->chpos_ref
                     });
@@ -150,7 +150,7 @@ void micro_instrgen_gen(micro_instrgen_t *instrgen)
             default:
                 puts(micro_token_type2str[tok->type]);
                 micro_push_err((micro_error_t){
-                    .msg = "Unexpected token",
+                    .err = MICRO_ERROR_UNEXPECTED_TOKEN,
                     .line_ref = tok->line_ref,
                     .chpos_ref = tok->chpos_ref
                 });

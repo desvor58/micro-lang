@@ -5,7 +5,7 @@ void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
     micro_token_t *goto_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!goto_tok || goto_tok->type != MICRO_TOK_KW_GOTO) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'call' keyword",
+            .err = MICRO_ERROR_EXPECTED_GOTO_KW,
             .line_ref = goto_tok ? goto_tok->line_ref : 0,
             .chpos_ref = goto_tok ? goto_tok->chpos_ref : 0
         });
@@ -14,7 +14,7 @@ void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
 
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'goto' instruction can be only in function body",
+            .err = MICRO_ERROR_GOTO_OUTSIDE_FUNCTION,
             .line_ref = goto_tok ? goto_tok->line_ref : 0,
             .chpos_ref = goto_tok ? goto_tok->chpos_ref : 0
         });
@@ -24,7 +24,7 @@ void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
     micro_token_t *lbl_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!lbl_tok || lbl_tok->type != MICRO_TOK_IDENT) {
         micro_push_err((micro_error_t){
-            .msg = "Expected register name for result or '_'",
+            .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
             .line_ref = lbl_tok ? lbl_tok->line_ref : 0,
             .chpos_ref = lbl_tok ? lbl_tok->chpos_ref : 0
         });

@@ -5,7 +5,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
     micro_token_t *ret_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     if (!ret_tok || ret_tok->type != MICRO_TOK_KW_RET) {
         micro_push_err((micro_error_t){
-            .msg = "Expected 'ret' keyword",
+            .err = MICRO_ERROR_EXPECTED_RET_KW,
             .line_ref = ret_tok ? ret_tok->line_ref : 0,
             .chpos_ref = ret_tok ? ret_tok->chpos_ref : 0
         });
@@ -14,7 +14,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
     
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'ret' instruction can be only in function body",
+            .err = MICRO_ERROR_RET_OUTSIDE_FUNCTION,
             .line_ref = ret_tok ? ret_tok->line_ref : 0,
             .chpos_ref = ret_tok ? ret_tok->chpos_ref : 0
         });
@@ -24,7 +24,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
     micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!expr_start_tok || (expr_start_tok->type != MICRO_TOK_SEMICOLON && !_micro_tok_is_expr_start(expr_start_tok->type))) {
         micro_push_err((micro_error_t){
-            .msg = "Expected expression",
+            .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .line_ref = expr_start_tok ? expr_start_tok->line_ref : 0,
             .chpos_ref = expr_start_tok ? expr_start_tok->chpos_ref : 0
         });
@@ -41,7 +41,7 @@ void micro_instrgen_parse_ret(micro_instrgen_t *instrgen)
         micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_offset);
         if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
             micro_push_err((micro_error_t) {
-                .msg = "Expected ';'",
+                .err = MICRO_ERROR_EXPECTED_SEMICOLON,
                 .line_ref = semicolon_tok ? semicolon_tok->line_ref : 0,
                 .chpos_ref = semicolon_tok ? semicolon_tok->chpos_ref : 0
             });

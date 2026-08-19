@@ -6,7 +6,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
-            .msg = "'set' instruction can be only in function body",
+            .err = MICRO_ERROR_SET_OUTSIDE_FUNCTION,
             .line_ref = instr->start_tok->line_ref,
             .chpos_ref = instr->start_tok->chpos_ref
         });
@@ -21,7 +21,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (ident) {
         if (ident->type != MICRO_IDENT_VREG) {
             micro_push_err((micro_error_t){
-                .msg = "This ident already defined as not a virtual register",
+                .err = MICRO_ERROR_IDENT_NOT_VREG,
                 .line_ref = instr->start_tok->line_ref,
                 .chpos_ref = instr->start_tok->chpos_ref
             });
@@ -29,7 +29,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         }
         if (ident->vreg.type != instr_set.type) {
             micro_push_err((micro_error_t){
-                .msg = "Type mismatch with the already declared virtual register",
+                .err = MICRO_ERROR_VREG_TYPE_MISMATCH,
                 .line_ref = instr->start_tok->line_ref,
                 .chpos_ref = instr->start_tok->chpos_ref
             });
@@ -65,7 +65,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     int expr_size = expr_parse(codegen, dst, instr_set.val_expr);
     if (!expr_size) {
         micro_push_err((micro_error_t){
-            .msg = "expression parse error",
+            .err = MICRO_ERROR_EXPR_PARSE,
             .line_ref = instr_set.val_expr->line_ref,
             .chpos_ref = instr_set.val_expr->chpos_ref
         });
