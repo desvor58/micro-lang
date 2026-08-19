@@ -72,5 +72,42 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(stack_cleanup_offset) });
 
+    micro_codegen386_ident_t *res_ident = sct_hashmap_get(&ext->idents, instr_call.ret_reg_name);
+    if (!res_ident) {
+        micro_push_err((micro_error_t){
+            .msg = "Undefined ident",
+            .line_ref = instr->start_tok[1].line_ref,
+            .chpos_ref = instr->start_tok[1].chpos_ref
+        });
+        return 1;
+    }
+    if (res_ident->type != MICRO_IDENT_VREG) {
+        micro_push_err((micro_error_t){
+            .msg = "Expected vreg as result value save identifier",
+            .line_ref = instr->start_tok[1].line_ref,
+            .chpos_ref = instr->start_tok[1].chpos_ref
+        });
+        return 1;
+    }
+    if (res_ident->vreg.type != fun->instr_info.ret_type) {
+        micro_push_err((micro_error_t){
+            .msg = "result value save vreg and function return type mismatch",
+            .line_ref = instr->start_tok[1].line_ref,
+            .chpos_ref = instr->start_tok[1].chpos_ref
+        });
+        return 1;
+    }
+
+    switch (res_ident->vreg.storage.type) {
+        case MICRO_STORAGE_DATASEC: return 1;
+        case MICRO_STORAGE_STACK:
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(res_ident->vreg.storage.stack.ebp_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
+            break;
+
+        case MICRO_STORAGE_REG:
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, { .reg = res_ident->vreg.storage.reg.reg }, { .reg = MICRO_ASM386_REG32_EAX });
+            break;
+    }
+
     return 0;
 }
