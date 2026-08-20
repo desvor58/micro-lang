@@ -2,6 +2,7 @@
 #define TESTS_LEXER_H
 
 #include "../include/munit.h"
+#include "errors.h"
 #include <micro/lexer.h>
 #include <stdio.h>
 #include <string.h>
@@ -369,6 +370,7 @@ MunitResult test_lexer_err_unclosed_comment(const MunitParameter params[], void 
 
     const char *text = "\\ never closed";
     micro_tokenize(text, strlen(text), &toks);
+    test_put_errors("lexer");
     munit_assert_size(toks.size, ==, 0);
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_COMMENT_CLOSE);
@@ -389,6 +391,7 @@ MunitResult test_lexer_err_unclosed_string(const MunitParameter params[], void *
 
     const char *text = "\"abc";
     micro_tokenize(text, strlen(text), &toks);
+    test_put_errors("lexer");
     munit_assert_size(toks.size, ==, 0);
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_STRING_CLOSE);

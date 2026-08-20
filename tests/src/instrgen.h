@@ -2,6 +2,7 @@
 #define TESTS_INSTRGEN_H
 
 #include "../include/munit.h"
+#include "errors.h"
 #include <micro/instrgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,6 +19,9 @@ static void ig_gen(const char *text, sct_vector_t *toks, micro_instrgen_t *ig)
 
     micro_instrgen_init(ig, toks);
     micro_instrgen_gen(ig);
+
+    /* dump accumulated errors, if any, like microc does */
+    test_put_errors("instrgen");
 }
 
 static micro_instruction_t *ig_instr(micro_instrgen_t *ig, size_t i)

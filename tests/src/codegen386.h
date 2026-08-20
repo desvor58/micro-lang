@@ -2,6 +2,7 @@
 #define TESTS_CODEGEN386_H
 
 #include "../include/munit.h"
+#include "errors.h"
 #include <micro/micro.h>
 #include <micro/asm/asm386.h>
 #include <stdio.h>
@@ -17,6 +18,9 @@ static void cg_gen(const char *text, sct_vector_t *toks, micro_instrgen_t *ig, m
 
     micro_codegen386_init(cg);
     cg->emit(cg, &ig->instructions);
+
+    /* dump accumulated errors, if any, like microc does */
+    test_put_errors("codegen");
 }
 
 static void cg_cleanup(sct_vector_t *toks, micro_instrgen_t *ig, micro_codegen_t *cg)
@@ -703,7 +707,7 @@ MunitResult test_codegen_goto(const MunitParameter params[], void *data)
            "end\n", &toks, &ig, &cg);
 
     munit_assert_size(micro_err_stk_size, ==, 0);
-    munit_assert_size(cg.asm_instrs.size, ==, 10);
+    munit_assert_size(cg.asm_instrs.size, ==, 9);
 
     cg_assert_asm_opcode(&cg, 4, MICRO_ASM386_INSTR_LBL);
     cg_assert_asm_lbl(&cg, 4, 1, "f.target");
@@ -711,7 +715,7 @@ MunitResult test_codegen_goto(const MunitParameter params[], void *data)
     cg_assert_asm_opcode(&cg, 5, MICRO_ASM386_INSTR_JMP_L32);
     cg_assert_asm_lbl(&cg, 5, 1, "f.target");
 
-    cg_assert_asm_opcode(&cg, 6, MICRO_ASM386_INSTR_JMP_L32);
+    cg_assert_asm_opcode(&cg, 6, MICRO_ASM386_INSTR_LBL);
     cg_assert_asm_lbl(&cg, 6, 1, "f.end");
 
     cg_cleanup(&toks, &ig, &cg);
@@ -768,7 +772,7 @@ MunitResult test_codegen_err_goto_undefined(const MunitParameter params[], void 
            "end\n", &toks, &ig, &cg);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
-    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_IDENT);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_LBL);
 
     cg_cleanup(&toks, &ig, &cg);
 
@@ -818,7 +822,26 @@ MunitResult test_codegen_err_goto_outside_scope(const MunitParameter params[], v
            "end\n", &toks, &ig, &cg);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
-    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_LBL_OUTSIDE_SCOPE);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_LBL);
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_goto_outside_function(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("goto l1;\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_GOTO_OUTSIDE_FUNCTION);
 
     cg_cleanup(&toks, &ig, &cg);
 
@@ -1034,6 +1057,7 @@ static MunitTest codegen386_tests[] = {
     { "/err_goto_undefined", test_codegen_err_goto_undefined, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_not_lbl", test_codegen_err_goto_not_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_outside_scope", test_codegen_err_goto_outside_scope, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_goto_outside_function", test_codegen_err_goto_outside_function, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_undefined_ident", test_codegen_err_undefined_ident, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_undefined_fun", test_codegen_err_undefined_fun, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_too_many_args", test_codegen_err_too_many_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
