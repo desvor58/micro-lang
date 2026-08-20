@@ -62,8 +62,8 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
         }
     }
 
-    char *end_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_label) + 1 + 4);
-    strcpy(end_lbl_name, ext->curent_function_label);
+    char *end_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + 1 + 4);
+    strcpy(end_lbl_name, ext->curent_function_name);
     strcat(end_lbl_name, ".end");
     push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = end_lbl_name }, {});
     

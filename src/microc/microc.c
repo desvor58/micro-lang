@@ -153,7 +153,7 @@ char *err_str[] = {
     [MICRO_ERROR_RET_OUTSIDE_FUNCTION]      = "'ret' can be only in function body",
     [MICRO_ERROR_CALL_OUTSIDE_FUNCTION]     = "'call' can be only in function body",
     [MICRO_ERROR_GOTO_OUTSIDE_FUNCTION]     = "'goto' can be only in function body",
-    [MICRO_ERROR_LABEL_OUTSIDE_FUNCTION]    = "'lbl' can be only in function body",
+    [MICRO_ERROR_LBL_OUTSIDE_FUNCTION]      = "'lbl' can be only in function body",
     
     [MICRO_ERROR_UNDEFINED_IDENT]           = "Undefined identifier",
     [MICRO_ERROR_UNDEFINED_FUN]             = "Undefined function",

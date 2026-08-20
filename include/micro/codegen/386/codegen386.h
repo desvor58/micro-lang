@@ -44,7 +44,6 @@ typedef enum {
 
 typedef struct {
     micro_instruction_fun_t instr_info;
-    u32                     address;
 } micro_codegen386_ident_fun_t;
 
 typedef struct {
@@ -55,7 +54,6 @@ typedef struct {
 
 typedef struct {
     char name[MICRO_MAX_SYMBOL_SIZE];
-    u32  address;
 } micro_codegen386_ident_lbl_t;
 
 typedef struct {
@@ -77,7 +75,7 @@ typedef struct {
     ptrdiff_t     max_stack_offset;
     sct_hashmap_t idents;
     int           used_regs[8];
-    char         *curent_function_label;
+    char         *curent_function_name;
 } micro_codegen386_ext_t;
 
 void micro_codegen386_init(micro_codegen_t *codegen);

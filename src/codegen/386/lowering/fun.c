@@ -10,7 +10,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     strcpy(fun_lbl_name, instr_fun.name);
     push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = fun_lbl_name }, {});
 
-    ext->curent_function_label = fun_lbl_name;
+    ext->curent_function_name = fun_lbl_name;
 
     push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, {0}, {0});
 
@@ -36,7 +36,6 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_codegen386_ident_fun_t fun = {
         .instr_info = instr_fun,
-        .address = 0  /* TODO: calculating at asm emitting */
     };
 
     sct_hashmap_add(&ext->idents, instr_fun.name, &(micro_codegen386_ident_t){

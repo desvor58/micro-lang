@@ -39,6 +39,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 
 int asmopting(micro_codegen_t *codegen);
 

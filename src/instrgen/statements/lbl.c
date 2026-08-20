@@ -14,7 +14,7 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
 
     if (!instrgen->code_in_function) {
         micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_LABEL_OUTSIDE_FUNCTION,
+            .err = MICRO_ERROR_LBL_OUTSIDE_FUNCTION,
             .line_ref = name_tok ? name_tok->line_ref : 0,
             .chpos_ref = name_tok ? name_tok->chpos_ref : 0
         });

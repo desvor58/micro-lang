@@ -1,0 +1,33 @@
+#include "../internal.h"
+
+int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
+{
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (!ext->in_function) {
+        micro_push_err((micro_error_t){
+            .err = MICRO_ERROR_LBL_OUTSIDE_FUNCTION,
+            .line_ref = instr->start_tok->line_ref,
+            .chpos_ref = instr->start_tok->chpos_ref
+        });
+        return 1;
+    }
+
+    micro_instruction_lbl_t instr_lbl = instr->lbl;
+
+    char *lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_lbl.name) + 2);
+    strcpy(lbl_name, ext->curent_function_name);
+    strcat(lbl_name, ".");
+    strcat(lbl_name, instr_lbl.name);
+
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = lbl_name }, {});
+
+    micro_codegen386_ident_t ident = {
+        .type = MICRO_IDENT_LBL,
+    };
+    strcpy(ident.lbl.name, lbl_name);
+
+    sct_hashmap_add(&ext->idents, instr_lbl.name, &ident);
+
+    return 0;
+}
