@@ -27,6 +27,9 @@ int lowering(micro_codegen_t *codegen)
             case MICRO_INSTR_LBL:
                 res |= lowering_lbl(codegen, instr);
                 break;
+
+            case MICRO_INSTR_GOTO:
+                res |= lowering_goto(codegen, instr);
         }
 
         codegen->pos++;

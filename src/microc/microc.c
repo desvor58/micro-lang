@@ -161,9 +161,13 @@ char *err_str[] = {
     [MICRO_ERROR_RESULT_TYPE_MISMATCH]      = "Call result type mismatch",
     [MICRO_ERROR_TOO_FEW_ARGS]              = "Too few arguments in call",
     [MICRO_ERROR_TOO_MANY_ARGS]             = "Too many arguments in call",
-    [MICRO_ERROR_IDENT_NOT_VREG]            = "Identifier is not a virtual register",
     [MICRO_ERROR_VREG_TYPE_MISMATCH]        = "Type mismatch with declared vreg",
     [MICRO_ERROR_EXPR_PARSE]                = "Expression parse error",
+
+    [MICRO_ERROR_IDENT_NOT_VREG]            = "Identifier is not a virtual register",
+    [MICRO_ERROR_IDENT_NOT_LBL]             = "Identifier is not a label",
+
+    [MICRO_ERROR_LBL_OUTSIDE_SCOPE]         = "Label in not this scope",
 };
 
 void put_err(char *file, micro_error_t err)

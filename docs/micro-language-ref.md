@@ -330,23 +330,6 @@ my_lbl:
 end
 ```
 
-Unlike in C, labels are global. Any function can jump to any label:
-
-```
-fun a
-    ret i32
-start
-    target:
-    ret 7;
-end
-
-fun b
-    ret i32
-start
-    goto target;
-end
-```
-
 `goto` and labels are the only way to build loops and branches in micro.
 
 ---
