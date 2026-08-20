@@ -22,9 +22,11 @@ int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_goto.lbl);
     if (!ident) {
+        char *name_copy = sct_arena_alloc(&ext->arena, strlen(instr_goto.lbl) + 1);
+        strcpy(name_copy, instr_goto.lbl);
         sct_vector_push(&ext->goto_unfound_labels, &(micro_codegen386_goto_unfound_lbl_t){
-            .name = instr_goto.lbl,
-            .lbl_tok = instr->start_tok++,
+            .name = name_copy,
+            .lbl_tok = instr->start_tok,
         });
     } else
     if (ident->type != MICRO_IDENT_LBL) {
