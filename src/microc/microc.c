@@ -167,7 +167,7 @@ char *err_str[] = {
     [MICRO_ERROR_IDENT_NOT_VREG]            = "Identifier is not a virtual register",
     [MICRO_ERROR_IDENT_NOT_LBL]             = "Identifier is not a label",
 
-    [MICRO_ERROR_LBL_OUTSIDE_SCOPE]         = "Label in not this scope",
+    [MICRO_ERROR_UNDEFINED_LBL]             = "Undefined label",
 };
 
 void put_err(char *file, micro_error_t err)
@@ -553,6 +553,7 @@ int main(int argc, char **argv)
             put_err(args->inputfile, micro_err_stk[i]);
         }
         if (micro_err_stk_size) {
+            puts("Lexing fail");
             return 2;
         }
 
@@ -574,6 +575,7 @@ int main(int argc, char **argv)
                 put_err(args->inputfile, micro_err_stk[i]);
             }
             if (micro_err_stk_size) {
+                puts("Instruction generation fail");
                 return 3;
             }
             
@@ -588,6 +590,10 @@ int main(int argc, char **argv)
                 codegen.emit(&codegen, &instrgen.instructions);
                 for (size_t i = 0; i < micro_err_stk_size; i++) {
                     put_err(args->inputfile, micro_err_stk[i]);
+                }
+                if (micro_err_stk_size) {
+                    puts("Assembler generation fail");
+                    return 4;
                 }
 
                 if (args->asm_put) {

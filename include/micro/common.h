@@ -103,7 +103,7 @@ typedef enum {
     MICRO_ERROR_IDENT_NOT_VREG,
     MICRO_ERROR_IDENT_NOT_LBL,
     
-    MICRO_ERROR_LBL_OUTSIDE_SCOPE,
+    MICRO_ERROR_UNDEFINED_LBL,
 } micro_error_type_t;
 
 typedef struct {

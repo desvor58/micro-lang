@@ -22,31 +22,20 @@ int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_goto.lbl);
     if (!ident) {
-        micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_UNDEFINED_IDENT,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+        sct_vector_push(&ext->goto_unfound_labels, &(micro_codegen386_goto_unfound_lbl_t){
+            .name = instr_goto.lbl,
+            .lbl_tok = instr->start_tok++,
         });
-        return 1;
-    }
+    } else
     if (ident->type != MICRO_IDENT_LBL) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_IDENT_NOT_LBL,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
-        });
-        return 1;
-    }
-    if (strcmp(lbl_name, ident->lbl.name)) {
-        micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_LBL_OUTSIDE_SCOPE,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .line_ref = instr->start_tok[1].line_ref,
+            .chpos_ref = instr->start_tok[1].chpos_ref
         });
         return 1;
     }
 
     push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = lbl_name }, {});
-
     return 0;
 }

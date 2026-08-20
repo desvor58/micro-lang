@@ -133,5 +133,17 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, {0}, {0});
 
+    for (size_t i = 0; i < ext->goto_unfound_labels.size; i++) {
+        micro_codegen386_goto_unfound_lbl_t *lbl = sct_vector_get(&ext->goto_unfound_labels, i);
+        micro_push_err((micro_error_t){
+            .err = MICRO_ERROR_UNDEFINED_LBL,
+            .line_ref = lbl->lbl_tok->line_ref,
+            .chpos_ref = lbl->lbl_tok->chpos_ref
+        });
+        return 1;
+    }
+    sct_vector_deinit(&ext->goto_unfound_labels);
+    sct_vector_init(&ext->goto_unfound_labels, sizeof(micro_codegen386_goto_unfound_lbl_t));
+
     return 0;
 }
