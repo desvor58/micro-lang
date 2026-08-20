@@ -66,11 +66,11 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     size_t expr_size = expr_parse(codegen, dst, instr_set.val_expr);
     if (!expr_size) {
-        micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_EXPR_PARSE,
-            .line_ref = instr_set.val_expr->line_ref,
-            .chpos_ref = instr_set.val_expr->chpos_ref
-        });
+        // micro_push_err((micro_error_t){
+        //     .err = MICRO_ERROR_EXPR_PARSE,
+        //     .line_ref = instr_set.val_expr->line_ref,
+        //     .chpos_ref = instr_set.val_expr->chpos_ref
+        // });
         return 1;
     }
     if (dst.type == MICRO_STORAGE_REG) {

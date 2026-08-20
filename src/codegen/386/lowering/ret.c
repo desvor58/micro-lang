@@ -53,11 +53,11 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
         }, instr_ret.val_expr);
 
         if (!expr_size) {
-            micro_push_err((micro_error_t){
-                .err = MICRO_ERROR_EXPR_PARSE,
-                .line_ref = instr_ret.val_expr->line_ref,
-                .chpos_ref = instr_ret.val_expr->chpos_ref
-            });
+            // micro_push_err((micro_error_t){
+            //     .err = MICRO_ERROR_EXPR_PARSE,
+            //     .line_ref = instr_ret.val_expr->line_ref,
+            //     .chpos_ref = instr_ret.val_expr->chpos_ref
+            // });
             return 1;
         }
     }

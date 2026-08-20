@@ -1,9 +1,13 @@
 #include "types.h"
 #include "lexer.h"
+#include "instrgen.h"
+#include "codegen386.h"
 
 static MunitSuite all_suites[] =  {
     types_suite,
     lexer_suite,
+    instrgen_suite,
+    codegen386_suite,
     { NULL, NULL, NULL, 0, MUNIT_SUITE_OPTION_NONE }
 };
 

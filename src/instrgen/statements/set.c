@@ -67,14 +67,16 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
         });
         goto exit;
     }
+    size_t expr_size = 0;
     if (expr_start_tok->type == MICRO_TOK_SEMICOLON) {
         expr_start_tok = 0;
+    } else {
+        expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
+        if (!expr_size) {
+            goto exit;
+        }
     }
 
-    size_t expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
-    if (!expr_size) {
-        goto exit;
-    }
     micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_size);
     if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
         micro_push_err((micro_error_t) {

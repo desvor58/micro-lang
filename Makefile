@@ -73,7 +73,7 @@ microc: $(OBJS) src/microc/microc.c
 	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
 test: tests/bin/tests$(EXE_EXT)
-	.$(FIX_PATH,/tests/bin/tests$(EXE_EXT)) $(TEST_FLAGS)
+	.$(call FIX_PATH,/tests/bin/tests$(EXE_EXT)) $(TEST_FLAGS)
 
 tests/bin/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
 	@$(call MKDIR,tests/bin)
