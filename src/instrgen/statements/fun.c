@@ -79,6 +79,8 @@ void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
         }
 
         instr.ret_type = micro_type_str_parse(ret_type_tok->val);
+    } else {
+        instrgen->pos--;
     }
 
     sct_vector_t body;
