@@ -31,12 +31,9 @@ void micro_codegen386_init(micro_codegen_t *codegen)
 void micro_codegen386_deinit(micro_codegen_t *codegen)
 {
     sct_vector_deinit(&codegen->outbuf);
-
     sct_vector_deinit(&codegen->asm_instrs);
-
     sct_hashmap_deinit(&_micro_codegen386_ext(codegen)->idents);
-
     sct_arena_deinit(&_micro_codegen386_ext(codegen)->arena);
-    
+    sct_vector_deinit(&_micro_codegen386_ext(codegen)->goto_unfound_labels);
     free(codegen->ext);
 }

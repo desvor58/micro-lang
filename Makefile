@@ -76,7 +76,6 @@ microc: $(OBJS) src/microc/microc.c
 	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
 test: test-debug test-release
-	@echo "All tests passed (debug + release)"
 
 test-debug:
 	$(MAKE) MODE=debug _run_tests
