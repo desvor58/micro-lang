@@ -3,7 +3,7 @@
 void micro_instrgen_parse_fun(micro_instrgen_t *instrgen)
 {
     micro_token_t *fun_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!fun_tok || fun_tok->type != MICRO_TOK_KW_FUN) {
+    if (unlikely(!fun_tok || fun_tok->type != MICRO_TOK_KW_FUN)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_FUN_KW,
             .line_ref = fun_tok ? fun_tok->line_ref : 0,

@@ -3,7 +3,7 @@
 void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
 {
     micro_token_t *goto_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!goto_tok || goto_tok->type != MICRO_TOK_KW_GOTO) {
+    if (unlikely(!goto_tok || goto_tok->type != MICRO_TOK_KW_GOTO)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_GOTO_KW,
             .line_ref = goto_tok ? goto_tok->line_ref : 0,

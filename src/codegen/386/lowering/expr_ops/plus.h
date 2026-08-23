@@ -42,7 +42,7 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
         if (ident->type == MICRO_IDENT_VREG) {
-            int ok = expr_vreg_parse(codegen, dst, ident->vreg);
+            int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
             if (!ok) return 0;
         }
         
@@ -97,7 +97,7 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         if (second_operand->type == MICRO_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
-                int ok = expr_vreg_parse(codegen, dst, ident->vreg);
+                int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
                 if (!ok) return 0;
             }
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);

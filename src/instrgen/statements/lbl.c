@@ -3,7 +3,7 @@
 void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen)
 {
     micro_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!name_tok || name_tok->type != MICRO_TOK_IDENT) {
+    if (unlikely(!name_tok || name_tok->type != MICRO_TOK_IDENT)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
             .line_ref = name_tok ? name_tok->line_ref : 0,

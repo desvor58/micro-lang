@@ -32,6 +32,12 @@ static const micro_asm386_instruction_type_t movRR_tbl[3] = {
     [MICRO_SIZE_32] = MICRO_ASM386_INSTR_MOV_R32R32,
 };
 
+static const micro_asm386_instruction_type_t testRR_tbl[3] = {
+    [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_TEST_R8R8,
+    [MICRO_SIZE_16] = MICRO_ASM386_INSTR_TEST_R16R16,
+    [MICRO_SIZE_32] = MICRO_ASM386_INSTR_TEST_R32R32,
+};
+
 // return 1 if err, else return 0
 
 int lowering(micro_codegen_t *codegen);
@@ -41,19 +47,24 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
 
 int asmopting(micro_codegen_t *codegen);
 
 int label_resulting(micro_codegen_t *codegen);
 
-size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
 size_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
-size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg);
+size_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);
+size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
+size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t *vreg);
 
 // return offset to next token after expr or 0 if err
 size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start);
 
 // return number of register or ebp offset, do not change ebp_offset
 int get_last_free_space(micro_codegen_t *codegen);
+
+// sets only flags
+size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start);
 
 #endif

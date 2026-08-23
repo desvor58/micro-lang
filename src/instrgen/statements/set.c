@@ -5,7 +5,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     int is_drset = 0;
 
     micro_token_t *set_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!set_tok || set_tok->type != MICRO_TOK_KW_SET) {
+    if (unlikely(!set_tok || set_tok->type != MICRO_TOK_KW_SET)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_SET_KW,
             .line_ref = set_tok ? set_tok->line_ref : 0,

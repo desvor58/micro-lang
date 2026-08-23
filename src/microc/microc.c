@@ -138,6 +138,8 @@ char *err_str[] = {
     [MICRO_ERROR_EXPECTED_GOTO_KW]          = "Expected 'goto' keyword",
     [MICRO_ERROR_EXPECTED_START_KW]         = "Expected 'start' keyword",
     [MICRO_ERROR_EXPECTED_END_KW]           = "Expected 'end' keyword",
+    [MICRO_ERROR_EXPECTED_IF_KW]            = "Expected 'if' keyword",
+    [MICRO_ERROR_EXPECTED_ELSE_KW]          = "Expected 'else' keyword",
     
     [MICRO_ERROR_EXPECTED_FUN_NAME]         = "Expected function name",
     [MICRO_ERROR_EXPECTED_ARG_TYPE]         = "Expected argument type",
@@ -153,7 +155,8 @@ char *err_str[] = {
     [MICRO_ERROR_RET_OUTSIDE_FUNCTION]      = "'ret' can be only in function body",
     [MICRO_ERROR_CALL_OUTSIDE_FUNCTION]     = "'call' can be only in function body",
     [MICRO_ERROR_GOTO_OUTSIDE_FUNCTION]     = "'goto' can be only in function body",
-    [MICRO_ERROR_LBL_OUTSIDE_FUNCTION]      = "'lbl' can be only in function body",
+    [MICRO_ERROR_LBL_OUTSIDE_FUNCTION]      = "label can be declared only in function body",
+    [MICRO_ERROR_IF_OUTSIDE_FUNCTION]       = "'if' can be only in function body",
     
     [MICRO_ERROR_UNDEFINED_IDENT]           = "Undefined identifier",
     [MICRO_ERROR_UNDEFINED_FUN]             = "Undefined function",
@@ -289,6 +292,11 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
                 printf("GOTO '%s'\n", instr->goto_lbl.lbl);
                 break;
 
+            case MICRO_INSTR_IF:
+                printf("IF -> %s\n", instr->if_goto.lbl_name);
+                print_expr(instr->if_goto.cond_expr, tab + 3);
+                break;
+
             default:
                 puts("wrong instr->type");
                 break;
@@ -356,6 +364,18 @@ static const asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_CMP_R16R16]  = A("cmpR16R16",   'R', 16, 'R', 16),
     [MICRO_ASM386_INSTR_CMP_R8R8]    = A("cmpR8R8",     'R', 8,  'R', 8),
 
+    [MICRO_ASM386_INSTR_CMP_M32I32]  = A("cmpM32I32",   'V', 32, 'V', 32),
+    [MICRO_ASM386_INSTR_CMP_M16I16]  = A("cmpM16I16",   'V', 16, 'V', 16),
+    [MICRO_ASM386_INSTR_CMP_M8I8]    = A("cmpM8I8",     'V', 8,  'V', 8),
+
+    [MICRO_ASM386_INSTR_CMP_R32I32]  = A("cmpR32I32",   'R', 32, 'V', 32),
+    [MICRO_ASM386_INSTR_CMP_R16I16]  = A("cmpR16I16",   'R', 16, 'V', 16),
+    [MICRO_ASM386_INSTR_CMP_R8I8]    = A("cmpR8I8",     'R', 8,  'V', 8),
+
+    [MICRO_ASM386_INSTR_CMP_S32I32]  = A("cmpS32I32",   'V', 32, 'V', 32),
+    [MICRO_ASM386_INSTR_CMP_S32I16]  = A("cmpS32I16",   'V', 16, 'V', 16),
+    [MICRO_ASM386_INSTR_CMP_S32I8]   = A("cmpS32I8",    'V', 8,  'V', 8),
+
     [MICRO_ASM386_INSTR_SETZ_R8]     = A1("setzR8",     'R', 8),
     [MICRO_ASM386_INSTR_SETNZ_R8]    = A1("setnzR8",    'R', 8),
     [MICRO_ASM386_INSTR_SETG_R8]     = A1("setgR8",     'R', 8),
@@ -380,6 +400,8 @@ static const asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_JNZ_S32]     = A1("jnzS32",     'V', 0),
     [MICRO_ASM386_INSTR_JMP_S32]     = A1("jmpS32",     'V', 0),
 
+    [MICRO_ASM386_INSTR_JZ_L32]      = A1("jzL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNZ_L32]     = A1("jnzL32",     'L', 0),
     [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),

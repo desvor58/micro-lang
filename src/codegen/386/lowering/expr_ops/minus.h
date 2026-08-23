@@ -42,7 +42,7 @@ int op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, m
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
         if (ident->type == MICRO_IDENT_VREG) {
-            int ok = expr_vreg_parse(codegen, dst, ident->vreg);
+            int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
             if (!ok) return 0;
         }
         
