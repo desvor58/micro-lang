@@ -14,6 +14,8 @@ else
     LDFLAGS += -flto
 endif
 
+OBJDIR := obj/$(MODE)
+
 ifeq ($(OS),Windows_NT)
     RM_DIR = if exist "$(subst /,\,$(1))" rmdir /s /q "$(subst /,\,$(1))"
     RM_FILE = if exist "$(subst /,\,$(1))" del /q /f "$(subst /,\,$(1))"
@@ -31,6 +33,7 @@ else
 
     ifeq ($(MODE),debug)
         CFLAGS +=  -fsanitize=address
+        LDFLAGS += -fsanitize=address
     endif
 endif
 
@@ -53,14 +56,14 @@ SRC_TARGETS := src/*.c \
 SRCS := $(wildcard $(SRC_TARGETS))
 
 SRCS := $(filter-out src/microc/microc.c, $(SRCS))
-OBJS := $(patsubst src/%.c, obj/%.o, $(SRCS))
+OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
 DEPS := $(OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
 MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
 TEST_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
 
-.PHONY: all libmicro microc test clean
+.PHONY: all libmicro microc test test-debug test-release _run_tests clean
 
 all: microc
 
@@ -72,14 +75,23 @@ microc: $(OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
 	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
-test: tests/bin/tests$(EXE_EXT)
-	.$(call FIX_PATH,/tests/bin/tests$(EXE_EXT)) $(TEST_FLAGS)
+test: test-debug test-release
+	@echo "All tests passed (debug + release)"
 
-tests/bin/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
-	@$(call MKDIR,tests/bin)
-	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(OBJS) -o tests/bin/tests$(EXE_EXT) $(TEST_LDFLAGS)
+test-debug:
+	$(MAKE) MODE=debug _run_tests
 
-obj/%.o: src/%.c
+test-release:
+	$(MAKE) MODE=release _run_tests
+
+_run_tests: tests/bin/$(MODE)/tests$(EXE_EXT)
+	.$(call FIX_PATH,/tests/bin/$(MODE)/tests$(EXE_EXT)) $(TEST_FLAGS)
+
+tests/bin/$(MODE)/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
+	@$(call MKDIR,tests/bin/$(MODE))
+	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
+
+$(OBJDIR)/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c $< -o $@
 
