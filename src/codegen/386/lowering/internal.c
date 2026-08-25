@@ -251,6 +251,7 @@ size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start)
         }
     } else
     if (start->type == MICRO_TOK_EQ) {
+        return cond_op_eq_handler(codegen, (micro_codegen386_storage_t){}, start);
     }
 
 exit:
