@@ -378,6 +378,155 @@ MunitResult test_instrgen_lbl_goto(const MunitParameter params[], void *data)
     return MUNIT_OK;
 }
 
+MunitResult test_instrgen_if_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 n 1;\n"
+           "    if n : target;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 1);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_IDENT);
+    munit_assert_string_equal(if_instr->if_goto.cond_expr->val, "n");
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_if_cmp(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    if <= n 1 : end_rec;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_LESS_OR_EQ);
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "end_rec");
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_if_not(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    if ! n : target;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_EXCLAMATION);
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_err_if_expected_expression(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    if ;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_EXPRESSION);
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_err_if_expected_colon(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    if n ;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_COLON);
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_err_if_expected_label_name(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    if n : ;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_LABEL_NAME);
+
+    micro_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_instrgen_err_set_outside_fun(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1128,6 +1277,12 @@ static MunitTest instrgen_tests[] = {
     { "/call_no_args", test_instrgen_call_no_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/call_multi_args", test_instrgen_call_multi_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lbl_goto", test_instrgen_lbl_goto, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_vreg", test_instrgen_if_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_cmp", test_instrgen_if_cmp, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_not", test_instrgen_if_not, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_expected_expression", test_instrgen_err_if_expected_expression, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_expected_colon", test_instrgen_err_if_expected_colon, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_expected_label_name", test_instrgen_err_if_expected_label_name, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/multiple_funs", test_instrgen_multiple_funs, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_set_outside_fun", test_instrgen_err_set_outside_fun, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_ret_outside_fun", test_instrgen_err_ret_outside_fun, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

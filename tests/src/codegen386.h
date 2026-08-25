@@ -504,9 +504,9 @@ MunitResult test_codegen_stack_overflow(const MunitParameter params[], void *dat
     cg_assert_asm_opcode(&cg, 2, MICRO_ASM386_INSTR_PUSH_R32);
     cg_assert_asm_opcode(&cg, 3, MICRO_ASM386_INSTR_PUSH_R32);
     cg_assert_asm_opcode(&cg, 4, MICRO_ASM386_INSTR_PUSH_R32);
-    cg_assert_asm_opcode(&cg, 12, MICRO_ASM386_INSTR_POP_R32);
     cg_assert_asm_opcode(&cg, 13, MICRO_ASM386_INSTR_POP_R32);
     cg_assert_asm_opcode(&cg, 14, MICRO_ASM386_INSTR_POP_R32);
+    cg_assert_asm_opcode(&cg, 15, MICRO_ASM386_INSTR_POP_R32);
 
     cg_cleanup(&toks, &ig, &cg);
 
@@ -751,6 +751,166 @@ MunitResult test_codegen_goto_forward(const MunitParameter params[], void *data)
         }
     }
     munit_assert_int(found, ==, 1);
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_if_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("fun f\n"
+           "start\n"
+           "    set i32 n 1;\n"
+           "    if n : target;\n"
+           "    ret;\n"
+           "target:\n"
+           "    ret;\n"
+           "end\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(cg.asm_instrs.size, ==, 14);
+
+    // if n jumps to f.target when n is non-zero
+    cg_assert_asm_opcode(&cg, 5, MICRO_ASM386_INSTR_TEST_R32R32);
+    cg_assert_asm_reg(&cg, 5, 1, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&cg, 6, MICRO_ASM386_INSTR_JNZ_L32);
+    cg_assert_asm_lbl(&cg, 6, 1, "f.target");
+
+    cg_assert_asm_opcode(&cg, 9, MICRO_ASM386_INSTR_LBL);
+    cg_assert_asm_lbl(&cg, 9, 1, "f.target");
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_if_not(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("fun f\n"
+           "start\n"
+           "    set i32 n 0;\n"
+           "    if ! n : target;\n"
+           "    ret;\n"
+           "target:\n"
+           "    ret;\n"
+           "end\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(cg.asm_instrs.size, ==, 14);
+
+    // if !n jumps to f.target when n is zero (JZ instead of JNZ)
+    cg_assert_asm_opcode(&cg, 5, MICRO_ASM386_INSTR_TEST_R32R32);
+
+    cg_assert_asm_opcode(&cg, 6, MICRO_ASM386_INSTR_JZ_L32);
+    cg_assert_asm_lbl(&cg, 6, 1, "f.target");
+
+    cg_assert_asm_opcode(&cg, 9, MICRO_ASM386_INSTR_LBL);
+    cg_assert_asm_lbl(&cg, 9, 1, "f.target");
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_if_outside_function(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("if n : target;\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_IF_OUTSIDE_FUNCTION);
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_if_undefined_ident(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("fun f\n"
+           "start\n"
+           "    if nope : target;\n"
+           "target:\n"
+           "    ret;\n"
+           "end\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, >=, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_IDENT);
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_if_undefined_label(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("fun f\n"
+           "start\n"
+           "    set i32 n 1;\n"
+           "    if n : nope;\n"
+           "end\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_LBL);
+
+    cg_cleanup(&toks, &ig, &cg);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_if_not_lbl(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    micro_instrgen_t ig;
+    micro_codegen_t cg;
+    cg_gen("fun f\n"
+           "start\n"
+           "    set i32 n 1;\n"
+           "    if n : n;\n"
+           "end\n", &toks, &ig, &cg);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_IDENT_NOT_LBL);
 
     cg_cleanup(&toks, &ig, &cg);
 
@@ -1054,6 +1214,12 @@ static MunitTest codegen386_tests[] = {
     { "/lbl", test_codegen_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/goto", test_codegen_goto, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/goto_forward", test_codegen_goto_forward, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_vreg", test_codegen_if_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_not", test_codegen_if_not, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_outside_function", test_codegen_err_if_outside_function, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_undefined_ident", test_codegen_err_if_undefined_ident, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_undefined_label", test_codegen_err_if_undefined_label, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_if_not_lbl", test_codegen_err_if_not_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_undefined", test_codegen_err_goto_undefined, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_not_lbl", test_codegen_err_goto_not_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_outside_scope", test_codegen_err_goto_outside_scope, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

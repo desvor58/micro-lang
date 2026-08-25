@@ -34,7 +34,6 @@ fun fib
 start
     if <= n 1 : end_rec;
     
-    \ f1 and f2 its a virtual registers \
     call f1 fib - n 1;
     call f2 fib - n 2;
 

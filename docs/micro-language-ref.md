@@ -10,6 +10,7 @@
 7. [Calling functions](#calling-functions)
 8. [Returning values](#returning-values)
 9. [Labels and jumps](#labels-and-jumps)
+10. [Conditional jumps](#conditional-jumps)
 
 ---
 
@@ -330,6 +331,41 @@ end
 ```
 
 `goto` and labels are the only way to build loops and branches in micro.
+For conditional branching use [`if`](#conditional-jumps).
+
+---
+
+## Conditional jumps
+
+The `if` keyword jumps to a label when a condition is true:
+
+```
+if <condition> : <label>;
+```
+
+Currently the condition must be a virtual register: the jump happens when it
+holds a non-zero value.
+
+```
+fun f
+    i32 n
+    ret i32
+start
+    if n : non_zero;   \ jump to non_zero when n != 0 \
+    ret 0;
+non_zero:
+    ret 1;
+end
+```
+
+To jump when the condition is *false* instead, prefix it with `!`:
+
+```
+if ! n : done;   \ jump to done when n == 0 \
+```
+
+After the jump target, the code continues normally, so `if` acts like a
+conditional `goto`. If the target label does not exist, compilation fails.
 
 ---
 

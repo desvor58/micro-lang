@@ -25,6 +25,8 @@ static const char *test_err_str[] = {
     [MICRO_ERROR_EXPECTED_GOTO_KW]          = "Expected 'goto' keyword",
     [MICRO_ERROR_EXPECTED_START_KW]         = "Expected 'start' keyword",
     [MICRO_ERROR_EXPECTED_END_KW]           = "Expected 'end' keyword",
+    [MICRO_ERROR_EXPECTED_IF_KW]            = "Expected 'if' keyword",
+    [MICRO_ERROR_EXPECTED_ELSE_KW]          = "Expected 'else' keyword",
 
     [MICRO_ERROR_EXPECTED_FUN_NAME]         = "Expected function name",
     [MICRO_ERROR_EXPECTED_ARG_TYPE]         = "Expected argument type",
@@ -41,6 +43,7 @@ static const char *test_err_str[] = {
     [MICRO_ERROR_CALL_OUTSIDE_FUNCTION]     = "'call' can be only in function body",
     [MICRO_ERROR_GOTO_OUTSIDE_FUNCTION]     = "'goto' can be only in function body",
     [MICRO_ERROR_LBL_OUTSIDE_FUNCTION]      = "'lbl' can be only in function body",
+    [MICRO_ERROR_IF_OUTSIDE_FUNCTION]       = "'if' can be only in function body",
 
     [MICRO_ERROR_UNDEFINED_IDENT]           = "Undefined identifier",
     [MICRO_ERROR_UNDEFINED_FUN]             = "Undefined function",

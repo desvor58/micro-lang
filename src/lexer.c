@@ -260,6 +260,9 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 .line_ref = line,
                 .chpos_ref = chpos,
             });
+            pos += 2;
+            chpos += 2;
+            continue;
         }
         if (text[pos] == '<' && text[pos + 1] == '=') {
             sct_vector_push(toks, &(micro_token_t){
@@ -267,6 +270,9 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 .line_ref = line,
                 .chpos_ref = chpos,
             });
+            pos += 2;
+            chpos += 2;
+            continue;
         }
         
         _micro_single_chlex('!', MICRO_TOK_EXCLAMATION) else
