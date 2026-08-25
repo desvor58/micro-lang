@@ -29,12 +29,6 @@
 #define MICRO_TOKEN_VEC_EXTEND_SIZE 32
 // max size of symbols
 #define MICRO_MAX_SYMBOL_SIZE 64
-// size of buffer for reading input file
-#define MICRO_MAX_INPUT_CODE_SIZE 48 * 1024
-// size of buffer for writing instructions before __micro_asm_instructions_put()
-#define MICRO_INSTRUCTION_STACK_SIZE 16
-// size by which outbuf will be extended on each overflow
-#define MICRO_OUTBUF_EXTEND_SIZE 196
 
 typedef enum {
     MICRO_TYPE_NULL = 0,

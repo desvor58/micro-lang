@@ -10,12 +10,7 @@
 #include <micro/micro.h>
 #include <string.h>
 #include <stdio.h>
-
-#ifdef _WIN32
-# define _CRTDBG_MAP_ALLOC
-# include <stdlib.h>
-# include <crtdbg.h>
-#endif
+#include <SCT/string.h>
 
 typedef struct {
     char inputfile[MICRO_MAX_SYMBOL_SIZE];
@@ -529,56 +524,50 @@ void put_asm(micro_codegen_t *codegen)
 
 int main(int argc, char **argv)
 {
-    micro_args_t *args = (micro_args_t*)malloc(sizeof(micro_args_t));
+    micro_args_t args;
+    args = micro_args_parse(argc, argv);
 
-    *args = micro_args_parse(argc, argv);
-
-    if (args->inputfile[0] == 0) {
+    if (args.inputfile[0] == 0) {
         puts("Error: Expected input file name");
         return 1;
     }
-    if (args->outfile[0] == 0) {
+    if (args.outfile[0] == 0) {
         puts("Error: Expected output file name");
         return 1;
     }
 
-    char *text = (char*)malloc(sizeof(char) * MICRO_MAX_INPUT_CODE_SIZE);
-    size_t text_size = 0;
+    sct_string_t input_text;
+    sct_string_init(&input_text);
 
-    FILE *infile = fopen(args->inputfile, "r");
+    FILE *infile = fopen(args.inputfile, "r");
     if (!infile) {
         puts("Error: Input file not be opening");
         return 1;
     }
     char c = 0;
     while ((c = getc(infile)) != EOF) {
-        if (text_size >= MICRO_MAX_INPUT_CODE_SIZE) {
-            puts("Error: Input file to large for reading");
-            fclose(infile);
-            return 1;
-        }
-        text[text_size++] = c;
+        sct_string_push(&input_text, c);
     }
     fclose(infile);
 
-    if (args->stop_at == STOPAFTER_FILE_READ) return 0;
+    if (args.stop_at == STOPAFTER_FILE_READ) return 0;
 
     micro_init();
         sct_vector_t toks;
         sct_vector_init(&toks, sizeof(micro_token_t));
-        micro_tokenize(text, text_size, &toks);
+        micro_tokenize(input_text.cstr, input_text.size, &toks);
 
-        free(text);
+        sct_string_deinit(&input_text);
 
         for (size_t i = 0; i < micro_err_stk_size; i++) {
-            put_err(args->inputfile, micro_err_stk[i]);
+            put_err(args.inputfile, micro_err_stk[i]);
         }
         if (micro_err_stk_size) {
             puts("Lexing fail");
             return 2;
         }
 
-        if (args->toks_put) {
+        if (args.toks_put) {
             for (size_t i = 0; i < toks.size; i++) {
                 micro_token_t tok = *(micro_token_t*)sct_vector_get(&toks, i);
                 printf("%lu. ", i);
@@ -586,52 +575,49 @@ int main(int argc, char **argv)
             }
         }
 
-        if (args->stop_at == STOPAFTER_LEXER) return 0;
+        if (args.stop_at == STOPAFTER_LEXER) return 0;
 
         micro_instrgen_t instrgen;
         micro_instrgen_init(&instrgen, &toks);
             micro_instrgen_gen(&instrgen);
 
             for (size_t i = 0; i < micro_err_stk_size; i++) {
-                put_err(args->inputfile, micro_err_stk[i]);
+                put_err(args.inputfile, micro_err_stk[i]);
             }
             if (micro_err_stk_size) {
                 puts("Instruction generation fail");
                 return 3;
             }
             
-            if (args->instrs_put) {
+            if (args.instrs_put) {
                 print_instructions(&instrgen.instructions, 0);
             }
 
-            if (args->stop_at == STOPAFTER_INSTRGEN) return 0;
+            if (args.stop_at == STOPAFTER_INSTRGEN) return 0;
 
             micro_codegen_t codegen;
             micro_codegen386_init(&codegen);
                 codegen.emit(&codegen, &instrgen.instructions);
                 for (size_t i = 0; i < micro_err_stk_size; i++) {
-                    put_err(args->inputfile, micro_err_stk[i]);
+                    put_err(args.inputfile, micro_err_stk[i]);
                 }
                 if (micro_err_stk_size) {
                     puts("Assembler generation fail");
                     return 4;
                 }
 
-                if (args->asm_put) {
+                if (args.asm_put) {
                     put_asm(&codegen);
                 }
 
                 micro_asm386_emit(&codegen.asm_instrs, &codegen.outbuf);
 
-                FILE *outfile = fopen(args->outfile, "wb");
+                FILE *outfile = fopen(args.outfile, "wb");
                 fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);
                 fclose(outfile);
             micro_codegen386_deinit(&codegen);
         micro_instrgen_deinit(&instrgen);
         sct_vector_deinit(&toks);
     micro_deinit();
-
-    free(args);
-
     return 0;
 }
