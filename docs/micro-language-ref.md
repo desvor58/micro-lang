@@ -102,8 +102,7 @@ takes its operands in prefix form.
 | && <o1> <o2>      | <o1> && <o2>     | logical and of o1 and o2           |
 | || <o1> <o2>      | <o1> || <o2>     | logical or of o1 and o2            |
 | ! <o1>            | !<o1>            | logical not of o1                  |
-| == <o1> <o2>      | <o1> == <o2>     | true if o1 equals o2               |
-| != <o1> <o2>      | <o1> != <o2>     | true if o1 not equals o2           |
+| = <o1> <o2>       | <o1> == <o2>     | true if o1 equals o2               |
 | > <o1> <o2>       | <o1> > <o2>      | true if o1 is bigger than o2       |
 | < <o1> <o2>       | <o1> < <o2>      | true if o1 is less than o2         |
 | >= <o1> <o2>      | <o1> >= <o2>     | true if o1 is bigger or equal      |

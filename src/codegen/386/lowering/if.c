@@ -15,8 +15,21 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_if_t instr_if = instr->if_goto;
 
-    size_t expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
-    if (!expr_size) {
+    micro_asm386_instruction_type_t asm_instr = MICRO_ASM386_INSTR_JNZ_L32;
+
+    size_t cond_expr_size = 0;
+    if (instr_if.cond_expr->type == MICRO_TOK_EXCLAMATION) {
+        asm_instr = MICRO_ASM386_INSTR_JZ_L32;
+        cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr + 1);
+    } else {
+        cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
+    }
+    if (!cond_expr_size) {
+        micro_push_err((micro_error_t){
+            .err = MICRO_ERROR_EXPECTED_EXPRESSION,
+            .line_ref = instr->start_tok->line_ref,
+            .chpos_ref = instr->start_tok->chpos_ref
+        });
         return 1;
     }
     
@@ -43,6 +56,6 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
         return 1;
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_JNZ_L32, { .lbl_name = lbl_name }, {});
+    push_asm_instr(asm_instr, { .lbl_name = lbl_name }, {});
     return 0;
 }

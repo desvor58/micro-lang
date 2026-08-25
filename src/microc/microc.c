@@ -211,7 +211,6 @@ u8 _op_args_num[] = {
     [MICRO_TOK_TILDE]       = 1,
     [MICRO_TOK_EQ]          = 2,
     [MICRO_TOK_EXCLAMATION] = 1,
-    [MICRO_TOK_NOT_EQ]      = 2,
     [MICRO_TOK_GREAT]       = 2,
     [MICRO_TOK_LESS]        = 2,
     [MICRO_TOK_GREAT_OR_EQ] = 2,

@@ -17,7 +17,6 @@ char *micro_token_type2str[] = {
     [MICRO_TOK_TILDE]       = "tilde",
     [MICRO_TOK_EXCLAMATION] = "exclamation",
     [MICRO_TOK_EQ]          = "eq",
-    [MICRO_TOK_NOT_EQ]      = "not eq",
     [MICRO_TOK_GREAT]       = "great",
     [MICRO_TOK_LESS]        = "less",
     [MICRO_TOK_GREAT_OR_EQ] = "great or eq",
@@ -255,13 +254,6 @@ void micro_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
         _micro_single_chlex('=', MICRO_TOK_EQ)          else
         _micro_single_chlex('~', MICRO_TOK_TILDE)
         
-        if (text[pos] == '!' && text[pos + 1] == '=') {
-            sct_vector_push(toks, &(micro_token_t){
-                .type = MICRO_TOK_NOT_EQ,
-                .line_ref = line,
-                .chpos_ref = chpos,
-            });
-        }
         if (text[pos] == '>' && text[pos + 1] == '=') {
             sct_vector_push(toks, &(micro_token_t){
                 .type = MICRO_TOK_GREAT_OR_EQ,

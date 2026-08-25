@@ -249,6 +249,8 @@ size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start)
             res = cond_expr_vreg_parse(codegen, &ident->vreg);
             goto exit;
         }
+    } else
+    if (start->type == MICRO_TOK_EQ) {
     }
 
 exit:

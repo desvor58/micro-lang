@@ -96,6 +96,11 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     micro_imm_le_t imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset));
     ((micro_asm386_instruction_t*)sct_vector_get(&codegen->asm_instrs, sub_instr_addr))->operand2.imm = imm;
 
+    char *exit_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 4);
+    strcpy(exit_lbl_name, instr_fun.name);
+    strcat(exit_lbl_name, ".end");
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = exit_lbl_name }, {});
+
     if (ext->use_callee_save_regs) {
         sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_PUSH_R32,
@@ -123,11 +128,6 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
             .operand1 = MICRO_ASM386_REG32_EDI
         });
     }
-
-    char *exit_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 4);
-    strcpy(exit_lbl_name, instr_fun.name);
-    strcat(exit_lbl_name, ".end");
-    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = exit_lbl_name }, {});
 
     push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset)) });
 

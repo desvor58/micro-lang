@@ -10,7 +10,7 @@
 
 ### 🎯 Project Goals
 - **Compilation speed** > Execution speed
-- **Compiler simplicity** (< 2500 lines of code now, < 5000 line of code at 1.0.0 version)
+- **Compiler simplicity** (< 4000 lines of code now, < 5000 line of code at 1.0.0 version)
 
 -----------------
 
@@ -34,7 +34,7 @@ fun fib
 start
     if <= n 1 : end_rec;
     
-    // f1 and f2 its a virtual registers
+    \ f1 and f2 its a virtual registers \
     call f1 fib - n 1;
     call f2 fib - n 2;
 

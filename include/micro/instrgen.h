@@ -16,7 +16,6 @@
                                     (tok_type) == MICRO_TOK_TILDE ||  \
                                     (tok_type) == MICRO_TOK_EQ ||  \
                                     (tok_type) == MICRO_TOK_EXCLAMATION ||  \
-                                    (tok_type) == MICRO_TOK_NOT_EQ ||  \
                                     (tok_type) == MICRO_TOK_GREAT ||  \
                                     (tok_type) == MICRO_TOK_LESS ||  \
                                     (tok_type) == MICRO_TOK_GREAT_OR_EQ ||  \
