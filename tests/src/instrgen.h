@@ -3,7 +3,7 @@
 
 #include "../include/munit.h"
 #include "errors.h"
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 #include <stdio.h>
 #include <string.h>
 

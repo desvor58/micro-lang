@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
 {
@@ -44,7 +44,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
     micro_instruction_call_t call_instr;
     strcpy(call_instr.ret_reg_name, ret_reg_tok->val);
     strcpy(call_instr.fun_name, fun_name_tok->val);
-    sct_vector_init(&call_instr.arg_exprs, sizeof(micro_token_t*));
+    sct_vector_init(&call_instr.arg_exprs, sizeof(micro_expr_t*));
 
     micro_token_t *tok = sct_vector_get(instrgen->toks, instrgen->pos);
     for (;;) {
@@ -59,7 +59,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
         if (tok->type == MICRO_TOK_SEMICOLON) {
             break;
         }
-        if (!_micro_tok_is_expr_start(tok->type)) {
+        if (!_micro_expr_is_expr_start(tok->type)) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_EXPECTED_EXPRESSION,
                 .line_ref = tok->line_ref,
@@ -67,7 +67,8 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
             });
             goto exit;
         }
-        sct_vector_push(&call_instr.arg_exprs, &tok);
+        micro_expr_t *arg_expr = (micro_expr_t*)tok;
+        sct_vector_push(&call_instr.arg_exprs, &arg_expr);
         size_t expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
         if (!expr_size) {
             goto exit;
@@ -78,7 +79,7 @@ void micro_instrgen_parse_call(micro_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_CALL,
-        .start_tok = call_tok,
+        .start_tok = (micro_expr_t*)call_tok,
         .call = call_instr
     });
 

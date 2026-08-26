@@ -3,7 +3,7 @@
 
 #include "../include/munit.h"
 #include "errors.h"
-#include <micro/lexer.h>
+#include <microc/lexer.h>
 #include <stdio.h>
 #include <string.h>
 

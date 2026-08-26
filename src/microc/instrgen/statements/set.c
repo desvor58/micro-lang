@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
 {
@@ -59,7 +59,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
     }
 
     micro_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    if (!expr_start_tok || (!_micro_tok_is_expr_start(expr_start_tok->type) && expr_start_tok->type != MICRO_TOK_SEMICOLON)) {
+    if (!expr_start_tok || (!_micro_expr_is_expr_start(expr_start_tok->type) && expr_start_tok->type != MICRO_TOK_SEMICOLON)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .line_ref = expr_start_tok ? expr_start_tok->line_ref : 0,
@@ -92,7 +92,7 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
         micro_instruction_drset_t drset_instr;
         drset_instr.type = type;
         strcpy(drset_instr.reg_name, name_tok->val);
-        drset_instr.val_expr = expr_start_tok;
+        drset_instr.val_expr = (micro_expr_t*)expr_start_tok;
 
         instr = (micro_instruction_t){
             .type = MICRO_INSTR_DRSET,
@@ -102,11 +102,11 @@ void micro_instrgen_parse_set(micro_instrgen_t *instrgen)
         micro_instruction_set_t set_instr;
         set_instr.type = type;
         strcpy(set_instr.reg_name, name_tok->val);
-        set_instr.val_expr = expr_start_tok;
+        set_instr.val_expr = (micro_expr_t*)expr_start_tok;
 
         instr = (micro_instruction_t){
             .type = MICRO_INSTR_SET,
-            .start_tok = set_tok,
+            .start_tok = (micro_expr_t*)set_tok,
             .set = set_instr
         };
     }

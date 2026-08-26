@@ -7,7 +7,11 @@
  *     All documentation in `docs` directory
  **********************************************/
 
-#include <micro/micro.h>
+#include <micro/common.h>
+#include <micro/asm/asm386.h>
+#include <micro/codegen/386/codegen386.h>
+#include <microc/lexer.h>
+#include <microc/instrgen.h>
 #include <string.h>
 #include <stdio.h>
 #include <SCT/string.h>
@@ -212,17 +216,17 @@ u8 _op_args_num[] = {
     [MICRO_TOK_LESS_OR_EQ]  = 2,
 };
 
-size_t print_expr(micro_token_t *start, size_t tab)
+size_t print_expr(micro_expr_tok_t *start, size_t tab)
 {
     if (!start) return 0;
     for (size_t i = 0; i < tab; i++) {
         putchar(' ');
     }
-    print_tok(*start);
-    if (_micro_tok_is_lit(start->type) || start->type == MICRO_TOK_IDENT) {
+    print_tok(*(micro_token_t*)start);
+    if (_micro_expr_is_lit(start->type) || start->type == MICRO_EXPR_TOK_IDENT) {
         return 1;
     }
-    if (_micro_tok_is_op(start->type)) {
+    if (_micro_expr_is_op(start->type)) {
         u8 num = _op_args_num[start->type];
         size_t offset = 0;
         while (num) {
@@ -273,7 +277,7 @@ void print_instructions(sct_vector_t *instrs, size_t tab)
                 printf("CALL: res_reg:'%s', fun:'%s'\n", instr->call.ret_reg_name, instr->call.fun_name);
                 printf("       args:\n");
                 for (size_t j = 0; j < instr->call.arg_exprs.size; j++) {
-                    print_expr(*(micro_token_t**)sct_vector_get(&instr->call.arg_exprs, j), tab + 6);
+                    print_expr(*(micro_expr_tok_t**)sct_vector_get(&instr->call.arg_exprs, j), tab + 6);
                     puts("");
                 }
                 break;

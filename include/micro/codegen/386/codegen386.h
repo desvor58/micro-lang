@@ -66,8 +66,8 @@ typedef struct {
 } micro_codegen386_ident_t;
 
 typedef struct {
-    char          *name;
-    micro_token_t *lbl_tok;
+    char         *name;
+    micro_expr_tok_t *lbl_tok;
 } micro_codegen386_goto_unfound_lbl_t;
 
 typedef struct {

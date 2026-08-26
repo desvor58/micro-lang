@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
 {
@@ -35,7 +35,7 @@ void micro_instrgen_parse_goto(micro_instrgen_t *instrgen)
     strcpy(goto_instr.lbl, lbl_tok->val);
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_GOTO,
-        .start_tok = goto_tok,
+        .start_tok = (micro_expr_t*)goto_tok,
         .goto_lbl = goto_instr
     });
 

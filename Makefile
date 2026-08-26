@@ -44,9 +44,8 @@ ifeq ($(CC),clang)
     AR := llvm-ar
 endif
 
-SRC_TARGETS := src/*.c \
-               src/instrgen/*.c \
-               src/instrgen/statements/*.c \
+# --- module micro (libmicro), standalone, does not depend on microc ---
+SRC_TARGETS := src/common.c \
                src/asm/*.c \
                src/codegen/*.c \
                src/codegen/386/*.c \
@@ -55,9 +54,17 @@ SRC_TARGETS := src/*.c \
 
 SRCS := $(wildcard $(SRC_TARGETS))
 
-SRCS := $(filter-out src/microc/microc.c, $(SRCS))
+# --- module microc (frontend), depends on micro ---
+MICROC_SRCS := src/microc/lexer.c \
+               src/microc/instrgen/genfuns.c \
+               src/microc/instrgen/instrgen.c \
+               src/microc/instrgen/statements/*.c \
+
+MICROC_SRCS := $(wildcard $(MICROC_SRCS))
+
 OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
-DEPS := $(OBJS:.o=.d)
+MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
+DEPS := $(OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
 MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
@@ -71,9 +78,9 @@ libmicro: $(OBJS)
 	@$(call MKDIR,lib)
 	$(AR) rcs lib/libmicro.a $(OBJS)
 
-microc: $(OBJS) src/microc/microc.c
+microc: $(OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
-	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
+	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
 test: test-debug test-release
 
@@ -86,9 +93,9 @@ test-release:
 _run_tests: tests/bin/$(MODE)/tests$(EXE_EXT)
 	.$(call FIX_PATH,/tests/bin/$(MODE)/tests$(EXE_EXT)) $(TEST_FLAGS)
 
-tests/bin/$(MODE)/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
+tests/bin/$(MODE)/tests$(EXE_EXT): $(OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c
 	@$(call MKDIR,tests/bin/$(MODE))
-	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
+	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(MICROC_OBJS) $(OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
 
 $(OBJDIR)/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))

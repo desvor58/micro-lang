@@ -69,7 +69,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         micro_instruction_fun_arg_t *arg = sct_vector_get(&fun->instr_info.args, i);
         arg_dst.reg.size = micro_type_to_size[arg->type];
 
-        micro_token_t **arg_start_tok = sct_vector_get(&instr_call.arg_exprs, i);
+        micro_expr_tok_t **arg_start_tok = sct_vector_get(&instr_call.arg_exprs, i);
         int expr_size = expr_parse(codegen, arg_dst, *arg_start_tok);
         
         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = arg_dst.reg.reg }, {});

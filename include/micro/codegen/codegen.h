@@ -2,7 +2,7 @@
 #define MICRO_CODEGEN_CODEGEN_H
 
 #include <micro/common.h>
-#include <micro/instrgen.h>
+#include <micro/instr.h>
 #include <SCT/hashmap.h>
 
 typedef struct _micro_codegen_t micro_codegen_t;

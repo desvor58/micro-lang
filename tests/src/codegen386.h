@@ -5,6 +5,8 @@
 #include "errors.h"
 #include <micro/micro.h>
 #include <micro/asm/asm386.h>
+#include <microc/lexer.h>
+#include <microc/instrgen.h>
 #include <stdio.h>
 #include <string.h>
 

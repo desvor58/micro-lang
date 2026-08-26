@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 int micro_instrgen_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr)
 {
@@ -11,7 +11,7 @@ int micro_instrgen_gen_set(sct_vector_t *instrs, micro_type_t type, const char *
     micro_instruction_set_t instr_set;
     strcpy(instr_set.reg_name, name);
     instr_set.type = type;
-    instr_set.val_expr = &expr->data;
+    instr_set.val_expr = (micro_expr_t*)expr->data;
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_SET,

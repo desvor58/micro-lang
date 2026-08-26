@@ -32,7 +32,7 @@ static void op_lit_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, mi
     }
 }
 
-static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_token_t *expr)
+static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_expr_t *expr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 

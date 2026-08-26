@@ -18,7 +18,7 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
     micro_asm386_instruction_type_t asm_instr = MICRO_ASM386_INSTR_JNZ_L32;
 
     size_t cond_expr_size = 0;
-    if (instr_if.cond_expr->type == MICRO_TOK_EXCLAMATION) {
+    if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EXCLAMATION) {
         asm_instr = MICRO_ASM386_INSTR_JZ_L32;
         cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr + 1);
     } else {

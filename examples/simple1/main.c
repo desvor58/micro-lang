@@ -1,4 +1,6 @@
-#include <micro/micro.h>
+#include <micro/common.h>
+#include <microc/lexer.h>
+#include <microc/instrgen.h>
 
 int main()
 {

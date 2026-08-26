@@ -59,12 +59,12 @@ size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, 
 size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t *vreg);
 
 // return offset to next token after expr or 0 if err
-size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start);
+size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start);
 
 // return number of register or ebp offset, do not change ebp_offset
 int get_last_free_space(micro_codegen_t *codegen);
 
 // sets only flags
-size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start);
+size_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start);
 
 #endif

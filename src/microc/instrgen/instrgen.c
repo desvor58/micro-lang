@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 struct {
     char name[4];
@@ -54,10 +54,10 @@ size_t micro_scroll_expr(sct_vector_t *toks, size_t pos)
         });
         return 0;
     }
-    if (_micro_tok_is_lit(tok->type) || tok->type == MICRO_TOK_IDENT) {
+    if (_micro_expr_is_lit(tok->type) || tok->type == MICRO_TOK_IDENT) {
         return 1;
     }
-    if (_micro_tok_is_op(tok->type)) {
+    if (_micro_expr_is_op(tok->type)) {
         u8 num = op_args_num[tok->type];
         size_t offset = 1;
         while (num) {

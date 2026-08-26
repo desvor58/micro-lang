@@ -1,4 +1,4 @@
-#include <micro/instrgen.h>
+#include <microc/instrgen.h>
 
 void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
 {
@@ -13,7 +13,7 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
     }
     
     micro_token_t *expr_tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    if (!expr_tok || !_micro_tok_is_expr_start(expr_tok->type)) {
+    if (!expr_tok || !_micro_expr_is_expr_start(expr_tok->type)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .line_ref = expr_tok ? expr_tok->line_ref : 0,
@@ -49,12 +49,12 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
     }
 
     micro_instruction_if_t instr_if;
-    instr_if.cond_expr = expr_tok;
+    instr_if.cond_expr = (micro_expr_t*)expr_tok;
     strcpy(instr_if.lbl_name, lbl_tok->val);
     
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_IF,
-        .start_tok = if_tok,
+        .start_tok = (micro_expr_t*)if_tok,
         .if_goto = instr_if,
     });
 
