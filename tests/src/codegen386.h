@@ -10,13 +10,13 @@
 #include <stdio.h>
 #include <string.h>
 
-static void cg_gen(const char *text, sct_vector_t *toks, micro_instrgen_t *ig, micro_codegen_t *cg)
+static void cg_gen(const char *text, sct_vector_t *toks, mc_instrgen_t *ig, micro_codegen_t *cg)
 {
-    sct_vector_init(toks, sizeof(micro_token_t));
-    micro_tokenize(text, strlen(text), toks);
+    sct_vector_init(toks, sizeof(mc_token_t));
+    mc_tokenize(text, strlen(text), toks);
 
-    micro_instrgen_init(ig, toks);
-    micro_instrgen_gen(ig);
+    mc_instrgen_init(ig, toks);
+    mc_instrgen_gen(ig);
 
     micro_codegen386_init(cg);
     cg->emit(cg, &ig->instructions);
@@ -25,10 +25,10 @@ static void cg_gen(const char *text, sct_vector_t *toks, micro_instrgen_t *ig, m
     test_put_errors("codegen");
 }
 
-static void cg_cleanup(sct_vector_t *toks, micro_instrgen_t *ig, micro_codegen_t *cg)
+static void cg_cleanup(sct_vector_t *toks, mc_instrgen_t *ig, micro_codegen_t *cg)
 {
     micro_codegen386_deinit(cg);
-    micro_instrgen_deinit(ig);
+    mc_instrgen_deinit(ig);
     sct_vector_deinit(toks);
 }
 
@@ -82,7 +82,7 @@ MunitResult test_codegen_ret_no_val(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun empty\n"
            "start\n"
@@ -129,7 +129,7 @@ MunitResult test_codegen_set_i32_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -155,7 +155,7 @@ MunitResult test_codegen_set_i8_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -180,7 +180,7 @@ MunitResult test_codegen_set_i16_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -205,7 +205,7 @@ MunitResult test_codegen_set_u32_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -230,7 +230,7 @@ MunitResult test_codegen_set_ptr_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -255,7 +255,7 @@ MunitResult test_codegen_set_two_regs(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -286,7 +286,7 @@ MunitResult test_codegen_reassign_reg(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -318,7 +318,7 @@ MunitResult test_codegen_set_plus_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -344,7 +344,7 @@ MunitResult test_codegen_set_minus_lit(const MunitParameter params[], void *data
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -370,7 +370,7 @@ MunitResult test_codegen_set_vreg_ref(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -403,7 +403,7 @@ MunitResult test_codegen_set_minus_vreg(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -437,7 +437,7 @@ MunitResult test_codegen_set_nested_plus(const MunitParameter params[], void *da
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -467,7 +467,7 @@ MunitResult test_codegen_stack_overflow(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -522,7 +522,7 @@ MunitResult test_codegen_ret_expr(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "    ret i32\n"
@@ -552,7 +552,7 @@ MunitResult test_codegen_ret_vreg(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "    ret i32\n"
@@ -586,7 +586,7 @@ MunitResult test_codegen_call(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun add\n"
            "    i32 a\n"
@@ -628,7 +628,7 @@ MunitResult test_codegen_two_funs(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun a\n"
            "    ret i32\n"
@@ -666,7 +666,7 @@ MunitResult test_codegen_lbl(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -700,7 +700,7 @@ MunitResult test_codegen_goto(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -732,7 +732,7 @@ MunitResult test_codegen_goto_forward(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -766,7 +766,7 @@ MunitResult test_codegen_if_vreg(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -802,7 +802,7 @@ MunitResult test_codegen_if_not(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -837,7 +837,7 @@ MunitResult test_codegen_err_if_outside_function(const MunitParameter params[], 
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("if n : target;\n", &toks, &ig, &cg);
 
@@ -856,7 +856,7 @@ MunitResult test_codegen_err_if_undefined_ident(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -880,7 +880,7 @@ MunitResult test_codegen_err_if_undefined_label(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -903,7 +903,7 @@ MunitResult test_codegen_err_if_not_lbl(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -926,7 +926,7 @@ MunitResult test_codegen_err_goto_undefined(const MunitParameter params[], void 
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -948,7 +948,7 @@ MunitResult test_codegen_err_goto_not_lbl(const MunitParameter params[], void *d
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -971,7 +971,7 @@ MunitResult test_codegen_err_goto_outside_scope(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun a\n"
            "start\n"
@@ -998,7 +998,7 @@ MunitResult test_codegen_err_goto_outside_function(const MunitParameter params[]
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("goto l1;\n", &toks, &ig, &cg);
 
@@ -1017,7 +1017,7 @@ MunitResult test_codegen_err_undefined_ident(const MunitParameter params[], void
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -1039,7 +1039,7 @@ MunitResult test_codegen_err_undefined_fun(const MunitParameter params[], void *
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -1061,7 +1061,7 @@ MunitResult test_codegen_err_too_many_args(const MunitParameter params[], void *
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun add\n"
            "    i32 a\n"
@@ -1089,7 +1089,7 @@ MunitResult test_codegen_err_too_few_args(const MunitParameter params[], void *d
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun add\n"
            "    i32 a\n"
@@ -1118,7 +1118,7 @@ MunitResult test_codegen_err_vreg_type_mismatch(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun f\n"
            "start\n"
@@ -1141,7 +1141,7 @@ MunitResult test_codegen_err_call_result_undef(const MunitParameter params[], vo
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun add\n"
            "    ret i32\n"
@@ -1170,7 +1170,7 @@ MunitResult test_codegen_err_call_result_type(const MunitParameter params[], voi
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     micro_codegen_t cg;
     cg_gen("fun add\n"
            "    ret i32\n"

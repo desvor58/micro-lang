@@ -9,22 +9,22 @@
 
 static void ig_tokenize(sct_vector_t *toks, const char *text)
 {
-    micro_tokenize(text, strlen(text), toks);
+    mc_tokenize(text, strlen(text), toks);
 }
 
-static void ig_gen(const char *text, sct_vector_t *toks, micro_instrgen_t *ig)
+static void ig_gen(const char *text, sct_vector_t *toks, mc_instrgen_t *ig)
 {
-    sct_vector_init(toks, sizeof(micro_token_t));
+    sct_vector_init(toks, sizeof(mc_token_t));
     ig_tokenize(toks, text);
 
-    micro_instrgen_init(ig, toks);
-    micro_instrgen_gen(ig);
+    mc_instrgen_init(ig, toks);
+    mc_instrgen_gen(ig);
 
     /* dump accumulated errors, if any, like microc does */
     test_put_errors("instrgen");
 }
 
-static micro_instruction_t *ig_instr(micro_instrgen_t *ig, size_t i)
+static micro_instruction_t *ig_instr(mc_instrgen_t *ig, size_t i)
 {
     return sct_vector_get(&ig->instructions, i);
 }
@@ -38,15 +38,15 @@ MunitResult test_instrgen_type_str_parse(const MunitParameter params[], void *da
 {
     micro_init();
 
-    munit_assert_int((int)micro_type_str_parse("i8"), ==, (int)MICRO_TYPE_I8);
-    munit_assert_int((int)micro_type_str_parse("u8"), ==, (int)MICRO_TYPE_U8);
-    munit_assert_int((int)micro_type_str_parse("i16"), ==, (int)MICRO_TYPE_I16);
-    munit_assert_int((int)micro_type_str_parse("u16"), ==, (int)MICRO_TYPE_U16);
-    munit_assert_int((int)micro_type_str_parse("i32"), ==, (int)MICRO_TYPE_I32);
-    munit_assert_int((int)micro_type_str_parse("u32"), ==, (int)MICRO_TYPE_U32);
-    munit_assert_int((int)micro_type_str_parse("f32"), ==, (int)MICRO_TYPE_F32);
-    munit_assert_int((int)micro_type_str_parse("ptr"), ==, (int)MICRO_TYPE_PTR);
-    munit_assert_int((int)micro_type_str_parse("foo"), ==, (int)MICRO_TYPE_NULL);
+    munit_assert_int((int)mc_type_str_parse("i8"), ==, (int)MICRO_TYPE_I8);
+    munit_assert_int((int)mc_type_str_parse("u8"), ==, (int)MICRO_TYPE_U8);
+    munit_assert_int((int)mc_type_str_parse("i16"), ==, (int)MICRO_TYPE_I16);
+    munit_assert_int((int)mc_type_str_parse("u16"), ==, (int)MICRO_TYPE_U16);
+    munit_assert_int((int)mc_type_str_parse("i32"), ==, (int)MICRO_TYPE_I32);
+    munit_assert_int((int)mc_type_str_parse("u32"), ==, (int)MICRO_TYPE_U32);
+    munit_assert_int((int)mc_type_str_parse("f32"), ==, (int)MICRO_TYPE_F32);
+    munit_assert_int((int)mc_type_str_parse("ptr"), ==, (int)MICRO_TYPE_PTR);
+    munit_assert_int((int)mc_type_str_parse("foo"), ==, (int)MICRO_TYPE_NULL);
 
     micro_deinit();
 
@@ -58,7 +58,7 @@ MunitResult test_instrgen_fun_empty(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun empty\nstart\nend\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 0);
@@ -71,7 +71,7 @@ MunitResult test_instrgen_fun_empty(const MunitParameter params[], void *data)
     munit_assert_size(fun->fun.args.size, ==, 0);
     munit_assert_size(fun->fun.body.size, ==, 0);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -84,7 +84,7 @@ MunitResult test_instrgen_fun_args_ret(const MunitParameter params[], void *data
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun add\n"
            "    i32 a\n"
            "    i32 b\n"
@@ -109,7 +109,7 @@ MunitResult test_instrgen_fun_args_ret(const MunitParameter params[], void *data
     munit_assert_int((int)arg1->type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(arg1->name, "b");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -122,7 +122,7 @@ MunitResult test_instrgen_set_no_val(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 count;\n"
@@ -137,7 +137,7 @@ MunitResult test_instrgen_set_no_val(const MunitParameter params[], void *data)
     munit_assert_string_equal(set->set.reg_name, "count");
     munit_assert_ptr_null(set->set.val_expr);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -150,7 +150,7 @@ MunitResult test_instrgen_set_lit(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 number 5;\n"
@@ -163,10 +163,10 @@ MunitResult test_instrgen_set_lit(const MunitParameter params[], void *data)
     munit_assert_int((int)set->set.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(set->set.reg_name, "number");
     munit_assert_ptr_not_null(set->set.val_expr);
-    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_TOK_LIT_INT);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal(set->set.val_expr->val, "5");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -179,7 +179,7 @@ MunitResult test_instrgen_set_expr(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 total + number 2;\n"
@@ -192,9 +192,9 @@ MunitResult test_instrgen_set_expr(const MunitParameter params[], void *data)
     munit_assert_int((int)set->set.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(set->set.reg_name, "total");
     munit_assert_ptr_not_null(set->set.val_expr);
-    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_TOK_PLUS);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_PLUS);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -207,7 +207,7 @@ MunitResult test_instrgen_drset(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 $slot 42;\n"
@@ -220,10 +220,10 @@ MunitResult test_instrgen_drset(const MunitParameter params[], void *data)
     munit_assert_int((int)drset->drset.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(drset->drset.reg_name, "slot");
     munit_assert_ptr_not_null(drset->drset.val_expr);
-    munit_assert_int((int)drset->drset.val_expr->type, ==, (int)MICRO_TOK_LIT_INT);
+    munit_assert_int((int)drset->drset.val_expr->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal(drset->drset.val_expr->val, "42");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -236,7 +236,7 @@ MunitResult test_instrgen_ret_with_val(const MunitParameter params[], void *data
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "    ret i32\n"
            "start\n"
@@ -248,9 +248,9 @@ MunitResult test_instrgen_ret_with_val(const MunitParameter params[], void *data
     micro_instruction_t *ret = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_TOK_PLUS);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_PLUS);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -263,7 +263,7 @@ MunitResult test_instrgen_ret_no_val(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    ret;\n"
@@ -275,7 +275,7 @@ MunitResult test_instrgen_ret_no_val(const MunitParameter params[], void *data)
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_null(ret->ret.val_expr);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -288,7 +288,7 @@ MunitResult test_instrgen_call(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "    ret i32\n"
            "start\n"
@@ -304,15 +304,15 @@ MunitResult test_instrgen_call(const MunitParameter params[], void *data)
     munit_assert_string_equal(call->call.fun_name, "add");
     munit_assert_size(call->call.arg_exprs.size, ==, 2);
 
-    micro_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
-    munit_assert_int((int)(*arg0)->type, ==, (int)MICRO_TOK_LIT_INT);
+    mc_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
+    munit_assert_int((int)(*arg0)->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal((*arg0)->val, "10");
 
-    micro_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
-    munit_assert_int((int)(*arg1)->type, ==, (int)MICRO_TOK_LIT_INT);
+    mc_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
+    munit_assert_int((int)(*arg1)->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal((*arg1)->val, "5");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -325,7 +325,7 @@ MunitResult test_instrgen_call_no_args(const MunitParameter params[], void *data
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    call _ empty;\n"
@@ -339,7 +339,7 @@ MunitResult test_instrgen_call_no_args(const MunitParameter params[], void *data
     munit_assert_string_equal(call->call.fun_name, "empty");
     munit_assert_size(call->call.arg_exprs.size, ==, 0);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -352,7 +352,7 @@ MunitResult test_instrgen_lbl_goto(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    goto my_lbl;\n"
@@ -370,7 +370,7 @@ MunitResult test_instrgen_lbl_goto(const MunitParameter params[], void *data)
     munit_assert_int((int)lbl->type, ==, (int)MICRO_INSTR_LBL);
     munit_assert_string_equal(lbl->lbl.name, "my_lbl");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -383,7 +383,7 @@ MunitResult test_instrgen_if_vreg(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 n 1;\n"
@@ -395,11 +395,11 @@ MunitResult test_instrgen_if_vreg(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 1);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_IDENT);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_IDENT);
     munit_assert_string_equal(if_instr->if_goto.cond_expr->val, "n");
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -412,7 +412,7 @@ MunitResult test_instrgen_if_cmp(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    if <= n 1 : end_rec;\n"
@@ -423,10 +423,10 @@ MunitResult test_instrgen_if_cmp(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_LESS_OR_EQ);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_LESS_OR_EQ);
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "end_rec");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -439,7 +439,7 @@ MunitResult test_instrgen_if_not(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    if ! n : target;\n"
@@ -450,10 +450,10 @@ MunitResult test_instrgen_if_not(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_TOK_EXCLAMATION);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_EXCLAMATION);
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -466,7 +466,7 @@ MunitResult test_instrgen_err_if_expected_expression(const MunitParameter params
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    if ;\n"
@@ -475,7 +475,7 @@ MunitResult test_instrgen_err_if_expected_expression(const MunitParameter params
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_EXPRESSION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -488,7 +488,7 @@ MunitResult test_instrgen_err_if_expected_colon(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    if n ;\n"
@@ -497,7 +497,7 @@ MunitResult test_instrgen_err_if_expected_colon(const MunitParameter params[], v
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_COLON);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -510,7 +510,7 @@ MunitResult test_instrgen_err_if_expected_label_name(const MunitParameter params
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    if n : ;\n"
@@ -519,7 +519,7 @@ MunitResult test_instrgen_err_if_expected_label_name(const MunitParameter params
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_LABEL_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -532,13 +532,13 @@ MunitResult test_instrgen_err_set_outside_fun(const MunitParameter params[], voi
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("set i32 x 5;\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_SET_OUTSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -551,13 +551,13 @@ MunitResult test_instrgen_err_ret_outside_fun(const MunitParameter params[], voi
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("ret 5;\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_RET_OUTSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -570,13 +570,13 @@ MunitResult test_instrgen_err_call_outside_fun(const MunitParameter params[], vo
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("call _ f;\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_CALL_OUTSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -589,13 +589,13 @@ MunitResult test_instrgen_err_goto_outside_fun(const MunitParameter params[], vo
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("goto lbl;\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_GOTO_OUTSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -608,13 +608,13 @@ MunitResult test_instrgen_err_lbl_outside_fun(const MunitParameter params[], voi
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("mylabel:\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_LBL_OUTSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -627,7 +627,7 @@ MunitResult test_instrgen_err_fun_inside_fun(const MunitParameter params[], void
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    fun b\n"
@@ -638,7 +638,7 @@ MunitResult test_instrgen_err_fun_inside_fun(const MunitParameter params[], void
     munit_assert_size(micro_err_stk_size, >=, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_FUN_INSIDE_FUNCTION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -651,7 +651,7 @@ MunitResult test_instrgen_err_expected_type_name(const MunitParameter params[], 
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    set foo x 5;\n"
@@ -660,7 +660,7 @@ MunitResult test_instrgen_err_expected_type_name(const MunitParameter params[], 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_TYPE_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -673,7 +673,7 @@ MunitResult test_instrgen_err_expected_vreg_name(const MunitParameter params[], 
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    set i32 5;\n"
@@ -682,7 +682,7 @@ MunitResult test_instrgen_err_expected_vreg_name(const MunitParameter params[], 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_VREG_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -695,7 +695,7 @@ MunitResult test_instrgen_err_expected_expression(const MunitParameter params[],
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    set i32 x ,;\n"
@@ -704,7 +704,7 @@ MunitResult test_instrgen_err_expected_expression(const MunitParameter params[],
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_EXPRESSION);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -717,7 +717,7 @@ MunitResult test_instrgen_err_expected_semicolon(const MunitParameter params[], 
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    set i32 x 5\n"
@@ -726,7 +726,7 @@ MunitResult test_instrgen_err_expected_semicolon(const MunitParameter params[], 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_SEMICOLON);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -739,7 +739,7 @@ MunitResult test_instrgen_err_expected_fun_name(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun 5\n"
            "start\n"
            "end\n", &toks, &ig);
@@ -747,7 +747,7 @@ MunitResult test_instrgen_err_expected_fun_name(const MunitParameter params[], v
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_FUN_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -760,7 +760,7 @@ MunitResult test_instrgen_err_expected_arg_type(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "    foo x\n"
            "start\n"
@@ -769,7 +769,7 @@ MunitResult test_instrgen_err_expected_arg_type(const MunitParameter params[], v
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_ARG_TYPE);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -782,7 +782,7 @@ MunitResult test_instrgen_err_expected_ret_type(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "    ret 5\n"
            "start\n"
@@ -791,7 +791,7 @@ MunitResult test_instrgen_err_expected_ret_type(const MunitParameter params[], v
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_RET_TYPE);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -804,7 +804,7 @@ MunitResult test_instrgen_err_expected_start(const MunitParameter params[], void
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "    ret i32\n"
            "    5\n"
@@ -813,7 +813,7 @@ MunitResult test_instrgen_err_expected_start(const MunitParameter params[], void
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_START_KW);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -826,14 +826,14 @@ MunitResult test_instrgen_err_expected_end(const MunitParameter params[], void *
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_END_KW);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -846,13 +846,13 @@ MunitResult test_instrgen_err_unexpected_token(const MunitParameter params[], vo
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("start\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNEXPECTED_TOKEN);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -865,13 +865,13 @@ MunitResult test_instrgen_err_unexpected_end_kw(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("end\n", &toks, &ig);
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNEXPECTED_END_KW);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -884,7 +884,7 @@ MunitResult test_instrgen_fun_ret_no_args(const MunitParameter params[], void *d
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun get_five\n"
            "    ret i32\n"
            "start\n"
@@ -904,10 +904,10 @@ MunitResult test_instrgen_fun_ret_no_args(const MunitParameter params[], void *d
     micro_instruction_t *ret = ig_body_instr(fun, 0);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_TOK_LIT_INT);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal(ret->ret.val_expr->val, "5");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -920,7 +920,7 @@ MunitResult test_instrgen_fun_arg_types(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "    i8 a\n"
            "    u8 b\n"
@@ -955,7 +955,7 @@ MunitResult test_instrgen_fun_arg_types(const MunitParameter params[], void *dat
         munit_assert_string_equal(arg->name, expect_names[i]);
     }
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -968,7 +968,7 @@ MunitResult test_instrgen_set_all_types(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i8 a 1;\n"
@@ -999,10 +999,10 @@ MunitResult test_instrgen_set_all_types(const MunitParameter params[], void *dat
         munit_assert_int((int)set->set.type, ==, (int)expect_types[i]);
         munit_assert_string_equal(set->set.reg_name, expect_names[i]);
         munit_assert_ptr_not_null(set->set.val_expr);
-        munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_TOK_LIT_INT);
+        munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_LIT_INT);
     }
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1015,7 +1015,7 @@ MunitResult test_instrgen_drset_no_val(const MunitParameter params[], void *data
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 t 1;\n"
@@ -1030,7 +1030,7 @@ MunitResult test_instrgen_drset_no_val(const MunitParameter params[], void *data
     munit_assert_string_equal(drset->drset.reg_name, "p");
     munit_assert_ptr_null(drset->drset.val_expr);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1043,7 +1043,7 @@ MunitResult test_instrgen_ret_vreg(const MunitParameter params[], void *data)
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "    ret i32\n"
            "start\n"
@@ -1056,10 +1056,10 @@ MunitResult test_instrgen_ret_vreg(const MunitParameter params[], void *data)
     micro_instruction_t *ret = ig_body_instr(ig_instr(&ig, 0), 1);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_TOK_IDENT);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_IDENT);
     munit_assert_string_equal(ret->ret.val_expr->val, "a");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1072,7 +1072,7 @@ MunitResult test_instrgen_call_multi_args(const MunitParameter params[], void *d
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun f\n"
            "start\n"
            "    set i32 a 1;\n"
@@ -1087,19 +1087,19 @@ MunitResult test_instrgen_call_multi_args(const MunitParameter params[], void *d
     munit_assert_string_equal(call->call.fun_name, "add");
     munit_assert_size(call->call.arg_exprs.size, ==, 3);
 
-    micro_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
-    munit_assert_int((int)(*arg0)->type, ==, (int)MICRO_TOK_IDENT);
+    mc_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
+    munit_assert_int((int)(*arg0)->type, ==, (int)MC_TOK_IDENT);
     munit_assert_string_equal((*arg0)->val, "a");
 
-    micro_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
-    munit_assert_int((int)(*arg1)->type, ==, (int)MICRO_TOK_LIT_INT);
+    mc_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
+    munit_assert_int((int)(*arg1)->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal((*arg1)->val, "2");
 
-    micro_token_t **arg2 = sct_vector_get(&call->call.arg_exprs, 2);
-    munit_assert_int((int)(*arg2)->type, ==, (int)MICRO_TOK_LIT_INT);
+    mc_token_t **arg2 = sct_vector_get(&call->call.arg_exprs, 2);
+    munit_assert_int((int)(*arg2)->type, ==, (int)MC_TOK_LIT_INT);
     munit_assert_string_equal((*arg2)->val, "3");
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1112,7 +1112,7 @@ MunitResult test_instrgen_multiple_funs(const MunitParameter params[], void *dat
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "    i8 x\n"
            "start\n"
@@ -1140,7 +1140,7 @@ MunitResult test_instrgen_multiple_funs(const MunitParameter params[], void *dat
     munit_assert_size(fb->fun.args.size, ==, 0);
     munit_assert_size(fb->fun.body.size, ==, 1);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1153,7 +1153,7 @@ MunitResult test_instrgen_err_expected_arg_name(const MunitParameter params[], v
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "    i32\n"
            "start\n"
@@ -1162,7 +1162,7 @@ MunitResult test_instrgen_err_expected_arg_name(const MunitParameter params[], v
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_ARG_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1175,7 +1175,7 @@ MunitResult test_instrgen_err_expected_label_name(const MunitParameter params[],
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    goto ;\n"
@@ -1184,7 +1184,7 @@ MunitResult test_instrgen_err_expected_label_name(const MunitParameter params[],
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_LABEL_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1197,7 +1197,7 @@ MunitResult test_instrgen_err_expected_colon(const MunitParameter params[], void
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    mylbl\n"
@@ -1206,7 +1206,7 @@ MunitResult test_instrgen_err_expected_colon(const MunitParameter params[], void
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_COLON);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1219,7 +1219,7 @@ MunitResult test_instrgen_err_expected_result_reg(const MunitParameter params[],
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    call 5 f;\n"
@@ -1228,7 +1228,7 @@ MunitResult test_instrgen_err_expected_result_reg(const MunitParameter params[],
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_RESULT_REG);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -1241,7 +1241,7 @@ MunitResult test_instrgen_err_expected_fun_name_call(const MunitParameter params
     micro_init();
 
     sct_vector_t toks;
-    micro_instrgen_t ig;
+    mc_instrgen_t ig;
     ig_gen("fun a\n"
            "start\n"
            "    call _ 5;\n"
@@ -1250,7 +1250,7 @@ MunitResult test_instrgen_err_expected_fun_name_call(const MunitParameter params
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_FUN_NAME);
 
-    micro_instrgen_deinit(&ig);
+    mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
 
     micro_deinit();

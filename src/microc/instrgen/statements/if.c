@@ -1,9 +1,9 @@
 #include <microc/instrgen.h>
 
-void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
+void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
 {
-    micro_token_t *if_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (unlikely(!if_tok || if_tok->type != MICRO_TOK_KW_IF)) {
+    mc_token_t *if_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+    if (unlikely(!if_tok || if_tok->type != MC_TOK_KW_IF)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_IF_KW,
             .line_ref = if_tok ? if_tok->line_ref : 0,
@@ -12,7 +12,7 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
         goto exit;
     }
     
-    micro_token_t *expr_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    mc_token_t *expr_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!expr_tok || !_micro_expr_is_expr_start(expr_tok->type)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
@@ -22,14 +22,14 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
         goto exit;
     }
 
-    size_t expr_size = micro_scroll_expr(instrgen->toks, instrgen->pos);
+    size_t expr_size = mc_scroll_expr(instrgen->toks, instrgen->pos);
     if (!expr_size) {
         goto exit;
     }
     instrgen->pos += expr_size;
     
-    micro_token_t *colon_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!colon_tok || colon_tok->type != MICRO_TOK_COLON) {
+    mc_token_t *colon_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+    if (!colon_tok || colon_tok->type != MC_TOK_COLON) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_COLON,
             .line_ref = colon_tok ? colon_tok->line_ref : 0,
@@ -38,8 +38,8 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
         goto exit;
     }
 
-    micro_token_t *lbl_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (!lbl_tok || lbl_tok->type != MICRO_TOK_IDENT) {
+    mc_token_t *lbl_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+    if (!lbl_tok || lbl_tok->type != MC_TOK_IDENT) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
             .line_ref = lbl_tok ? lbl_tok->line_ref : 0,
@@ -49,17 +49,17 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
     }
 
     micro_instruction_if_t instr_if;
-    instr_if.cond_expr = (micro_expr_t*)expr_tok;
+    instr_if.cond_expr = (micro_expr_tok_t*)expr_tok;
     strcpy(instr_if.lbl_name, lbl_tok->val);
     
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_IF,
-        .start_tok = (micro_expr_t*)if_tok,
+        .start_tok = (micro_expr_tok_t*)if_tok,
         .if_goto = instr_if,
     });
 
-    micro_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    if (!semicolon_tok || semicolon_tok->type != MICRO_TOK_SEMICOLON) {
+    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
             .line_ref = semicolon_tok ? semicolon_tok->line_ref : 0,
@@ -69,7 +69,7 @@ void micro_instrgen_parse_if(micro_instrgen_t *instrgen)
     return;
 
 exit:
-    while (instrgen->pos < instrgen->toks->size && ((micro_token_t*)sct_vector_get(instrgen->toks, instrgen->pos))->type != MICRO_TOK_SEMICOLON) {
+    while (instrgen->pos < instrgen->toks->size && ((mc_token_t*)sct_vector_get(instrgen->toks, instrgen->pos))->type != MC_TOK_SEMICOLON) {
         instrgen->pos++;
     }
 }

@@ -29,7 +29,7 @@ typedef struct {
         STOPAFTER_INSTRGEN,
         STOPAFTER_OPTIMIZER,
     } stop_at;
-} micro_args_t;
+} mc_args_t;
 
 void print_usage()
 {
@@ -54,9 +54,9 @@ void print_usage()
     exit(0);
 }
 
-micro_args_t micro_args_parse(int argc, char **argv)
+mc_args_t mc_args_parse(int argc, char **argv)
 {
-    micro_args_t args;
+    mc_args_t args;
     args.inputfile[0] = 0;
     strcpy(args.outfile, "a");
     args.toks_put = 0;
@@ -177,12 +177,12 @@ void put_err(char *file, micro_error_t err)
     printf("Error: %s:%lu:%lu: %s\n", file, err.line_ref, err.chpos_ref, err_str[err.err]);
 }
 
-void print_tok(micro_token_t tok)
+void print_tok(mc_token_t tok)
 {
     printf("%lu:%lu type:%s, val:%s\n",
                        tok.line_ref,
                        tok.chpos_ref,
-                       micro_token_type2str[tok.type],
+                       mc_token_type2str[tok.type],
                        tok.val);
 }
 
@@ -199,21 +199,21 @@ char *str_type[] = {
 };
 
 u8 _op_args_num[] = {
-    [MICRO_TOK_PLUS]        = 2,
-    [MICRO_TOK_MINUS]       = 2,
-    [MICRO_TOK_STAR]        = 2,
-    [MICRO_TOK_SLASH]       = 2,
-    [MICRO_TOK_AMPERSAND]   = 1,
-    [MICRO_TOK_DOLLAR]      = 1,
-    [MICRO_TOK_HASH]        = 1,
-    [MICRO_TOK_APOSTROPHE]  = 1,
-    [MICRO_TOK_TILDE]       = 1,
-    [MICRO_TOK_EQ]          = 2,
-    [MICRO_TOK_EXCLAMATION] = 1,
-    [MICRO_TOK_GREAT]       = 2,
-    [MICRO_TOK_LESS]        = 2,
-    [MICRO_TOK_GREAT_OR_EQ] = 2,
-    [MICRO_TOK_LESS_OR_EQ]  = 2,
+    [MC_TOK_PLUS]        = 2,
+    [MC_TOK_MINUS]       = 2,
+    [MC_TOK_STAR]        = 2,
+    [MC_TOK_SLASH]       = 2,
+    [MC_TOK_AMPERSAND]   = 1,
+    [MC_TOK_DOLLAR]      = 1,
+    [MC_TOK_HASH]        = 1,
+    [MC_TOK_APOSTROPHE]  = 1,
+    [MC_TOK_TILDE]       = 1,
+    [MC_TOK_EQ]          = 2,
+    [MC_TOK_EXCLAMATION] = 1,
+    [MC_TOK_GREAT]       = 2,
+    [MC_TOK_LESS]        = 2,
+    [MC_TOK_GREAT_OR_EQ] = 2,
+    [MC_TOK_LESS_OR_EQ]  = 2,
 };
 
 size_t print_expr(micro_expr_tok_t *start, size_t tab)
@@ -222,7 +222,7 @@ size_t print_expr(micro_expr_tok_t *start, size_t tab)
     for (size_t i = 0; i < tab; i++) {
         putchar(' ');
     }
-    print_tok(*(micro_token_t*)start);
+    print_tok(*(mc_token_t*)start);
     if (_micro_expr_is_lit(start->type) || start->type == MICRO_EXPR_TOK_IDENT) {
         return 1;
     }
@@ -528,8 +528,8 @@ void put_asm(micro_codegen_t *codegen)
 
 int main(int argc, char **argv)
 {
-    micro_args_t args;
-    args = micro_args_parse(argc, argv);
+    mc_args_t args;
+    args = mc_args_parse(argc, argv);
 
     if (args.inputfile[0] == 0) {
         puts("Error: Expected input file name");
@@ -558,8 +558,8 @@ int main(int argc, char **argv)
 
     micro_init();
         sct_vector_t toks;
-        sct_vector_init(&toks, sizeof(micro_token_t));
-        micro_tokenize(input_text.cstr, input_text.size, &toks);
+        sct_vector_init(&toks, sizeof(mc_token_t));
+        mc_tokenize(input_text.cstr, input_text.size, &toks);
 
         sct_string_deinit(&input_text);
 
@@ -573,7 +573,7 @@ int main(int argc, char **argv)
 
         if (args.toks_put) {
             for (size_t i = 0; i < toks.size; i++) {
-                micro_token_t tok = *(micro_token_t*)sct_vector_get(&toks, i);
+                mc_token_t tok = *(mc_token_t*)sct_vector_get(&toks, i);
                 printf("%lu. ", i);
                 print_tok(tok);
             }
@@ -581,9 +581,9 @@ int main(int argc, char **argv)
 
         if (args.stop_at == STOPAFTER_LEXER) return 0;
 
-        micro_instrgen_t instrgen;
-        micro_instrgen_init(&instrgen, &toks);
-            micro_instrgen_gen(&instrgen);
+        mc_instrgen_t instrgen;
+        mc_instrgen_init(&instrgen, &toks);
+            mc_instrgen_gen(&instrgen);
 
             for (size_t i = 0; i < micro_err_stk_size; i++) {
                 put_err(args.inputfile, micro_err_stk[i]);
@@ -620,7 +620,7 @@ int main(int argc, char **argv)
                 fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);
                 fclose(outfile);
             micro_codegen386_deinit(&codegen);
-        micro_instrgen_deinit(&instrgen);
+        mc_instrgen_deinit(&instrgen);
         sct_vector_deinit(&toks);
     micro_deinit();
     return 0;
