@@ -46,30 +46,16 @@ end
 
 -----------------
 
-### 🏛️ Compiler architecture now
-If you use **micro** as a compiler
-```
-Source text
-  ↓
-Lexer
-  ↓
-Tokens
-  ↓
-Code-generator
-  ↓
-Binary (Or object file)
-```
-
 ### 🏛️ Compiler architecture in the future
-If you use **micro** as a compiler
+If you use **microc** as a compiler
 ```
 Source text
   ↓
-Lexer
+Lexer  (realized by microc as util, not a library)
   ↓
 Tokens
   ↓
-Parser
+Instruction-generator  (realized by microc)
   ↓
 Instruction infos
   ↓
@@ -77,8 +63,13 @@ Optimizer
   ↓
 Code-generator
   ↓
-Binary (Or object file)
+Assembler
+  ↓
+Assembler optimizer
+  ↓
+Binary
 ```
+
 If you use **micro** as a library
 ```
 Special functions 'instruction-generators'
@@ -88,6 +79,10 @@ Instruction infos
 Optimizer
   ↓
 Code-generator
+  ↓
+Assembler
+  ↓
+Assembler optimizer
   ↓
 Binary (Or object file)
 ```

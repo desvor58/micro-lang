@@ -126,4 +126,8 @@ void micro_instrgen_parse_lbl(micro_instrgen_t *instrgen);
 void micro_instrgen_parse_goto(micro_instrgen_t *instrgen);
 void micro_instrgen_parse_if(micro_instrgen_t *instrgen);
 
+size_t micro_scroll_expr(sct_vector_t *toks, size_t pos);
+
+int micro_instrgen_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr);
+
 #endif
