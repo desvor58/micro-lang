@@ -1,11 +1,11 @@
-/************************************************
- *               Micro IR compiler
+/*************************************************
+ *               micro-lang compiler
  *                   by Desvor
+ *               Version: dev-0.0.1
  * 
- *    Compiler created for Simple C Compiler,
- *     you can use it for your own compilers.
- *     All documentation in `docs` directory
- **********************************************/
+ * Compiler crated as util for
+ * compiling ir-language of micro
+ ************************************************/
 
 #include <micro/common.h>
 #include <micro/asm/asm386.h>

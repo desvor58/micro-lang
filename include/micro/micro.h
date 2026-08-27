@@ -1,3 +1,12 @@
+/*************************************************
+ *                  micro-lang
+ *                   by Desvor
+ *               Version: dev-0.0.1
+ * 
+ * Jit compiler-backend library orientated
+ * to minimalism
+ ************************************************/
+
 #ifndef MICRO_H
 #define MICRO_H
 
