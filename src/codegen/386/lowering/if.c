@@ -33,14 +33,14 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
         return 1;
     }
     
-    char *lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_if.lbl_name) + 2);
+    char *lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_if.lbl_name) + 2);
     strcpy(lbl_name, ext->curent_function_name);
     strcat(lbl_name, ".");
     strcat(lbl_name, instr_if.lbl_name);
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_if.lbl_name);
     if (!ident) {
-        char *name_copy = sct_arena_alloc(&ext->arena, strlen(instr_if.lbl_name) + 1);
+        char *name_copy = sct_arena_alloc(ext->arena, strlen(instr_if.lbl_name) + 1);
         strcpy(name_copy, instr_if.lbl_name);
         sct_vector_push(&ext->goto_unfound_labels, &(micro_codegen386_goto_unfound_lbl_t){
             .name = name_copy,

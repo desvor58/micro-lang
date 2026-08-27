@@ -45,6 +45,7 @@ ifeq ($(CC),clang)
 endif
 
 SRC_TARGETS := src/common.c \
+               src/instr.c \
                src/asm/*.c \
                src/codegen/*.c \
                src/codegen/386/*.c \
@@ -68,7 +69,11 @@ TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
 MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
 TEST_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
 
-.PHONY: all libmicro microc test test-debug test-release _run_tests clean
+EXAMPLES_SRCS := $(wildcard examples/*/main.c)
+EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
+EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -O3
+
+.PHONY: all libmicro microc test test-debug test-release _run_tests examples clean
 
 all: microc
 
@@ -79,6 +84,12 @@ libmicro: $(OBJS)
 microc: $(OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
 	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
+
+examples: $(EXAMPLES_BINS)
+
+bin/examples/%: examples/%/main.c $(OBJS) $(MICROC_OBJS)
+	@$(call MKDIR,bin/examples)
+	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS)
 
 test: test-debug test-release
 

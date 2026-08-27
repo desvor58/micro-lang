@@ -1,3 +1,6 @@
+#include <ctype.h>
+#include <string.h>
+
 #include <micro/instr.h>
 
 #define parse_opch(C, T, O)  \
@@ -8,6 +11,7 @@
             .chpos_ref = pos + 1  \
         });  \
         expected_toks_num += (O);  \
+        pos++;  \
     }
 
 size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
@@ -25,7 +29,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
         if (isalpha(c) || c == '_') {
             char buf[MICRO_MAX_SYMBOL_SIZE];
             size_t i = 0;
-            while (c && isalnum(c) || c == '_') {
+            while ((c && isalnum(c)) || c == '_') {
                 if (i >= MICRO_MAX_SYMBOL_SIZE) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_IDENT_NAME_TOO_LONG,
@@ -34,7 +38,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                     });
                     return 0;
                 }
-                buf[i++] += c;
+                buf[i++] = c;
                 c = str_expr[++pos];
             }
             buf[i] = '\0';
@@ -94,6 +98,15 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 buf[i] = str_expr[pos];
                 prev_c = str_expr[pos];
             }
+            buf[i] = '\0';
+
+            micro_expr_tok_t tok = {
+                .type = MICRO_EXPR_TOK_LIT_STR,
+                .line_ref = 0,
+                .chpos_ref = pos + 1,
+            };
+            strcpy(tok.val, buf);
+            sct_vector_push(expr_dst, &tok);
             expected_toks_num--;
         } else
         parse_opch('+', MICRO_EXPR_TOK_PLUS, 1)         else
@@ -114,6 +127,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 .chpos_ref = pos + 1,
             });
             expected_toks_num++;
+            pos += 2;
         } else
         if (c == '<' && str_expr[pos + 1] == '=') {
             sct_vector_push(expr_dst, &(micro_expr_tok_t){
@@ -122,9 +136,12 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 .chpos_ref = pos + 1,
             });
             expected_toks_num++;
+            pos += 2;
         } else
         parse_opch('>', MICRO_EXPR_TOK_GREAT, 1)        else
         parse_opch('<', MICRO_EXPR_TOK_LESS, 1)
+
+        pos++;
     }
 
     if (expected_toks_num) {
@@ -146,8 +163,6 @@ int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *nam
         return 1;
     }
 
-    size_t expr_size = mc_scroll_expr(expr, 0);
-
     micro_instruction_set_t instr_set;
     strcpy(instr_set.reg_name, name);
     instr_set.type = type;
@@ -158,4 +173,6 @@ int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *nam
         .start_tok = 0,
         .set = instr_set,
     });
+
+    return 0;
 }

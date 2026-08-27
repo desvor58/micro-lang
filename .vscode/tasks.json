@@ -6,7 +6,7 @@
             "label": "build debug",
             "command": "make",
             "args": [
-                "microc",
+                "examples",
                 "CC=gcc",
                 "MODE=debug"
             ],

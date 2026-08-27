@@ -5,7 +5,7 @@
 #include <micro/asm/asm386.h>
 
 #define push_asm_instr(instr, op1, op2)  \
-    sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){  \
+    sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){  \
         .opcode = (instr),  \
         .operand1 = (micro_asm386_instruction_operand_t)op1,  \
         .operand2 = (micro_asm386_instruction_operand_t)op2,  \

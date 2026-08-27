@@ -77,6 +77,28 @@ int main()
 
         print_expr((micro_expr_tok_t*)expr.data, 0);
 
-        micro_instr_gen_set(&instrs, MICRO_TYPE_I32, "test_vreg", &expr);
+        micro_instr_gen_set(&instrs, MICRO_TYPE_I32, "test_var", &expr);
+
+        sct_vector_t asm_instrs;
+        sct_vector_init(&asm_instrs, sizeof(micro_asm386_instruction_t));
+
+        sct_vector_t outbuf;
+        sct_vector_init(&outbuf, sizeof(u8));
+
+        sct_arena_t arena;
+        sct_arena_init(&arena);
+
+        micro_codegen_t codegen;
+        micro_codegen386_init(&codegen, &asm_instrs, &arena);
+            codegen.emit(&codegen, &instrs);
+        micro_codegen386_deinit(&codegen);
+
+        sct_vector_deinit(&instrs);
+        sct_vector_deinit(&expr);
+
+        micro_asm386_emit(&asm_instrs, &outbuf);
+
+        sct_vector_deinit(&asm_instrs);
+        sct_arena_deinit(&arena);
     micro_deinit();
 }

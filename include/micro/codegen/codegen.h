@@ -12,8 +12,7 @@ typedef void (*micro_codegen_emit_fun_t)(micro_codegen_t *codegen, sct_vector_t 
 struct _micro_codegen_t {
     sct_vector_t            *instrs;
     size_t                   pos;
-    sct_vector_t             asm_instrs;
-    sct_vector_t             outbuf;
+    sct_vector_t            *asm_instrs;
     micro_codegen_emit_fun_t emit;
     void                    *ext;
 };

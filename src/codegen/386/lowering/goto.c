@@ -15,14 +15,14 @@ int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_goto_t instr_goto = instr->goto_lbl;
 
-    char *lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_goto.lbl) + 2);
+    char *lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_goto.lbl) + 2);
     strcpy(lbl_name, ext->curent_function_name);
     strcat(lbl_name, ".");
     strcat(lbl_name, instr_goto.lbl);
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_goto.lbl);
     if (!ident) {
-        char *name_copy = sct_arena_alloc(&ext->arena, strlen(instr_goto.lbl) + 1);
+        char *name_copy = sct_arena_alloc(ext->arena, strlen(instr_goto.lbl) + 1);
         strcpy(name_copy, instr_goto.lbl);
         sct_vector_push(&ext->goto_unfound_labels, &(micro_codegen386_goto_unfound_lbl_t){
             .name = name_copy,

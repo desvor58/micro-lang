@@ -15,7 +15,7 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_lbl_t instr_lbl = instr->lbl;
 
-    char *lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_lbl.name) + 2);
+    char *lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(ext->curent_function_name) + strlen(instr_lbl.name) + 2);
     strcpy(lbl_name, ext->curent_function_name);
     strcat(lbl_name, ".");
     strcat(lbl_name, instr_lbl.name);

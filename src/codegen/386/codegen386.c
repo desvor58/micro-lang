@@ -9,15 +9,14 @@ void micro_codegen386_emit(micro_codegen_t *codegen, sct_vector_t *instrs)
     lowering(codegen);
 }
 
-void micro_codegen386_init(micro_codegen_t *codegen)
+void micro_codegen386_init(micro_codegen_t *codegen, sct_vector_t *asm_instrs, sct_arena_t *arena)
 {
-    sct_vector_init(&codegen->outbuf, sizeof(u8));
     codegen->emit = micro_codegen386_emit;
+    codegen->asm_instrs = asm_instrs;
     micro_codegen386_ext_t *ext = amalloc(sizeof(micro_codegen386_ext_t));
     *ext = (micro_codegen386_ext_t){};
     codegen->ext = ext;
-    sct_arena_init(&ext->arena);
-    sct_vector_init(&codegen->asm_instrs, sizeof(micro_asm386_instruction_t));
+    ext->arena = arena;
     ext->in_function = 0;
     ext->use_callee_save_regs = 0;
     ext->ebp_top_offset = -4;
@@ -30,10 +29,7 @@ void micro_codegen386_init(micro_codegen_t *codegen)
 
 void micro_codegen386_deinit(micro_codegen_t *codegen)
 {
-    sct_vector_deinit(&codegen->outbuf);
-    sct_vector_deinit(&codegen->asm_instrs);
     sct_hashmap_deinit(&_micro_codegen386_ext(codegen)->idents);
-    sct_arena_deinit(&_micro_codegen386_ext(codegen)->arena);
     sct_vector_deinit(&_micro_codegen386_ext(codegen)->goto_unfound_labels);
     free(codegen->ext);
 }
