@@ -1,2 +1,2 @@
-gcc main.c -o main.exe -L../../lib/ -lmicro -I../../include
+gcc main.c -I../../include -L../../lib/ -lmicro -o main.exe
 main.exe
