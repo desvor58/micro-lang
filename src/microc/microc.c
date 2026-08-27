@@ -492,10 +492,10 @@ static const asm_fmt_t asm_tbl[] = {
 #undef A1
 #undef A0
 
-void put_asm(micro_codegen_t *codegen)
+void put_asm(sct_vector_t *asm_instrs)
 {
-    for (size_t i = 0; i < codegen->asm_instrs.size; i++) {
-        micro_asm386_instruction_t *instr = sct_vector_get(&codegen->asm_instrs, i);
+    for (size_t i = 0; i < asm_instrs->size; i++) {
+        micro_asm386_instruction_t *instr = sct_vector_get(asm_instrs, i);
         if (instr->opcode == MICRO_ASM386_INSTR_NONE ||
             instr->opcode >= sizeof(asm_tbl) / sizeof(asm_tbl[0])) {
             continue;
@@ -611,8 +611,17 @@ int main(int argc, char **argv)
 
             if (args.stop_at == STOPAFTER_INSTRGEN) return 0;
 
+            sct_vector_t asm_instrs;
+            sct_vector_init(&asm_instrs, sizeof(micro_asm386_instruction_t));
+
+            sct_vector_t outbuf;
+            sct_vector_init(&outbuf, sizeof(u8));
+
+            sct_arena_t arena;
+            sct_arena_init(&arena);
+
             micro_codegen_t codegen;
-            micro_codegen386_init(&codegen);
+            micro_codegen386_init(&codegen, &asm_instrs, &arena);
                 codegen.emit(&codegen, &instrgen.instructions);
                 for (size_t i = 0; i < micro_err_stk_size; i++) {
                     put_err(args.inputfile, micro_err_stk[i]);
@@ -623,17 +632,22 @@ int main(int argc, char **argv)
                 }
 
                 if (args.asm_put) {
-                    put_asm(&codegen);
+                    put_asm(&asm_instrs);
                 }
 
-                micro_asm386_emit(&codegen.asm_instrs, &codegen.outbuf);
-
-                FILE *outfile = fopen(args.outfile, "wb");
-                fwrite(codegen.outbuf.data, sizeof(u8), codegen.outbuf.size, outfile);
-                fclose(outfile);
-            micro_codegen386_deinit(&codegen);
         mc_instrgen_deinit(&instrgen);
         sct_vector_deinit(&toks);
+
+                micro_asm386_emit(&asm_instrs, &outbuf);
+
+            sct_arena_deinit(&arena);
+
+                sct_vector_deinit(&asm_instrs);
+
+                FILE *outfile = fopen(args.outfile, "wb");
+                fwrite(outbuf.data, sizeof(u8), outbuf.size, outfile);
+                fclose(outfile);
+            micro_codegen386_deinit(&codegen);
     micro_deinit();
     return 0;
 }
