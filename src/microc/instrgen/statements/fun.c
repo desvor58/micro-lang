@@ -6,8 +6,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     if (unlikely(!fun_tok || fun_tok->type != MC_TOK_KW_FUN)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_FUN_KW,
-            .line_ref = fun_tok ? fun_tok->line_ref : 0,
-            .chpos_ref = fun_tok ? fun_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_FUN
         });
         goto exit;
     }
@@ -15,8 +14,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     if (instrgen->code_in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_FUN_INSIDE_FUNCTION,
-            .line_ref = fun_tok ? fun_tok->line_ref : 0,
-            .chpos_ref = fun_tok ? fun_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_FUN
         });
         goto exit;
     }
@@ -25,8 +23,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     if (!name_tok || name_tok->type != MC_TOK_IDENT) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_FUN_NAME,
-            .line_ref = name_tok ? name_tok->line_ref : 0,
-            .chpos_ref = name_tok ? name_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_FUN
         });
         goto exit;
     }
@@ -42,8 +39,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         if (!arg_type_tok || arg_type_tok->type != MC_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_EXPECTED_ARG_TYPE,
-                .line_ref = arg_type_tok ? arg_type_tok->line_ref : 0,
-                .chpos_ref = arg_type_tok ? arg_type_tok->chpos_ref : 0
+                .instr = MICRO_INSTR_FUN
             });
             goto exit;
         }
@@ -52,8 +48,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         if (!arg_name_tok || arg_name_tok->type != MC_TOK_IDENT) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_EXPECTED_ARG_NAME,
-                .line_ref = arg_name_tok ? arg_name_tok->line_ref : 0,
-                .chpos_ref = arg_name_tok ? arg_name_tok->chpos_ref : 0
+                .instr = MICRO_INSTR_FUN
             });
             goto exit;
         }
@@ -72,8 +67,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         if (!ret_type_tok || ret_type_tok->type != MC_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_EXPECTED_RET_TYPE,
-                .line_ref = ret_type_tok ? ret_type_tok->line_ref : 0,
-                .chpos_ref = ret_type_tok ? ret_type_tok->chpos_ref : 0
+                .instr = MICRO_INSTR_FUN
             });
             goto exit;
         }
@@ -90,8 +84,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     if (!tok || tok->type != MC_TOK_KW_START) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_START_KW,
-            .line_ref = tok ? tok->line_ref : 0,
-            .chpos_ref = tok ? tok->chpos_ref : 0
+            .instr = MICRO_INSTR_FUN
         });
     }
     
@@ -100,8 +93,7 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         if (!tok) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_EXPECTED_END_KW,
-                .line_ref = 0,
-                .chpos_ref = 0
+                .instr = MICRO_INSTR_FUN
             });
             return;
         }
@@ -127,7 +119,6 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_FUN,
-        .start_tok = (micro_expr_tok_t*)fun_tok,
         .fun = instr,
     });
 

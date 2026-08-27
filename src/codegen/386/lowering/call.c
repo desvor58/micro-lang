@@ -7,8 +7,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_CALL_OUTSIDE_FUNCTION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
@@ -19,8 +18,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!ident || ident->type != MICRO_IDENT_FUN) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_UNDEFINED_FUN,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
@@ -51,16 +49,14 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (instr_call.arg_exprs.size < fun->instr_info.args.size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_TOO_FEW_ARGS,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
     if (instr_call.arg_exprs.size > fun->instr_info.args.size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_TOO_MANY_ARGS,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
@@ -84,24 +80,21 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!res_ident) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_UNDEFINED_IDENT,
-            .line_ref = instr->start_tok[1].line_ref,
-            .chpos_ref = instr->start_tok[1].chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
     if (res_ident->type != MICRO_IDENT_VREG) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_VREG_RESULT,
-            .line_ref = instr->start_tok[1].line_ref,
-            .chpos_ref = instr->start_tok[1].chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
     if (res_ident->vreg.type != fun->instr_info.ret_type) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_RESULT_TYPE_MISMATCH,
-            .line_ref = instr->start_tok[1].line_ref,
-            .chpos_ref = instr->start_tok[1].chpos_ref
+            .instr = MICRO_INSTR_CALL
         });
         return 1;
     }

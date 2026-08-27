@@ -6,8 +6,7 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     if (unlikely(!if_tok || if_tok->type != MC_TOK_KW_IF)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_IF_KW,
-            .line_ref = if_tok ? if_tok->line_ref : 0,
-            .chpos_ref = if_tok ? if_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_IF
         });
         goto exit;
     }
@@ -16,8 +15,7 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     if (!expr_tok || !_micro_expr_is_expr_start(expr_tok->type)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-            .line_ref = expr_tok ? expr_tok->line_ref : 0,
-            .chpos_ref = expr_tok ? expr_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_IF
         });
         goto exit;
     }
@@ -32,8 +30,7 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     if (!colon_tok || colon_tok->type != MC_TOK_COLON) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_COLON,
-            .line_ref = colon_tok ? colon_tok->line_ref : 0,
-            .chpos_ref = colon_tok ? colon_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_IF
         });
         goto exit;
     }
@@ -42,8 +39,7 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     if (!lbl_tok || lbl_tok->type != MC_TOK_IDENT) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
-            .line_ref = lbl_tok ? lbl_tok->line_ref : 0,
-            .chpos_ref = lbl_tok ? lbl_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_IF
         });
         goto exit;
     }
@@ -54,7 +50,6 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_IF,
-        .start_tok = (micro_expr_tok_t*)if_tok,
         .if_goto = instr_if,
     });
 
@@ -62,8 +57,7 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
     if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_LABEL_NAME,
-            .line_ref = semicolon_tok ? semicolon_tok->line_ref : 0,
-            .chpos_ref = semicolon_tok ? semicolon_tok->chpos_ref : 0
+            .instr = MICRO_INSTR_IF
         });
     }
     return;

@@ -162,8 +162,6 @@ size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micr
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
-                .line_ref = start->line_ref,
-                .chpos_ref = start->chpos_ref
             });
             goto exit;
         }
@@ -239,8 +237,6 @@ size_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
-                .line_ref = start->line_ref,
-                .chpos_ref = start->chpos_ref
             });
             goto exit;
         }

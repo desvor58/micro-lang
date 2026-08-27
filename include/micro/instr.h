@@ -6,17 +6,6 @@
 #include <micro/common.h>
 #include <micro/expr.h>
 
-typedef enum {
-    MICRO_INSTR_SET,
-    MICRO_INSTR_DRSET,  // DeRef&SET
-    MICRO_INSTR_FUN,
-    MICRO_INSTR_RET,
-    MICRO_INSTR_CALL,
-    MICRO_INSTR_LBL,
-    MICRO_INSTR_GOTO,
-    MICRO_INSTR_IF,
-} micro_instruction_type_t;
-
 typedef struct {
     micro_type_t      type;
     char              reg_name[MICRO_MAX_SYMBOL_SIZE];
@@ -66,7 +55,6 @@ typedef struct {
 
 typedef struct {
     micro_instruction_type_t type;
-    micro_expr_tok_t        *start_tok;
     union {
         micro_instruction_set_t   set;
         micro_instruction_drset_t drset;

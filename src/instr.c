@@ -6,9 +6,7 @@
 #define parse_opch(C, T, O)  \
     if (c == (C)) {  \
         sct_vector_push(expr_dst, &(micro_expr_tok_t){  \
-            .type = (T),  \
-            .line_ref = 0,  \
-            .chpos_ref = pos + 1  \
+            .type = (T)  \
         });  \
         expected_toks_num += (O);  \
         pos++;  \
@@ -33,8 +31,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 if (i >= MICRO_MAX_SYMBOL_SIZE) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_IDENT_NAME_TOO_LONG,
-                        .line_ref = 0,
-                        .chpos_ref = pos + 1,
                     });
                     return 0;
                 }
@@ -45,8 +41,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
 
             micro_expr_tok_t tok = {
                 .type = MICRO_EXPR_TOK_IDENT,
-                .line_ref = 0,
-                .chpos_ref = pos + 1,
             };
             strcpy(tok.val, buf);
             sct_vector_push(expr_dst, &tok);
@@ -60,8 +54,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 if (i >= MICRO_MAX_SYMBOL_SIZE) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_DIGIT_TOO_LONG,
-                        .line_ref = 0,
-                        .chpos_ref = pos + 1,
                     });
                     return 0;
                 }
@@ -75,8 +67,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
 
             micro_expr_tok_t tok = {
                 .type = type,
-                .line_ref = 0,
-                .chpos_ref = pos + 1
             };
             strcpy(tok.val, buf);
             sct_vector_push(expr_dst, &tok);
@@ -90,8 +80,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
                 if (i >= MICRO_MAX_SYMBOL_SIZE) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_STR_LIT_TOO_LONG,
-                        .line_ref = 0,
-                        .chpos_ref = pos + 1,
                     });
                     return 0;
                 }
@@ -102,8 +90,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
 
             micro_expr_tok_t tok = {
                 .type = MICRO_EXPR_TOK_LIT_STR,
-                .line_ref = 0,
-                .chpos_ref = pos + 1,
             };
             strcpy(tok.val, buf);
             sct_vector_push(expr_dst, &tok);
@@ -123,8 +109,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
         if (c == '>' && str_expr[pos + 1] == '=') {
             sct_vector_push(expr_dst, &(micro_expr_tok_t){
                 .type = MICRO_EXPR_TOK_GREAT_OR_EQ,
-                .line_ref = 0,
-                .chpos_ref = pos + 1,
             });
             expected_toks_num++;
             pos += 2;
@@ -132,8 +116,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
         if (c == '<' && str_expr[pos + 1] == '=') {
             sct_vector_push(expr_dst, &(micro_expr_tok_t){
                 .type = MICRO_EXPR_TOK_LESS_OR_EQ,
-                .line_ref = 0,
-                .chpos_ref = pos + 1,
             });
             expected_toks_num++;
             pos += 2;
@@ -147,8 +129,6 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
     if (expected_toks_num) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-            .line_ref = 0,
-            .chpos_ref = pos,
         });
         return 0;
     }
@@ -170,7 +150,6 @@ int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *nam
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_SET,
-        .start_tok = 0,
         .set = instr_set,
     });
 

@@ -49,6 +49,18 @@ typedef enum {
 } micro_size_t;
 
 typedef enum {
+    MICRO_INSTR_NONE = 0,
+    MICRO_INSTR_SET,
+    MICRO_INSTR_DRSET,  // DeRef&SET
+    MICRO_INSTR_FUN,
+    MICRO_INSTR_RET,
+    MICRO_INSTR_CALL,
+    MICRO_INSTR_LBL,
+    MICRO_INSTR_GOTO,
+    MICRO_INSTR_IF,
+} micro_instruction_type_t;
+
+typedef enum {
     MICRO_ERROR_NONE = 0,
 
     MICRO_ERROR_IDENT_NAME_TOO_LONG,
@@ -108,9 +120,8 @@ typedef enum {
 } micro_error_type_t;
 
 typedef struct {
-    micro_error_type_t err;
-    size_t             line_ref;
-    size_t             chpos_ref;
+    micro_error_type_t       err;
+    micro_instruction_type_t instr;
 } micro_error_t;
 
 typedef struct {
@@ -132,8 +143,8 @@ MICRO_ATTRIBUTE_CONST
 micro_imm_le_t micro_imm_le_gen(i32 val);
 
 extern micro_error_t *micro_err_stk;
-extern size_t              micro_err_stk_size;
-extern size_t             _micro_err_stk_real_size;
+extern size_t         micro_err_stk_size;
+extern size_t        _micro_err_stk_real_size;
 
 void micro_init();
 

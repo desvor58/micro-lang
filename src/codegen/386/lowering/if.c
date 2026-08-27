@@ -7,8 +7,7 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_IF_OUTSIDE_FUNCTION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_IF
         });
         return 1;
     }
@@ -27,8 +26,7 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!cond_expr_size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_IF
         });
         return 1;
     }
@@ -44,14 +42,12 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
         strcpy(name_copy, instr_if.lbl_name);
         sct_vector_push(&ext->goto_unfound_labels, &(micro_codegen386_goto_unfound_lbl_t){
             .name = name_copy,
-            .lbl_tok = instr->start_tok,
         });
     } else
     if (ident->type != MICRO_IDENT_LBL) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_IDENT_NOT_LBL,
-            .line_ref = instr->start_tok[1].line_ref,
-            .chpos_ref = instr->start_tok[1].chpos_ref
+            .instr = MICRO_INSTR_IF
         });
         return 1;
     }

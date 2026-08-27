@@ -49,8 +49,6 @@ size_t mc_scroll_expr(sct_vector_t *toks, size_t pos)
         mc_token_t *err_tok = sct_vector_get(toks, toks->size - 1);
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-            .line_ref = err_tok->line_ref,
-            .chpos_ref = err_tok->chpos_ref
         });
         return 0;
     }
@@ -70,8 +68,6 @@ size_t mc_scroll_expr(sct_vector_t *toks, size_t pos)
     }
     micro_push_err((micro_error_t){
         .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-        .line_ref = tok->line_ref,
-        .chpos_ref = tok->chpos_ref
     });
     return 0;
 }
@@ -144,8 +140,6 @@ void mc_instrgen_gen(mc_instrgen_t *instrgen)
                 if (!instrgen->code_in_function) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_UNEXPECTED_END_KW,
-                        .line_ref = tok->line_ref,
-                        .chpos_ref = tok->chpos_ref
                     });
                 }
                 return;
@@ -154,8 +148,6 @@ void mc_instrgen_gen(mc_instrgen_t *instrgen)
                 puts(mc_token_type2str[tok->type]);
                 micro_push_err((micro_error_t){
                     .err = MICRO_ERROR_UNEXPECTED_TOKEN,
-                    .line_ref = tok->line_ref,
-                    .chpos_ref = tok->chpos_ref
                 });
                 return;
         }

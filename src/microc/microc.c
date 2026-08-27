@@ -172,9 +172,21 @@ char *err_str[] = {
     [MICRO_ERROR_UNDEFINED_LBL]             = "Undefined label",
 };
 
+char *instr_str[] = {
+    [MICRO_INSTR_NONE]   = "",
+    [MICRO_INSTR_SET]    = "set",
+    [MICRO_INSTR_DRSET]  = "drset",
+    [MICRO_INSTR_FUN]    = "fun",
+    [MICRO_INSTR_RET]    = "ret",
+    [MICRO_INSTR_CALL]   = "call",
+    [MICRO_INSTR_LBL]    = "label",
+    [MICRO_INSTR_GOTO]   = "goto",
+    [MICRO_INSTR_IF]     = "if",
+};
+
 void put_err(char *file, micro_error_t err)
 {
-    printf("Error: %s:%lu:%lu: %s\n", file, err.line_ref, err.chpos_ref, err_str[err.err]);
+    printf("Error: %s%s%s: %s\n", file, err.instr ? "[" : "", err.instr ? instr_str[err.instr] : "", err_str[err.err]);
 }
 
 void print_tok(mc_token_t tok)

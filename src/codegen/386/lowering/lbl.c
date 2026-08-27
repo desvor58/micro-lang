@@ -7,8 +7,7 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_LBL_OUTSIDE_FUNCTION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_LBL
         });
         return 1;
     }
