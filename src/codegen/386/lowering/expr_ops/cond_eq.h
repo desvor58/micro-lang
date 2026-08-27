@@ -29,7 +29,7 @@ static const op_tbls_t cond_eq_op_tbls = {
     .opSR_fn = MICRO_ASM386_INSTR_SUB_S32R32,
 };
 
-int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_t *start)
+int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -37,11 +37,11 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
         return 0;
     }
 
-    micro_expr_t *first_operand = start + 1;
+    micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
-        micro_expr_t *second_operand = start + 2;
+        micro_expr_tok_t *second_operand = start + 2;
         if (ident->type == MICRO_IDENT_VREG) {
             if (_micro_expr_is_lit(second_operand->type)) {
                 char *end;

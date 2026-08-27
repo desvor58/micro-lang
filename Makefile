@@ -44,7 +44,6 @@ ifeq ($(CC),clang)
     AR := llvm-ar
 endif
 
-# --- module micro (libmicro), standalone, does not depend on microc ---
 SRC_TARGETS := src/common.c \
                src/asm/*.c \
                src/codegen/*.c \
@@ -54,7 +53,6 @@ SRC_TARGETS := src/common.c \
 
 SRCS := $(wildcard $(SRC_TARGETS))
 
-# --- module microc (frontend), depends on micro ---
 MICROC_SRCS := src/microc/lexer.c \
                src/microc/instrgen/genfuns.c \
                src/microc/instrgen/instrgen.c \
@@ -76,7 +74,7 @@ all: microc
 
 libmicro: $(OBJS)
 	@$(call MKDIR,lib)
-	$(AR) rcs lib/libmicro.a $(OBJS)
+	$(AR) rcs lib/libmicro.a $(OBJS) lib/lib$(SCT_LIB_FILE).a
 
 microc: $(OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)

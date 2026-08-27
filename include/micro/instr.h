@@ -79,7 +79,8 @@ typedef struct {
     };
 } micro_instruction_t;
 
-int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr);
+size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr);
 
+int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr);
 
 #endif
