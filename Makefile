@@ -11,13 +11,16 @@ CFLAGS := -Wall -Wextra -Wshadow -Wpointer-arith  \
 LDFLAGS :=
 AR := gcc-ar
 
-MODE ?= release
+MODE ?= release-fast
 
-ifeq ($(MODE),debug)
-    CFLAGS += -Os -g
-else
-    CFLAGS += -Os -flto
-    LDFLAGS += -flto
+ifeq ($(MODE), debug)
+	CFLAGS += -O0 -g
+endif
+ifeq ($(MODE), release-fast)
+	CFLAGS += -O3 -ffast-math
+endif
+ifeq ($(MODE), release-size)
+	CFLAGS += -Os
 endif
 
 OBJDIR := obj/$(MODE)
