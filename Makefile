@@ -1,16 +1,22 @@
 CC ?= gcc
+
+SCT_DIR := lib/sct
+SCT_LIB_DIR := $(SCT_DIR)/lib
+SCT_INC_DIR := $(SCT_DIR)/include
+
 CFLAGS := -Wall -Wextra -Wshadow -Wpointer-arith  \
           -Wno-format -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable  -Wno-switch  \
           -fno-strict-aliasing  \
-          -std=c99 -Iinclude
+          -std=c99 -Iinclude -I$(SCT_INC_DIR)
 LDFLAGS :=
-MODE ?= release
 AR := gcc-ar
 
+MODE ?= release
+
 ifeq ($(MODE),debug)
-    CFLAGS += -O0 -g
+    CFLAGS += -Os -g
 else
-    CFLAGS += -O3 -flto
+    CFLAGS += -Os -flto
     LDFLAGS += -flto
 endif
 
@@ -23,6 +29,9 @@ ifeq ($(OS),Windows_NT)
     MKDIR = if not exist "$(call FIX_PATH,$(1))" mkdir "$(call FIX_PATH,$(1))"
     SCT_LIB_FILE := sct-win
     EXE_EXT := .exe
+
+    SCT_SM_CHECK := @if not exist "$@" (git submodule update --init --recursive --remote --merge)
+    SCT_CLEAN    := @if exist "$(SCT_DIR)\Makefile" $(MAKE) -C $(SCT_DIR) clean
 else
     RM_DIR = rm -rf "$(1)"
     RM_FILE = rm -f "$(1)"
@@ -35,6 +44,9 @@ else
         CFLAGS +=  -fsanitize=address
         LDFLAGS += -fsanitize=address
     endif
+
+    SCT_SM_CHECK := @if [ ! -f "$@" ]; then git submodule update --init --recursive --remote --merge || (exit 1;); fi
+    SCT_CLEAN    := @if [ -f "$(SCT_DIR)/Makefile" ]; then $(MAKE) -C $(SCT_DIR) clean; fi
 endif
 
 ifeq ($(CC),clang)
@@ -66,26 +78,32 @@ MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
 DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
-MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
-TEST_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
+MICROC_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
+TEST_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 
 EXAMPLES_SRCS := $(wildcard examples/*/main.c)
 EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
 EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -O3
 
-.PHONY: all libmicro microc test test-debug test-release _run_tests examples clean
+.PHONY: all libmicro microc test test-debug test-release _run_tests examples clean SCT
 
 all: microc libmicro
 
-libmicro: $(MICRO_OBJS)
+libmicro: SCT $(MICRO_OBJS)
 	@$(call MKDIR,lib)
-	$(AR) rcs lib/libmicro.a $(MICRO_OBJS) lib/lib$(SCT_LIB_FILE).a
+	$(AR) rcs lib/libmicro.a $(MICRO_OBJS) $(SCT_LIB_DIR)/lib$(SCT_LIB_FILE).a
 
-microc: $(MICRO_OBJS) $(MICROC_OBJS) src/microc/microc.c
+microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
 	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
 examples: $(EXAMPLES_BINS)
+
+SCT: $(SCT_DIR)/Makefile
+	@$(MAKE) -C $(SCT_DIR) CC=$(CC) MODE=$(MODE)
+
+$(SCT_DIR)/Makefile:
+	$(SCT_SM_CHECK)
 
 bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS)
 	@$(call MKDIR,bin/examples)
@@ -120,3 +138,4 @@ clean:
 	@$(call MKDIR,bin)
 	@$(call MKDIR,obj)
 	@$(call MKDIR,tests/bin)
+	@$(call RM_DIR,lib/sct)
