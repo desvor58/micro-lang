@@ -44,15 +44,15 @@ ifeq ($(CC),clang)
     AR := llvm-ar
 endif
 
-SRC_TARGETS := src/common.c \
-               src/instr.c \
-               src/asm/*.c \
-               src/codegen/*.c \
-               src/codegen/386/*.c \
-               src/codegen/386/lowering/*.c \
-               src/codegen/386/lowering/expr_ops/*.c \
+MICRO_SRC := src/common.c \
+             src/instr.c \
+             src/asm/*.c \
+             src/codegen/*.c \
+             src/codegen/386/*.c \
+             src/codegen/386/lowering/*.c \
+             src/codegen/386/lowering/expr_ops/*.c \
 
-SRCS := $(wildcard $(SRC_TARGETS))
+MICRO_SRC := $(wildcard $(MICRO_SRC))
 
 MICROC_SRCS := src/microc/lexer.c \
                src/microc/instrgen/genfuns.c \
@@ -61,9 +61,9 @@ MICROC_SRCS := src/microc/lexer.c \
 
 MICROC_SRCS := $(wildcard $(MICROC_SRCS))
 
-OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
+MICRO_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRO_SRC))
 MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
-DEPS := $(OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
+DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
 MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
@@ -75,21 +75,21 @@ EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -O3
 
 .PHONY: all libmicro microc test test-debug test-release _run_tests examples clean
 
-all: microc
+all: microc libmicro
 
-libmicro: $(OBJS)
+libmicro: $(MICRO_OBJS)
 	@$(call MKDIR,lib)
-	$(AR) rcs lib/libmicro.a $(OBJS) lib/lib$(SCT_LIB_FILE).a
+	$(AR) rcs lib/libmicro.a $(MICRO_OBJS) lib/lib$(SCT_LIB_FILE).a
 
-microc: $(OBJS) $(MICROC_OBJS) src/microc/microc.c
+microc: $(MICRO_OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
-	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
+	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
 examples: $(EXAMPLES_BINS)
 
-bin/examples/%: examples/%/main.c $(OBJS) $(MICROC_OBJS)
+bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS)
 	@$(call MKDIR,bin/examples)
-	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS)
+	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS)
 
 test: test-debug test-release
 
@@ -102,9 +102,9 @@ test-release:
 _run_tests: tests/bin/$(MODE)/tests$(EXE_EXT)
 	.$(call FIX_PATH,/tests/bin/$(MODE)/tests$(EXE_EXT)) $(TEST_FLAGS)
 
-tests/bin/$(MODE)/tests$(EXE_EXT): $(OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c
+tests/bin/$(MODE)/tests$(EXE_EXT): $(MICRO_OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c
 	@$(call MKDIR,tests/bin/$(MODE))
-	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(MICROC_OBJS) $(OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
+	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(MICROC_OBJS) $(MICRO_OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
 
 $(OBJDIR)/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))

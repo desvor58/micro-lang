@@ -69,6 +69,46 @@ typedef struct {
 
 size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr);
 
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param type type of dereferenced memory
+/// @param name name of virtual register for dereferencing
+/// @param expr vector of micro_expr_tok_t - init expr. if = 0 then non init (in code set <type> #<name>;)
 int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param type type of virtual register
+/// @param name name of virtual register
+/// @param expr vector of micro_expr_tok_t - init expr. if = 0 then non init (in code set <type> <name>;)
+int micro_instr_gen_drset(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param name name of function
+/// @param args vector of micro_instruction_fun_arg_t - arguments of function
+/// @param ret_type type which function will return
+/// @param body vector of micro_instruction_t - body of function
+int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, sct_vector_t *body);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param expr vector of micro_expr_tok_t - return expr. if = 0 then ret have not expression (in code ret;)
+int micro_instr_gen_ret(sct_vector_t *instrs, sct_vector_t *expr);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param reg_name name of virtual register to save returned value
+/// @param fun_name name of function to calling
+/// @param args vector of expressions - sct_vector_t of micro_expr_tok_t - arguments for calling
+int micro_instr_gen_call(sct_vector_t *instrs, const char *reg_name, const char *fun_name, sct_vector_t *args);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param name name of label
+int micro_instr_gen_lbl(sct_vector_t *instrs, const char *name);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param name name of label for jumping
+int micro_instr_gen_goto(sct_vector_t *instrs, const char *name);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param cond_expr expression to check
+/// @param lbl_name name of label for jumping if cond_expr != 0
+int micro_instr_gen_if(sct_vector_t *instrs, sct_vector_t *cond_expr, const char *lbl_name);
 
 #endif
