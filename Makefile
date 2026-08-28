@@ -80,13 +80,13 @@ MICRO_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRO_SRC))
 MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
 DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
 
-TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
+TEST_CFLAGS := $(CFLAGS) -Itests/include -I$(SCT_INC_DIR) -O3
 MICROC_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 TEST_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 
 EXAMPLES_SRCS := $(wildcard examples/*/main.c)
 EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
-EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -O3
+EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -I$(SCT_INC_DIR) -O3
 
 .PHONY: all libmicro microc test test-debug test-release _run_tests examples clean SCT
 
@@ -100,7 +100,7 @@ microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) src/microc/microc.c
 	@$(call MKDIR,bin)
 	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
 
-examples: $(EXAMPLES_BINS)
+examples: SCT $(EXAMPLES_BINS)
 
 SCT: $(SCT_DIR)/Makefile
 	@$(MAKE) -C $(SCT_DIR) CC=$(CC) MODE=$(MODE)
