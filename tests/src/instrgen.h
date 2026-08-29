@@ -4,6 +4,7 @@
 #include "../include/munit.h"
 #include "errors.h"
 #include <microc/instrgen.h>
+#include <micro/expr.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -163,7 +164,7 @@ MunitResult test_instrgen_set_lit(const MunitParameter params[], void *data)
     munit_assert_int((int)set->set.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(set->set.reg_name, "number");
     munit_assert_ptr_not_null(set->set.val_expr);
-    munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_LIT_INT);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal(set->set.val_expr->val, "5");
 
     mc_instrgen_deinit(&ig);
@@ -192,7 +193,7 @@ MunitResult test_instrgen_set_expr(const MunitParameter params[], void *data)
     munit_assert_int((int)set->set.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(set->set.reg_name, "total");
     munit_assert_ptr_not_null(set->set.val_expr);
-    munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_PLUS);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_PLUS);
 
     mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
@@ -220,7 +221,7 @@ MunitResult test_instrgen_drset(const MunitParameter params[], void *data)
     munit_assert_int((int)drset->drset.type, ==, (int)MICRO_TYPE_I32);
     munit_assert_string_equal(drset->drset.reg_name, "slot");
     munit_assert_ptr_not_null(drset->drset.val_expr);
-    munit_assert_int((int)drset->drset.val_expr->type, ==, (int)MC_TOK_LIT_INT);
+    munit_assert_int((int)drset->drset.val_expr->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal(drset->drset.val_expr->val, "42");
 
     mc_instrgen_deinit(&ig);
@@ -248,7 +249,7 @@ MunitResult test_instrgen_ret_with_val(const MunitParameter params[], void *data
     micro_instruction_t *ret = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_PLUS);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_EXPR_TOK_PLUS);
 
     mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
@@ -304,12 +305,12 @@ MunitResult test_instrgen_call(const MunitParameter params[], void *data)
     munit_assert_string_equal(call->call.fun_name, "add");
     munit_assert_size(call->call.arg_exprs.size, ==, 2);
 
-    mc_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
-    munit_assert_int((int)(*arg0)->type, ==, (int)MC_TOK_LIT_INT);
+    micro_expr_tok_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
+    munit_assert_int((int)(*arg0)->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal((*arg0)->val, "10");
 
-    mc_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
-    munit_assert_int((int)(*arg1)->type, ==, (int)MC_TOK_LIT_INT);
+    micro_expr_tok_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
+    munit_assert_int((int)(*arg1)->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal((*arg1)->val, "5");
 
     mc_instrgen_deinit(&ig);
@@ -395,7 +396,7 @@ MunitResult test_instrgen_if_vreg(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 1);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_IDENT);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_IDENT);
     munit_assert_string_equal(if_instr->if_goto.cond_expr->val, "n");
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
 
@@ -423,7 +424,7 @@ MunitResult test_instrgen_if_cmp(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_LESS_OR_EQ);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_LESS_OR_EQ);
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "end_rec");
 
     mc_instrgen_deinit(&ig);
@@ -450,8 +451,326 @@ MunitResult test_instrgen_if_not(const MunitParameter params[], void *data)
     micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
     munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
     munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
-    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MC_TOK_EXCLAMATION);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_EXCLAMATION);
     munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+/* --- documented operators, currently only parsed into expression trees --- */
+
+MunitResult test_instrgen_set_star(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 x * 3 2;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_STAR);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_set_slash(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 x / 6 2;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_SLASH);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_addr_deref(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    /* docs/micro-language-ref.md #Expressions:
+     *   # <i>  -> &<i>          address of i
+     *   $ <p>  -> *<p>          value at address p
+     * example: set i16 other $val;  reads val as a pointer to i16 */
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 val 4;\n"
+           "    set ptr p #val;\n"
+           "    set i16 other $val;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *addr = ig_body_instr(ig_instr(&ig, 0), 1);
+    munit_assert_int((int)addr->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(addr->set.val_expr);
+    munit_assert_int((int)addr->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_HASH);
+
+    micro_instruction_t *deref = ig_body_instr(ig_instr(&ig, 0), 2);
+    munit_assert_int((int)deref->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_int((int)deref->set.type, ==, (int)MICRO_TYPE_I16);
+    munit_assert_ptr_not_null(deref->set.val_expr);
+    munit_assert_int((int)deref->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_DOLLAR);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_set_tilde(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 x ~ 5;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_TILDE);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_set_bitnot(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 x ` 5;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_APOSTROPHE);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_set_str_lit(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    /* docs: "hello, world" is also a valid expression */
+    ig_gen("fun f\n"
+           "start\n"
+           "    set ptr s \"hello, world\";\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_LIT_STR);
+    munit_assert_string_equal(set->set.val_expr->val, "hello, world");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_if_great(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "    i32 n\n"
+           "start\n"
+           "    if > n 1 : target;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_GREAT);
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_if_less(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "    i32 n\n"
+           "start\n"
+           "    if < n 1 : target;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_LESS);
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_if_great_or_eq(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "    i32 n\n"
+           "start\n"
+           "    if >= n 1 : target;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *if_instr = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)if_instr->type, ==, (int)MICRO_INSTR_IF);
+    munit_assert_ptr_not_null(if_instr->if_goto.cond_expr);
+    munit_assert_int((int)if_instr->if_goto.cond_expr->type, ==, (int)MICRO_EXPR_TOK_GREAT_OR_EQ);
+    munit_assert_string_equal(if_instr->if_goto.lbl_name, "target");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_call_arg_expr(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    /* docs: call arguments are expressions */
+    ig_gen("fun f\n"
+           "start\n"
+           "    call res add + 1 2 3;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *call = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)call->type, ==, (int)MICRO_INSTR_CALL);
+    munit_assert_size(call->call.arg_exprs.size, ==, 2);
+
+    micro_expr_tok_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
+    munit_assert_int((int)(*arg0)->type, ==, (int)MICRO_EXPR_TOK_PLUS);
+
+    micro_expr_tok_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
+    munit_assert_int((int)(*arg1)->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
+    munit_assert_string_equal((*arg1)->val, "3");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+/* docs describe '&' as a binary bitwise-and operator (& <o1> <o2>), but the
+ * instrgen currently parses '&' as unary. Marked TODO: passes once '&'
+ * arity matches the docs. */
+MunitResult test_instrgen_set_bitand(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 x & 3 1;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), 0);
+    munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_ptr_not_null(set->set.val_expr);
+    munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_AMPERSAND);
 
     mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
@@ -904,7 +1223,7 @@ MunitResult test_instrgen_fun_ret_no_args(const MunitParameter params[], void *d
     micro_instruction_t *ret = ig_body_instr(fun, 0);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_LIT_INT);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal(ret->ret.val_expr->val, "5");
 
     mc_instrgen_deinit(&ig);
@@ -999,7 +1318,7 @@ MunitResult test_instrgen_set_all_types(const MunitParameter params[], void *dat
         munit_assert_int((int)set->set.type, ==, (int)expect_types[i]);
         munit_assert_string_equal(set->set.reg_name, expect_names[i]);
         munit_assert_ptr_not_null(set->set.val_expr);
-        munit_assert_int((int)set->set.val_expr->type, ==, (int)MC_TOK_LIT_INT);
+        munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     }
 
     mc_instrgen_deinit(&ig);
@@ -1056,7 +1375,7 @@ MunitResult test_instrgen_ret_vreg(const MunitParameter params[], void *data)
     micro_instruction_t *ret = ig_body_instr(ig_instr(&ig, 0), 1);
     munit_assert_int((int)ret->type, ==, (int)MICRO_INSTR_RET);
     munit_assert_ptr_not_null(ret->ret.val_expr);
-    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MC_TOK_IDENT);
+    munit_assert_int((int)ret->ret.val_expr->type, ==, (int)MICRO_EXPR_TOK_IDENT);
     munit_assert_string_equal(ret->ret.val_expr->val, "a");
 
     mc_instrgen_deinit(&ig);
@@ -1087,16 +1406,16 @@ MunitResult test_instrgen_call_multi_args(const MunitParameter params[], void *d
     munit_assert_string_equal(call->call.fun_name, "add");
     munit_assert_size(call->call.arg_exprs.size, ==, 3);
 
-    mc_token_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
-    munit_assert_int((int)(*arg0)->type, ==, (int)MC_TOK_IDENT);
+    micro_expr_tok_t **arg0 = sct_vector_get(&call->call.arg_exprs, 0);
+    munit_assert_int((int)(*arg0)->type, ==, (int)MICRO_EXPR_TOK_IDENT);
     munit_assert_string_equal((*arg0)->val, "a");
 
-    mc_token_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
-    munit_assert_int((int)(*arg1)->type, ==, (int)MC_TOK_LIT_INT);
+    micro_expr_tok_t **arg1 = sct_vector_get(&call->call.arg_exprs, 1);
+    munit_assert_int((int)(*arg1)->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal((*arg1)->val, "2");
 
-    mc_token_t **arg2 = sct_vector_get(&call->call.arg_exprs, 2);
-    munit_assert_int((int)(*arg2)->type, ==, (int)MC_TOK_LIT_INT);
+    micro_expr_tok_t **arg2 = sct_vector_get(&call->call.arg_exprs, 2);
+    munit_assert_int((int)(*arg2)->type, ==, (int)MICRO_EXPR_TOK_LIT_INT);
     munit_assert_string_equal((*arg2)->val, "3");
 
     mc_instrgen_deinit(&ig);
@@ -1280,6 +1599,17 @@ static MunitTest instrgen_tests[] = {
     { "/if_vreg", test_instrgen_if_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/if_cmp", test_instrgen_if_cmp, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/if_not", test_instrgen_if_not, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_star", test_instrgen_set_star, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_slash", test_instrgen_set_slash, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/addr_deref", test_instrgen_addr_deref, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_tilde", test_instrgen_set_tilde, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_bitnot", test_instrgen_set_bitnot, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_str_lit", test_instrgen_set_str_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_great", test_instrgen_if_great, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_less", test_instrgen_if_less, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/if_great_or_eq", test_instrgen_if_great_or_eq, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/call_arg_expr", test_instrgen_call_arg_expr, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_bitand", test_instrgen_set_bitand, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
     { "/err_if_expected_expression", test_instrgen_err_if_expected_expression, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_expected_colon", test_instrgen_err_if_expected_colon, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_expected_label_name", test_instrgen_err_if_expected_label_name, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

@@ -286,6 +286,105 @@ MunitResult test_lexer_operators_great_less(const MunitParameter params[], void 
     return MUNIT_OK;
 }
 
+MunitResult test_lexer_operators_great_or_eq_less_or_eq(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    const char *text = ">= <=";
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(toks.size, ==, 2);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    lexer_assert_tok(&toks, 0, MC_TOK_GREAT_OR_EQ, "", 1, 1);
+    lexer_assert_tok(&toks, 1, MC_TOK_LESS_OR_EQ, "", 1, 4);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+/* The reference (docs/micro-language-ref.md) declares a full operator set
+ * that includes bitwise or '|', bitwise xor '^' and the logical and/or
+ * '&&'/'||'. These are not lexed yet, so these tests are marked TODO: they
+ * document the intended behaviour and start passing as soon as the lexer
+ * recognizes each operator as a single token. */
+MunitResult test_lexer_op_pipe(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    const char *text = "|";
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(toks.size, ==, 1);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_op_caret(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    const char *text = "^";
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(toks.size, ==, 1);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_op_logic_and(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    const char *text = "&&";
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(toks.size, ==, 1);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_op_logic_or(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    const char *text = "||";
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(toks.size, ==, 1);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_lexer_line_chpos(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -525,6 +624,11 @@ static MunitTest lexer_tests[] = {
     { "/lit_str_empty", test_lexer_lit_str_empty, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/operators_single", test_lexer_operators_single, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/operators_great_less", test_lexer_operators_great_less, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/operators_great_or_eq_less_or_eq", test_lexer_operators_great_or_eq_less_or_eq, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/op_pipe", test_lexer_op_pipe, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
+    { "/op_caret", test_lexer_op_caret, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
+    { "/op_logic_and", test_lexer_op_logic_and, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
+    { "/op_logic_or", test_lexer_op_logic_or, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
     { "/line_chpos", test_lexer_line_chpos, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/comment_single", test_lexer_comment_single, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/comment_multiline", test_lexer_comment_multiline, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

@@ -112,18 +112,18 @@ bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS)
 	@$(call MKDIR,bin/examples)
 	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS)
 
-test: test-debug test-release
+test: SCT test-debug test-release
 
 test-debug:
 	$(MAKE) MODE=debug _run_tests
 
 test-release:
-	$(MAKE) MODE=release _run_tests
+	$(MAKE) MODE=release-fast _run_tests
 
 _run_tests: tests/bin/$(MODE)/tests$(EXE_EXT)
 	.$(call FIX_PATH,/tests/bin/$(MODE)/tests$(EXE_EXT)) $(TEST_FLAGS)
 
-tests/bin/$(MODE)/tests$(EXE_EXT): $(MICRO_OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c
+tests/bin/$(MODE)/tests$(EXE_EXT): $(MICRO_OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c tests/src/*.h
 	@$(call MKDIR,tests/bin/$(MODE))
 	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(MICROC_OBJS) $(MICRO_OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
 
