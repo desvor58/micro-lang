@@ -88,8 +88,12 @@ int main()
         sct_arena_t arena;
         sct_arena_init(&arena);
 
+        micro_codegen_flags_t codegen_flags = {
+            .no_err_outside_fun = 1,
+        };
+
         micro_codegen_t codegen;
-        micro_codegen386_init(&codegen, &asm_instrs, &arena);
+        micro_codegen386_init(&codegen, codegen_flags, &asm_instrs, &arena);
             codegen.emit(&codegen, &instrs);
         micro_codegen386_deinit(&codegen);
 
@@ -101,4 +105,8 @@ int main()
         sct_vector_deinit(&asm_instrs);
         sct_arena_deinit(&arena);
     micro_deinit();
+
+    for (size_t i = 0; i < outbuf.size; i++) {
+        printf("%x ", *(u8*)sct_vector_get(&outbuf, i));
+    }
 }

@@ -4,7 +4,7 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (!ext->in_function) {
+    if (!codegen->flags.no_err_outside_fun && !ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_LBL_OUTSIDE_FUNCTION,
             .instr = MICRO_INSTR_LBL

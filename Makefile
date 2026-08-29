@@ -17,10 +17,12 @@ ifeq ($(MODE), debug)
 	CFLAGS += -O0 -g
 endif
 ifeq ($(MODE), release-fast)
-	CFLAGS += -O3 -ffast-math
+	CFLAGS += -O3 -ffast-math -flto
+    LDFLAGS += -flto
 endif
 ifeq ($(MODE), release-size)
-	CFLAGS += -Os
+	CFLAGS += -Os -flto
+    LDFLAGS += -flto
 endif
 
 OBJDIR := obj/$(MODE)

@@ -7,7 +7,7 @@
             "command": "make",
             "args": [
                 "examples",
-                "CC=gcc",
+                "CC=clang",
                 "MODE=debug"
             ],
             "options": {
@@ -17,7 +17,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": ["$gcc"]
+            "problemMatcher": ["$clang"]
         }
     ]
 }

@@ -9,7 +9,7 @@ void micro_codegen386_emit(micro_codegen_t *codegen, sct_vector_t *instrs)
     lowering(codegen);
 }
 
-void micro_codegen386_init(micro_codegen_t *codegen, sct_vector_t *asm_instrs, sct_arena_t *arena)
+void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena)
 {
     codegen->emit = micro_codegen386_emit;
     codegen->asm_instrs = asm_instrs;
@@ -25,6 +25,7 @@ void micro_codegen386_init(micro_codegen_t *codegen, sct_vector_t *asm_instrs, s
     sct_vector_init(&ext->goto_unfound_labels, sizeof(micro_codegen386_goto_unfound_lbl_t));
     sct_hashmap_init(&ext->idents, sizeof(micro_codegen386_ident_t));
     memset(ext->used_regs, 0, sizeof(ext->used_regs));
+    codegen->flags = flags;
 }
 
 void micro_codegen386_deinit(micro_codegen_t *codegen)

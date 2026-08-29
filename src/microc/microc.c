@@ -29,6 +29,7 @@ typedef struct {
         STOPAFTER_INSTRGEN,
         STOPAFTER_OPTIMIZER,
     } stop_at;
+    micro_codegen_flags_t codegen_flags;
 } mc_args_t;
 
 void print_usage()
@@ -39,17 +40,18 @@ void print_usage()
         "usage:\n"
         "    microc [flags] <input file>\n"
         "flags:\n"
-        "    --help (-h)   - put this menu\n"
-        "    --output (-o) - set output file\n"
-        "    -P            - put some info\n"
-        "      t           - put tokens\n"
-        "      i           - put instructions\n"
-        "      a           - put assembly\n"
-        "    -S            - stop compiling\n"
-        "      r           - stop after reading file\n"
-        "      l           - stop after lexing\n"
-        "      i           - stop after instruction generation\n"
-        "      o           - stop after optimization stage (non supported now)\n"
+        "    --help (-h)          - put this menu\n"
+        "    --output (-o) <file> - set output file\n"
+        "    -P                   - put some info\n"
+        "      t                  - put tokens\n"
+        "      i                  - put instructions\n"
+        "      a                  - put assembly\n"
+        "    -S                   - stop compiling\n"
+        "      r                  - stop after reading file\n"
+        "      l                  - stop after lexing\n"
+        "      i                  - stop after instruction generation\n"
+        "      o                  - stop after optimization stage (non supported now)\n"
+        "    -Fno-err-outside-fun - disable errors like \"instruction 'set' can be only in function body\"\n"
     );
     exit(0);
 }
@@ -101,8 +103,11 @@ mc_args_t mc_args_parse(int argc, char **argv)
                 } else {
                     printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'o')", argv[i][2]);
                 }
+            } else
+            if (!strcmp(argv[i], "-Fno-err-outside-fun")) {
+                args.codegen_flags.no_err_outside_fun = 1;
             } else {
-                printf("Error: Undefined flag");
+                printf("Error: Undefined flag %s\n", argv[i]);
                 print_usage();
             }
         } else {
@@ -621,7 +626,7 @@ int main(int argc, char **argv)
             sct_arena_init(&arena);
 
             micro_codegen_t codegen;
-            micro_codegen386_init(&codegen, &asm_instrs, &arena);
+            micro_codegen386_init(&codegen, args.codegen_flags, &asm_instrs, &arena);
                 codegen.emit(&codegen, &instrgen.instructions);
                 for (size_t i = 0; i < micro_err_stk_size; i++) {
                     put_err(args.inputfile, micro_err_stk[i]);

@@ -83,7 +83,7 @@ typedef struct {
     sct_vector_t  goto_unfound_labels;
 } micro_codegen386_ext_t;
 
-void micro_codegen386_init(micro_codegen_t *codegen, sct_vector_t *asm_instrs, sct_arena_t *arena);
+void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena);
 
 void micro_codegen386_deinit(micro_codegen_t *codegen);
 
