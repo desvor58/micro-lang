@@ -6,8 +6,8 @@
             "label": "build debug",
             "command": "make",
             "args": [
-                "microc",
-                "CC=gcc",
+                "examples",
+                "CC=clang",
                 "MODE=debug"
             ],
             "options": {
@@ -17,7 +17,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": ["$gcc"]
+            "problemMatcher": ["$clang"]
         }
     ]
 }

@@ -29,16 +29,16 @@ static const op_tbls_t plus_op_tbls = {
     .opSR_fn = MICRO_ASM386_INSTR_ADD_S32R32,
 };
 
-int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
+int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (unlikely(start->type != MICRO_TOK_PLUS)) {
+    if (unlikely(start->type != MICRO_EXPR_TOK_PLUS)) {
         return 0;
     }
 
-    micro_token_t *first_operand = start + 1;
-    if (first_operand->type == MICRO_TOK_IDENT) {
+    micro_expr_tok_t *first_operand = start + 1;
+    if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
         if (ident->type == MICRO_IDENT_VREG) {
@@ -46,8 +46,8 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             if (!ok) return 0;
         }
         
-        micro_token_t *second_operand = start + 2;
-        if (_micro_tok_is_lit(second_operand->type)) {
+        micro_expr_tok_t *second_operand = start + 2;
+        if (_micro_expr_is_lit(second_operand->type)) {
             char *end;
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
@@ -55,12 +55,12 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             op_lit_to_dst(codegen, &plus_op_tbls, dst, lit);
             return 3;
         }
-        if (_micro_tok_is_op(second_operand->type)) {
+        if (_micro_expr_is_op(second_operand->type)) {
             int expr_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr_size) return 0;
             return 2 + expr_size;
         }
-        if (second_operand->type == MICRO_TOK_IDENT) {
+        if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
 
             if (ident2->type == MICRO_IDENT_VREG) {
@@ -71,13 +71,13 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         }
         return 0;
     }
-    if (_micro_tok_is_lit(first_operand->type)) {
+    if (_micro_expr_is_lit(first_operand->type)) {
         char *end;
         errno = 0;
         i32 first_lit = strtol(first_operand->val, &end, 10);
 
-        micro_token_t *second_operand = start + 2;
-        if (_micro_tok_is_lit(second_operand->type)) {
+        micro_expr_tok_t *second_operand = start + 2;
+        if (_micro_expr_is_lit(second_operand->type)) {
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
@@ -87,14 +87,14 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
             return 3;
         }
-        if (_micro_tok_is_op(second_operand->type)) {
+        if (_micro_expr_is_op(second_operand->type)) {
             int expr_size = expr_parse(codegen, dst, second_operand);
             if (!expr_size) return 0;
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
             return 2 + expr_size;
         }
-        if (second_operand->type == MICRO_TOK_IDENT) {
+        if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
                 int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
@@ -105,7 +105,7 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         }
         return 0;
     }
-    if (_micro_tok_is_op(first_operand->type)) {
+    if (_micro_expr_is_op(first_operand->type)) {
         int expr_size = expr_parse(codegen, dst, first_operand);
         if (!expr_size) return 0;
 
@@ -113,8 +113,8 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             ext->used_regs[dst.reg.reg] = 1;
         }
 
-        micro_token_t *second_operand = start + expr_size + 1;
-        if (_micro_tok_is_lit(second_operand->type)) {
+        micro_expr_tok_t *second_operand = start + expr_size + 1;
+        if (_micro_expr_is_lit(second_operand->type)) {
             char *end;
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
@@ -122,12 +122,12 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
             return 2 + expr_size;
         }
-        if (_micro_tok_is_op(second_operand->type)) {
+        if (_micro_expr_is_op(second_operand->type)) {
             int expr2_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr2_size) return 0;
             return 1 + expr_size + expr2_size;
         }
-        if (second_operand->type == MICRO_TOK_IDENT) {
+        if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident->vreg);

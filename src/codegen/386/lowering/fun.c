@@ -6,7 +6,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_fun_t instr_fun = instr->fun;
 
-    char *fun_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1);
+    char *fun_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1);
     strcpy(fun_lbl_name, instr_fun.name);
     push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = fun_lbl_name }, {});
 
@@ -14,12 +14,12 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, {0}, {0});
 
-    size_t sub_instr_addr = codegen->asm_instrs.size;
+    size_t sub_instr_addr = codegen->asm_instrs->size;
 
     push_asm_instr(MICRO_ASM386_INSTR_SUB_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(0) });
-    size_t callee_save_addr = codegen->asm_instrs.size - 1;
+    size_t callee_save_addr = codegen->asm_instrs->size - 1;
 
-    char *start_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 6);
+    char *start_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 6);
     strcpy(start_lbl_name, instr_fun.name);
     strcat(start_lbl_name, ".start");
     push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = start_lbl_name }, {});
@@ -94,36 +94,36 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     sct_vector_deinit(&save_idents);
 
     micro_imm_le_t imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset));
-    ((micro_asm386_instruction_t*)sct_vector_get(&codegen->asm_instrs, sub_instr_addr))->operand2.imm = imm;
+    ((micro_asm386_instruction_t*)sct_vector_get(codegen->asm_instrs, sub_instr_addr))->operand2.imm = imm;
 
-    char *exit_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 4);
+    char *exit_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 4);
     strcpy(exit_lbl_name, instr_fun.name);
     strcat(exit_lbl_name, ".end");
     push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = exit_lbl_name }, {});
 
     if (ext->use_callee_save_regs) {
-        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+        sct_vector_insert(codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_PUSH_R32,
             .operand1 = MICRO_ASM386_REG32_EBX
         });
-        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+        sct_vector_insert(codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_PUSH_R32,
             .operand1 = MICRO_ASM386_REG32_ESI
         });
-        sct_vector_insert(&codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
+        sct_vector_insert(codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_PUSH_R32,
             .operand1 = MICRO_ASM386_REG32_EDI
         });
 
-        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+        sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_POP_R32,
             .operand1 = MICRO_ASM386_REG32_EBX
         });
-        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+        sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_POP_R32,
             .operand1 = MICRO_ASM386_REG32_ESI
         });
-        sct_vector_push(&codegen->asm_instrs, &(micro_asm386_instruction_t){
+        sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){
             .opcode = MICRO_ASM386_INSTR_POP_R32,
             .operand1 = MICRO_ASM386_REG32_EDI
         });
@@ -134,11 +134,9 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, {0}, {0});
 
     for (size_t i = 0; i < ext->goto_unfound_labels.size; i++) {
-        micro_codegen386_goto_unfound_lbl_t *lbl = sct_vector_get(&ext->goto_unfound_labels, i);
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_UNDEFINED_LBL,
-            .line_ref = lbl->lbl_tok->line_ref,
-            .chpos_ref = lbl->lbl_tok->chpos_ref
+            .instr = MICRO_INSTR_GOTO
         });
         return 1;
     }

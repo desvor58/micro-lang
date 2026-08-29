@@ -5,7 +5,7 @@
             "name": "lldb-debug",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/microc.exe",
+            "program": "${workspaceFolder}/bin/examples/simple1.exe",
             "args": [
                 "./test.micro",
                 "-o",

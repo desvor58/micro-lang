@@ -60,11 +60,25 @@ static const char *test_err_str[] = {
     [MICRO_ERROR_UNDEFINED_LBL]             = "Undefined label",
 };
 
+/* Instruction names, mirrors the `instr_str[]` table in src/microc/microc.c */
+static const char *test_instr_str[] = {
+    [MICRO_INSTR_NONE]   = "",
+    [MICRO_INSTR_SET]    = "set",
+    [MICRO_INSTR_DRSET]  = "drset",
+    [MICRO_INSTR_FUN]    = "fun",
+    [MICRO_INSTR_RET]    = "ret",
+    [MICRO_INSTR_CALL]   = "call",
+    [MICRO_INSTR_LBL]    = "label",
+    [MICRO_INSTR_GOTO]   = "goto",
+    [MICRO_INSTR_IF]     = "if",
+};
+
 /* Print a single error exactly like microc's put_err() */
 static void test_put_err(const char *file, micro_error_t err)
 {
-    fprintf(stderr, "Error: %s:%lu:%lu: %s\n", file,
-            err.line_ref, err.chpos_ref, test_err_str[err.err]);
+    fprintf(stderr, "Error: %s%s%s: %s\n", file,
+            err.instr ? "[" : "", err.instr ? test_instr_str[err.instr] : "",
+            test_err_str[err.err]);
 }
 
 /* Print all accumulated errors from the stack, if any */

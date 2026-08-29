@@ -66,12 +66,11 @@ typedef struct {
 } micro_codegen386_ident_t;
 
 typedef struct {
-    char          *name;
-    micro_token_t *lbl_tok;
+    char *name;
 } micro_codegen386_goto_unfound_lbl_t;
 
 typedef struct {
-    sct_arena_t arena;
+    sct_arena_t *arena;
     struct {
         u32 in_function : 1;
         u32 use_callee_save_regs : 1;
@@ -84,7 +83,7 @@ typedef struct {
     sct_vector_t  goto_unfound_labels;
 } micro_codegen386_ext_t;
 
-void micro_codegen386_init(micro_codegen_t *codegen);
+void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena);
 
 void micro_codegen386_deinit(micro_codegen_t *codegen);
 

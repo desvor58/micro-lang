@@ -1,16 +1,27 @@
 CC ?= gcc
+
+SCT_DIR := lib/sct
+SCT_LIB_DIR := $(SCT_DIR)/lib
+SCT_INC_DIR := $(SCT_DIR)/include
+
 CFLAGS := -Wall -Wextra -Wshadow -Wpointer-arith  \
           -Wno-format -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable  -Wno-switch  \
           -fno-strict-aliasing  \
-          -std=c99 -Iinclude
+          -std=c99 -Iinclude -I$(SCT_INC_DIR)
 LDFLAGS :=
-MODE ?= release
 AR := gcc-ar
 
-ifeq ($(MODE),debug)
-    CFLAGS += -O0 -g
-else
-    CFLAGS += -O3 -flto
+MODE ?= release-fast
+
+ifeq ($(MODE), debug)
+	CFLAGS += -O0 -g
+endif
+ifeq ($(MODE), release-fast)
+	CFLAGS += -O3 -ffast-math -flto
+    LDFLAGS += -flto
+endif
+ifeq ($(MODE), release-size)
+	CFLAGS += -Os -flto
     LDFLAGS += -flto
 endif
 
@@ -23,6 +34,9 @@ ifeq ($(OS),Windows_NT)
     MKDIR = if not exist "$(call FIX_PATH,$(1))" mkdir "$(call FIX_PATH,$(1))"
     SCT_LIB_FILE := sct-win
     EXE_EXT := .exe
+
+    SCT_SM_CHECK := @if not exist "$@" (git submodule update --init --recursive --remote --merge)
+    SCT_CLEAN    := @if exist "$(SCT_DIR)\Makefile" $(MAKE) -C $(SCT_DIR) clean
 else
     RM_DIR = rm -rf "$(1)"
     RM_FILE = rm -f "$(1)"
@@ -35,6 +49,9 @@ else
         CFLAGS +=  -fsanitize=address
         LDFLAGS += -fsanitize=address
     endif
+
+    SCT_SM_CHECK := @if [ ! -f "$@" ]; then git submodule update --init --recursive --remote --merge || (exit 1;); fi
+    SCT_CLEAN    := @if [ -f "$(SCT_DIR)/Makefile" ]; then $(MAKE) -C $(SCT_DIR) clean; fi
 endif
 
 ifeq ($(CC),clang)
@@ -44,51 +61,80 @@ ifeq ($(CC),clang)
     AR := llvm-ar
 endif
 
-SRC_TARGETS := src/*.c \
-               src/instrgen/*.c \
-               src/instrgen/statements/*.c \
-               src/asm/*.c \
-               src/codegen/*.c \
-               src/codegen/386/*.c \
-               src/codegen/386/lowering/*.c \
-               src/codegen/386/lowering/expr_ops/*.c \
+MICRO_SRC := src/common.c \
+             src/instr.c \
+             src/asm/*.c \
+             src/codegen/*.c \
+             src/codegen/386/*.c \
+             src/codegen/386/lowering/*.c \
+             src/codegen/386/lowering/expr_ops/*.c \
 
-SRCS := $(wildcard $(SRC_TARGETS))
+MICRO_SRC := $(wildcard $(MICRO_SRC))
 
-SRCS := $(filter-out src/microc/microc.c, $(SRCS))
-OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(SRCS))
-DEPS := $(OBJS:.o=.d)
+MICROC_SRCS := src/microc/lexer.c \
+               src/microc/instrgen/genfuns.c \
+               src/microc/instrgen/instrgen.c \
+               src/microc/instrgen/statements/*.c \
 
-TEST_CFLAGS := $(CFLAGS) -Itests/include -O3
-MICROC_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
-TEST_LDFLAGS := $(LDFLAGS) -Llib -l$(SCT_LIB_FILE)
+MICROC_SRCS := $(wildcard $(MICROC_SRCS))
 
-.PHONY: all libmicro microc test test-debug test-release _run_tests clean
+MICRODEBUG_SRC := src/microdebug/*.c
+MICRODEBUG_SRC := $(wildcard $(MICRODEBUG_SRC))
 
-all: microc
+MICRO_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRO_SRC))
+MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
+MICRODEBUG_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRODEBUG_SRC))
+DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d) $(MICRODEBUG_OBJS:.o=.d)
 
-libmicro: $(OBJS)
+TEST_CFLAGS := $(CFLAGS) -Itests/include -I$(SCT_INC_DIR) -O3
+MICROC_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
+TEST_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
+MICRODEBUG_LDFLAGS := $(LDFLAGS) -Llib -lmicro-debug
+
+EXAMPLES_SRCS := $(wildcard examples/*/main.c)
+EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
+EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -I$(SCT_INC_DIR) -O3
+
+.PHONY: all libmicro microc test test-debug test-release _run_tests examples clean SCT
+
+all: microc libmicro libmicro-debug
+
+libmicro: SCT $(MICRO_OBJS)
 	@$(call MKDIR,lib)
-	$(AR) rcs lib/libmicro.a $(OBJS)
+	$(AR) rcs lib/libmicro.a $(MICRO_OBJS) $(SCT_LIB_DIR)/lib$(SCT_LIB_FILE).a
 
-microc: $(OBJS) src/microc/microc.c
+libmicro-debug: SCT $(MICRODEBUG_OBJS)
+	@$(call MKDIR,lib)
+	$(AR) rcs lib/libmicro-debug.a $(MICRODEBUG_OBJS)
+
+microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a src/microc/microc.c
 	@$(call MKDIR,bin)
-	$(CC) $(CFLAGS) src/microc/microc.c $(OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
+	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS) $(MICRODEBUG_LDFLAGS)
 
-test: test-debug test-release
+examples: SCT $(EXAMPLES_BINS)
+
+SCT:
+	$(SCT_SM_CHECK)
+	@$(MAKE) -C $(SCT_DIR) CC=$(CC) MODE=$(MODE)
+
+bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a
+	@$(call MKDIR,bin/examples)
+	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS) $(MICRODEBUG_LDFLAGS)
+
+test: SCT test-debug test-release
 
 test-debug:
 	$(MAKE) MODE=debug _run_tests
 
 test-release:
-	$(MAKE) MODE=release _run_tests
+	$(MAKE) MODE=release-fast _run_tests
 
 _run_tests: tests/bin/$(MODE)/tests$(EXE_EXT)
 	.$(call FIX_PATH,/tests/bin/$(MODE)/tests$(EXE_EXT)) $(TEST_FLAGS)
 
-tests/bin/$(MODE)/tests$(EXE_EXT): $(OBJS) tests/src/munit.c tests/src/main.c
+tests/bin/$(MODE)/tests$(EXE_EXT): $(MICRO_OBJS) $(MICROC_OBJS) tests/src/munit.c tests/src/main.c tests/src/*.h
 	@$(call MKDIR,tests/bin/$(MODE))
-	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
+	$(CC) $(TEST_CFLAGS) tests/src/munit.c tests/src/main.c $(MICROC_OBJS) $(MICRO_OBJS) -o tests/bin/$(MODE)/tests$(EXE_EXT) $(TEST_LDFLAGS)
 
 $(OBJDIR)/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))
@@ -98,9 +144,10 @@ $(OBJDIR)/%.o: src/%.c
 
 clean:
 	@$(call RM_DIR,obj)
+	@$(call RM_DIR,lib)
 	@$(call RM_DIR,bin)
 	@$(call RM_DIR,tests/bin)
-	@$(call RM_FILE,lib/libmicro.a)
 	@$(call MKDIR,bin)
 	@$(call MKDIR,obj)
+	@$(call MKDIR,lib)
 	@$(call MKDIR,tests/bin)

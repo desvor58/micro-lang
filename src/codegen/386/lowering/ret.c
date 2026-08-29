@@ -4,11 +4,10 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (!ext->in_function) {
+    if (!codegen->flags.no_err_outside_fun && !ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_RET_OUTSIDE_FUNCTION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_RET
         });
         return 1;
     }
@@ -55,14 +54,13 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
         if (!expr_size) {
             // micro_push_err((micro_error_t){
             //     .err = MICRO_ERROR_EXPR_PARSE,
-            //     .line_ref = instr_ret.val_expr->line_ref,
-            //     .chpos_ref = instr_ret.val_expr->chpos_ref
+            //     .instr = MICRO_INSTR_RET
             // });
             return 1;
         }
     }
 
-    char *end_lbl_name = sct_arena_alloc(&ext->arena, sizeof(char) * strlen(ext->curent_function_name) + 1 + 4);
+    char *end_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(ext->curent_function_name) + 1 + 4);
     strcpy(end_lbl_name, ext->curent_function_name);
     strcat(end_lbl_name, ".end");
     push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = end_lbl_name }, {});

@@ -1,0 +1,3 @@
+[submodule "lib/sct"]
+	path = lib/sct
+	url = https://github.com/desvor58/Simple-C-Types

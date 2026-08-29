@@ -137,7 +137,7 @@ size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
     return 0;
 }
 
-size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
+size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -150,20 +150,18 @@ size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micr
         ext->used_regs[dst.reg.reg] = 1;
     }
 
-    if (start->type == MICRO_TOK_LIT_INT) {
+    if (start->type == MICRO_EXPR_TOK_LIT_INT) {
         char *end;
         errno = 0;
         i32 lit = strtol(start->val, &end, 10);
         res = expr_lit_parse(codegen, dst, lit);
         goto exit;
     }
-    if (start->type == MICRO_TOK_IDENT) {
+    if (start->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, start->val);
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
-                .line_ref = start->line_ref,
-                .chpos_ref = start->chpos_ref
             });
             goto exit;
         }
@@ -182,7 +180,7 @@ size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micr
                 goto exit;
         };
     }
-    if (_micro_tok_is_op(start->type)) {
+    if (_micro_expr_is_op(start->type)) {
         op_info_t op_info = op_tbl[start->type];
         res = op_info.handler(codegen, dst, start);
         goto exit;
@@ -225,22 +223,20 @@ size_t cond_expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_ident_vre
     return 1;
 }
 
-size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start)
+size_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     size_t res = 0;
     
-    if (start->type == MICRO_TOK_LIT_INT) {
+    if (start->type == MICRO_EXPR_TOK_LIT_INT) {
 
     } else
-    if (start->type == MICRO_TOK_IDENT) {
+    if (start->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, start->val);
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
-                .line_ref = start->line_ref,
-                .chpos_ref = start->chpos_ref
             });
             goto exit;
         }
@@ -250,7 +246,7 @@ size_t cond_expr_parse(micro_codegen_t *codegen, micro_token_t *start)
             goto exit;
         }
     } else
-    if (start->type == MICRO_TOK_EQ) {
+    if (start->type == MICRO_EXPR_TOK_EQ) {
         return cond_op_eq_handler(codegen, (micro_codegen386_storage_t){}, start);
     }
 

@@ -4,11 +4,10 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (!ext->in_function) {
+    if (!codegen->flags.no_err_outside_fun && !ext->in_function) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_SET_OUTSIDE_FUNCTION,
-            .line_ref = instr->start_tok->line_ref,
-            .chpos_ref = instr->start_tok->chpos_ref
+            .instr = MICRO_INSTR_SET
         });
         return 1;
     }
@@ -22,16 +21,14 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         if (ident->type != MICRO_IDENT_VREG) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_IDENT_NOT_VREG,
-                .line_ref = instr->start_tok->line_ref,
-                .chpos_ref = instr->start_tok->chpos_ref
+                .instr = MICRO_INSTR_SET
             });
             return 1;
         }
         if (ident->vreg.type != instr_set.type) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_VREG_TYPE_MISMATCH,
-                .line_ref = instr->start_tok->line_ref,
-                .chpos_ref = instr->start_tok->chpos_ref
+                .instr = MICRO_INSTR_SET
             });
             return 1;
         }
@@ -68,8 +65,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (!expr_size) {
         // micro_push_err((micro_error_t){
         //     .err = MICRO_ERROR_EXPR_PARSE,
-        //     .line_ref = instr_set.val_expr->line_ref,
-        //     .chpos_ref = instr_set.val_expr->chpos_ref
+        //     .instr = MICRO_INSTR_SET
         // });
         return 1;
     }

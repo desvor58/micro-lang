@@ -32,7 +32,7 @@ static void op_lit_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, mi
     }
 }
 
-static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_token_t *expr)
+static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_expr_tok_t *expr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -108,8 +108,6 @@ static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, m
     if (unlikely(vreg.storage.type == MICRO_STORAGE_DATASEC)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPR_PARSE,
-            .line_ref = 0,
-            .chpos_ref = 0
         });
         return;
     }

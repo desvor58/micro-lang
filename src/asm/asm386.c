@@ -2,28 +2,18 @@
 
 #define instr_handle(instr, S, ...)  \
     case instr:  \
-        sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (S));  \
-        return
+        sct_vector_push_array(outbuf, (u8[])__VA_ARGS__, (S));  \
+        break
 
 #define instr_handle_lbl(instr, S, N, ...)  \
     case instr:  \
-        sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (S));  \
-        sct_vector_push(&deferred_lbls, &(deferred_lbl_t){ .addr = outbuf->size, .lbl_name = (N), .is_rel_offset = 0 });  \
-        sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);  \
-        return
+        _instr_handle_lbl(outbuf, N, S, (u8[])__VA_ARGS__);  \
+        break
 
-    
 #define instr_handle_rel_lbl(instr, S, N, ...)  \
     case (instr):  \
-        sct_vector_push_array(outbuf, &(u8[])__VA_ARGS__, (S));  \
-        sct_vector_push(&deferred_lbls, &(deferred_lbl_t){  \
-            .addr = outbuf->size,  \
-            .lbl_name = (N),  \
-            .is_rel_offset = 1,  \
-            .rel_pos = outbuf->size + 4,  \
-        });  \
-        sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);  \
-        return
+        _instr_handle_rel_lbl(outbuf, N, S, (u8[])__VA_ARGS__);  \
+        break
 
 sct_hashmap_t lbls;
 
@@ -35,6 +25,25 @@ typedef struct {
 } deferred_lbl_t;
 
 sct_vector_t deferred_lbls;
+
+static inline void _instr_handle_lbl(sct_vector_t *outbuf, char *N, size_t S, u8 *V)
+{
+    sct_vector_push_array(outbuf, V, S);
+    sct_vector_push(&deferred_lbls, &(deferred_lbl_t){ .addr = outbuf->size, .lbl_name = N, .is_rel_offset = 0 });
+    sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);
+}
+
+static inline void _instr_handle_rel_lbl(sct_vector_t *outbuf, char *N, size_t S, u8 *V)
+{
+    sct_vector_push_array(outbuf, V, S);
+    sct_vector_push(&deferred_lbls, &(deferred_lbl_t){  \
+        .addr = outbuf->size,  \
+        .lbl_name = N,  \
+        .is_rel_offset = 1,  \
+        .rel_pos = outbuf->size + 4,  \
+    });  \
+    sct_vector_push_array(outbuf, &(u8[]){ 0, 0, 0, 0 }, 4);
+}
 
 static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *outbuf)
 {

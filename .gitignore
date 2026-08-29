@@ -5,6 +5,8 @@ bin/
 .vscode/
 target/
 obj/
+/lib/*
+!/lib/sct/
 
 tests/bin/
 tests/log/

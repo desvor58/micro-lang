@@ -29,21 +29,21 @@ static const op_tbls_t cond_eq_op_tbls = {
     .opSR_fn = MICRO_ASM386_INSTR_SUB_S32R32,
 };
 
-int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_token_t *start)
+int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (unlikely(start->type != MICRO_TOK_EQ)) {
+    if (unlikely(start->type != MICRO_EXPR_TOK_EQ)) {
         return 0;
     }
 
-    micro_token_t *first_operand = start + 1;
-    if (first_operand->type == MICRO_TOK_IDENT) {
+    micro_expr_tok_t *first_operand = start + 1;
+    if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
-        micro_token_t *second_operand = start + 2;
+        micro_expr_tok_t *second_operand = start + 2;
         if (ident->type == MICRO_IDENT_VREG) {
-            if (_micro_tok_is_lit(second_operand->type)) {
+            if (_micro_expr_is_lit(second_operand->type)) {
                 char *end;
                 errno = 0;
                 i32 lit = strtol(second_operand->val, &end, 10);
@@ -59,7 +59,7 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                 }
                 return 3;
             }
-            if (_micro_tok_is_op(second_operand->type)) {
+            if (_micro_expr_is_op(second_operand->type)) {
                 int free_space = get_last_free_space(codegen);
                 micro_codegen386_storage_t op_dst;
                 if (free_space < 0) {
@@ -113,7 +113,7 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                 }
                 return 2 + expr_size;
             }
-            if (second_operand->type == MICRO_TOK_IDENT) {
+            if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
                 puts("ds");
                 micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
 
