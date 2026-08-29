@@ -78,13 +78,18 @@ MICROC_SRCS := src/microc/lexer.c \
 
 MICROC_SRCS := $(wildcard $(MICROC_SRCS))
 
+MICRODEBUG_SRC := src/microdebug/*.c
+MICRODEBUG_SRC := $(wildcard $(MICRODEBUG_SRC))
+
 MICRO_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRO_SRC))
 MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
-DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d)
+MICRODEBUG_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRODEBUG_SRC))
+DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d) $(MICRODEBUG_OBJS:.o=.d)
 
 TEST_CFLAGS := $(CFLAGS) -Itests/include -I$(SCT_INC_DIR) -O3
 MICROC_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 TEST_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
+MICRODEBUG_LDFLAGS := $(LDFLAGS) -Llib -lmicro-debug
 
 EXAMPLES_SRCS := $(wildcard examples/*/main.c)
 EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
@@ -92,27 +97,29 @@ EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -I$(SCT_INC_DIR) -O3
 
 .PHONY: all libmicro microc test test-debug test-release _run_tests examples clean SCT
 
-all: microc libmicro
+all: microc libmicro libmicro-debug
 
 libmicro: SCT $(MICRO_OBJS)
 	@$(call MKDIR,lib)
 	$(AR) rcs lib/libmicro.a $(MICRO_OBJS) $(SCT_LIB_DIR)/lib$(SCT_LIB_FILE).a
 
-microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) src/microc/microc.c
+libmicro-debug: SCT $(MICRODEBUG_OBJS)
+	@$(call MKDIR,lib)
+	$(AR) rcs lib/libmicro-debug.a $(MICRODEBUG_OBJS)
+
+microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a src/microc/microc.c
 	@$(call MKDIR,bin)
-	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS)
+	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS) $(MICRODEBUG_LDFLAGS)
 
 examples: SCT $(EXAMPLES_BINS)
 
-SCT: $(SCT_DIR)/Makefile
+SCT:
+	$(SCT_SM_CHECK)
 	@$(MAKE) -C $(SCT_DIR) CC=$(CC) MODE=$(MODE)
 
-$(SCT_DIR)/Makefile:
-	$(SCT_SM_CHECK)
-
-bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS)
+bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a
 	@$(call MKDIR,bin/examples)
-	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS)
+	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS) $(MICRODEBUG_LDFLAGS)
 
 test: SCT test-debug test-release
 
@@ -137,10 +144,10 @@ $(OBJDIR)/%.o: src/%.c
 
 clean:
 	@$(call RM_DIR,obj)
+	@$(call RM_DIR,lib)
 	@$(call RM_DIR,bin)
 	@$(call RM_DIR,tests/bin)
-	@$(call RM_FILE,lib/libmicro.a)
 	@$(call MKDIR,bin)
 	@$(call MKDIR,obj)
+	@$(call MKDIR,lib)
 	@$(call MKDIR,tests/bin)
-	@$(call RM_DIR,lib/sct)

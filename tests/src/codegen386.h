@@ -10,9 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Group all state needed by the codegen stage in one context. The codegen
- * itself does not own asm_instrs/outbuf/arena: caller allocates them, so
- * tests keep them here and clean them up with cg_cleanup. */
 typedef struct {
     sct_vector_t    toks;
     mc_instrgen_t   ig;
@@ -34,10 +31,9 @@ static void cg_gen(cg_ctx_t *ctx, const char *text)
     sct_vector_init(&ctx->outbuf, sizeof(u8));
     sct_arena_init(&ctx->arena);
 
-    micro_codegen386_init(&ctx->cg, &ctx->asm_instrs, &ctx->arena);
+    micro_codegen386_init(&ctx->cg, (micro_codegen_flags_t){}, &ctx->asm_instrs, &ctx->arena);
     ctx->cg.emit(&ctx->cg, &ctx->ig.instructions);
 
-    /* dump accumulated errors, if any, like microc does */
     test_put_errors("codegen");
 }
 
