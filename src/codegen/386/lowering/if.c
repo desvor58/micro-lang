@@ -20,6 +20,10 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
     if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EXCLAMATION) {
         asm_instr = MICRO_ASM386_INSTR_JZ_L32;
         cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr + 1);
+    }
+    if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EQ) {
+        asm_instr = MICRO_ASM386_INSTR_JZ_L32;
+        cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
     } else {
         cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
     }

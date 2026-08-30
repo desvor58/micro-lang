@@ -107,7 +107,7 @@ libmicro-debug: SCT $(MICRODEBUG_OBJS)
 	@$(call MKDIR,lib)
 	$(AR) rcs lib/libmicro-debug.a $(MICRODEBUG_OBJS)
 
-microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a src/microc/microc.c
+microc: SCT $(MICRO_OBJS) $(MICROC_OBJS) libmicro-debug src/microc/microc.c
 	@$(call MKDIR,bin)
 	$(CC) $(CFLAGS) src/microc/microc.c $(MICROC_OBJS) $(MICRO_OBJS) -o bin/microc$(EXE_EXT) $(MICROC_LDFLAGS) $(MICRODEBUG_LDFLAGS)
 
@@ -117,7 +117,7 @@ SCT:
 	$(SCT_SM_CHECK)
 	@$(MAKE) -C $(SCT_DIR) CC=$(CC) MODE=$(MODE)
 
-bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS) lib/libmicro-debug.a
+bin/examples/%: examples/%/main.c $(MICRO_OBJS) $(MICROC_OBJS) libmicro-debug
 	@$(call MKDIR,bin/examples)
 	$(CC) $(EXAMPLES_CFLAGS) $< $(MICROC_OBJS) $(MICRO_OBJS) -o $@$(EXE_EXT) $(TEST_LDFLAGS) $(MICRODEBUG_LDFLAGS)
 
