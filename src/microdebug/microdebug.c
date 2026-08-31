@@ -108,7 +108,7 @@ u8 micro_debug_op_args_num[] = {
 
 void micro_debug_put_err(const char *file, micro_error_t err)
 {
-    printf("Error: %s%s%s: %s\n", file, err.instr ? "[" : "", err.instr ? micro_debug_instr_str[err.instr] : "", micro_debug_err_str[err.err]);
+    printf("Error: %s[%s]: %s\n", file, micro_debug_instr_str[err.instr], micro_debug_err_str[err.err]);
 }
 
 void micro_debug_put_tok(mc_token_t tok)

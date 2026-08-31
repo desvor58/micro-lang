@@ -234,11 +234,11 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
             return 2 + expr_size;
         }
         if (_micro_expr_is_op(second_operand->type)) {
-            int free_space = get_last_free_space(codegen);
+            int free_space2 = get_last_free_space(codegen);
             micro_codegen386_storage_t expr2_dst;
 
             int need_pop_eax = 0;
-            if (free_space < 0) {
+            if (free_space2 < 0) {
                 need_pop_eax = 1;
                 push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
                 ext->ebp_top_offset += 4;
@@ -247,7 +247,7 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                 expr2_dst.reg.size = MICRO_SIZE_32;
             } else {
                 expr2_dst.type = MICRO_STORAGE_REG;
-                expr2_dst.reg.reg = free_space;
+                expr2_dst.reg.reg = free_space2;
                 expr2_dst.reg.size = MICRO_SIZE_32;
             }
 

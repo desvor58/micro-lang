@@ -246,8 +246,28 @@ size_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
             goto exit;
         }
     } else
-    if (start->type == MICRO_EXPR_TOK_EQ) {
-        return cond_op_eq_handler(codegen, (micro_codegen386_storage_t){}, start);
+    if (_micro_expr_is_op(start->type)) {
+        int free_space = get_last_free_space(codegen);
+        micro_codegen386_storage_t dst;
+        if (free_space < 0) {
+            dst.type = MICRO_STORAGE_STACK;
+            dst.stack.ebp_offset = free_space;
+        } else {
+            dst.type = MICRO_STORAGE_REG;
+            dst.reg.reg = free_space;
+            dst.reg.size = MICRO_SIZE_32;
+        }
+        op_info_t op_info = cond_op_tbl[start->type];
+        res = op_info.handler(codegen, dst, start);
+        if (!op_info.is_cond) {
+            if (dst.type == MICRO_STORAGE_STACK) {
+                push_asm_instr(MICRO_ASM386_INSTR_CMP_S32I32, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .imm = micro_imm_le_gen(0) });
+            } else
+            if (dst.type == MICRO_STORAGE_REG) {
+                push_asm_instr(MICRO_ASM386_INSTR_TEST_R32R32, { .reg = dst.reg.reg }, { .reg = dst.reg.reg });
+            }
+        }
+        goto exit;
     }
 
 exit:
