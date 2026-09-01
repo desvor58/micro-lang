@@ -1,5 +1,33 @@
 #include "../internal.h"
 
+static size_t get_jump_instr(micro_expr_tok_t *tok)
+{
+    micro_asm386_instruction_type_t instr = MICRO_ASM386_INSTR_JNZ_L32;
+
+    if (tok->type == MICRO_EXPR_TOK_EXCLAMATION) {
+        instr = get_jump_instr(tok + 1);
+        instr = (micro_asm386_instruction_type_t[]){
+            [MICRO_ASM386_INSTR_JZ_L32]  = MICRO_ASM386_INSTR_JNZ_L32,
+            [MICRO_ASM386_INSTR_JNZ_L32] = MICRO_ASM386_INSTR_JZ_L32,
+            [MICRO_ASM386_INSTR_JL_L32]  = MICRO_ASM386_INSTR_JNL_L32,
+            [MICRO_ASM386_INSTR_JNL_L32] = MICRO_ASM386_INSTR_JL_L32,
+            [MICRO_ASM386_INSTR_JG_L32]  = MICRO_ASM386_INSTR_JNG_L32,
+            [MICRO_ASM386_INSTR_JNG_L32] = MICRO_ASM386_INSTR_JG_L32,
+        }[instr];
+        return instr;
+    } else
+    if (tok->type == MICRO_EXPR_TOK_EQ) {
+        instr = MICRO_ASM386_INSTR_JZ_L32;
+    } else
+    if (tok->type == MICRO_EXPR_TOK_LESS) {
+        instr = MICRO_ASM386_INSTR_JL_L32;
+    } else
+    if (tok->type == MICRO_EXPR_TOK_GREAT) {
+        instr = MICRO_ASM386_INSTR_JG_L32;
+    }
+    return instr;
+}
+
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
@@ -14,16 +42,15 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_if_t instr_if = instr->if_goto;
 
-    micro_asm386_instruction_type_t asm_instr = MICRO_ASM386_INSTR_JNZ_L32;
+    micro_asm386_instruction_type_t asm_instr = get_jump_instr(instr_if.cond_expr);
 
     size_t cond_expr_size = 0;
     if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EXCLAMATION) {
-        asm_instr = MICRO_ASM386_INSTR_JZ_L32;
-        cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr + 1);
-    }
-    if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EQ) {
-        asm_instr = MICRO_ASM386_INSTR_JZ_L32;
-        cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
+        micro_expr_tok_t *tok = instr_if.cond_expr + 1;
+        while (tok->type == MICRO_EXPR_TOK_EXCLAMATION) {
+            tok = tok + 1;
+        }
+        cond_expr_size = cond_expr_parse(codegen, tok);
     } else {
         cond_expr_size = cond_expr_parse(codegen, instr_if.cond_expr);
     }

@@ -298,12 +298,12 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_TEST_S32I16] = A("testS32I16",  'V', 0,  'V', 0),
     [MICRO_ASM386_INSTR_TEST_S32I8]  = A("testS32I8",   'V', 0,  'V', 0),
 
-    [MICRO_ASM386_INSTR_JZ_S32]      = A1("jzS32",      'V', 0),
-    [MICRO_ASM386_INSTR_JNZ_S32]     = A1("jnzS32",     'V', 0),
-    [MICRO_ASM386_INSTR_JMP_S32]     = A1("jmpS32",     'V', 0),
-
     [MICRO_ASM386_INSTR_JZ_L32]      = A1("jzL32",      'L', 0),
     [MICRO_ASM386_INSTR_JNZ_L32]     = A1("jnzL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JL_L32]      = A1("jlL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNL_L32]     = A1("jnlL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JG_L32]      = A1("jgL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNG_L32]     = A1("jngL32",     'L', 0),
     [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),

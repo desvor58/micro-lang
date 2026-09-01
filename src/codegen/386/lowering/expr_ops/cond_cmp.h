@@ -1,35 +1,9 @@
-#ifndef MICRO_CODEGEN386_EXPR_OPS_COND_EQ_H
-#define MICRO_CODEGEN386_EXPR_OPS_COND_EQ_H
+#ifndef MICRO_CODEGEN386_EXPR_OPS_COND_CMP_H
+#define MICRO_CODEGEN386_EXPR_OPS_COND_CMP_H
 
 #include "common.h"
 
-static const op_tbls_t cond_eq_op_tbls = {
-    .opMI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_M8I8,
-    .opMI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_CMP_M16I16,
-    .opMI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_M32I32,
-    
-    .opSI_fn = MICRO_ASM386_INSTR_CMP_S32I32,
-
-    .opRI_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_R8I8,
-    .opRI_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_CMP_R16I16,
-    .opRI_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_R32I32,
-    
-    .opMR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_M8R8,
-    .opMR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_M16R16,
-    .opMR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_M32R32,
-
-    .opRR_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_R8R8,
-    .opRR_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_CMP_R16R16,
-    .opRR_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_R32R32,
-
-    .opRS_tbl[MICRO_SIZE_8]  = MICRO_ASM386_INSTR_SUB_R8S32,
-    .opRS_tbl[MICRO_SIZE_16] = MICRO_ASM386_INSTR_SUB_R16S32,
-    .opRS_tbl[MICRO_SIZE_32] = MICRO_ASM386_INSTR_SUB_R32S32,
-
-    .opSR_fn = MICRO_ASM386_INSTR_SUB_S32R32,
-};
-
-int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
+int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -79,7 +53,6 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                 if (expr_dst.type == MICRO_STORAGE_STACK) {
                     if (ident->vreg.storage.type == MICRO_STORAGE_STACK) {
                         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
-                        ext->ebp_top_offset += 4;
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(expr_dst.stack.ebp_offset) });
                         push_asm_instr(((micro_asm386_instruction_type_t[]){
                             [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_S32R8,
@@ -121,7 +94,6 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                     if (ident2->vreg.storage.type == MICRO_STORAGE_STACK) {
                         if (ident->vreg.storage.type == MICRO_STORAGE_STACK) {
                             push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
-                            ext->ebp_top_offset += 4;
                             push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(ident2->vreg.storage.stack.ebp_offset) });
                             push_asm_instr(((micro_asm386_instruction_type_t[]){
                                 [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_S32R8,
@@ -185,7 +157,6 @@ int cond_op_eq_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
                 if (expr_dst.type == MICRO_STORAGE_STACK) {
                     if (ident->vreg.storage.type == MICRO_STORAGE_STACK) {
                         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
-                        ext->ebp_top_offset += 4;
                         push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(expr_dst.stack.ebp_offset) });
                         push_asm_instr(((micro_asm386_instruction_type_t[]){
                             [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_S32R8,
