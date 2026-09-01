@@ -7,10 +7,6 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (unlikely(start->type != MICRO_EXPR_TOK_EQ)) {
-        return 0;
-    }
-
     micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
