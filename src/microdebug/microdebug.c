@@ -300,10 +300,26 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
 
     [MICRO_ASM386_INSTR_JZ_L32]      = A1("jzL32",      'L', 0),
     [MICRO_ASM386_INSTR_JNZ_L32]     = A1("jnzL32",     'L', 0),
+
     [MICRO_ASM386_INSTR_JL_L32]      = A1("jlL32",      'L', 0),
     [MICRO_ASM386_INSTR_JNL_L32]     = A1("jnlL32",     'L', 0),
     [MICRO_ASM386_INSTR_JG_L32]      = A1("jgL32",      'L', 0),
     [MICRO_ASM386_INSTR_JNG_L32]     = A1("jngL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JB_L32]      = A1("jbL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNB_L32]     = A1("jnbL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JA_L32]      = A1("jaL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNA_L32]     = A1("jnaL32",     'L', 0),
+
+    [MICRO_ASM386_INSTR_JLE_L32]     = A1("jle",        'L', 0),
+    [MICRO_ASM386_INSTR_JNLE_L32]    = A1("jnle",       'L', 0),
+    [MICRO_ASM386_INSTR_JGE_L32]     = A1("jge",        'L', 0),
+    [MICRO_ASM386_INSTR_JNGE_L32]    = A1("jnge",       'L', 0),
+    [MICRO_ASM386_INSTR_JBE_L32]     = A1("jbe",        'L', 0),
+    [MICRO_ASM386_INSTR_JNBE_L32]    = A1("jnbe",       'L', 0),
+    [MICRO_ASM386_INSTR_JAE_L32]     = A1("jae",        'L', 0),
+    [MICRO_ASM386_INSTR_JNAE_L32]    = A1("jnae",       'L', 0),
+
+    
     [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),

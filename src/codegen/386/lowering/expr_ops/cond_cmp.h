@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
+expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -27,7 +27,7 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                         [MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_R32I32,
                     })[ident->vreg.storage.reg.size], { .reg = ident->vreg.storage.reg.reg }, { .imm = micro_imm_le_gen(lit) });
                 }
-                return 3;
+                return (expr_info_t){ 3, ident->vreg.type };
             }
             if (_micro_expr_is_op(second_operand->type)) {
                 int free_space = get_last_free_space(codegen);
@@ -41,9 +41,9 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                     expr_dst.reg.size = MICRO_SIZE_32;
                 }
 
-                size_t expr_size = expr_parse(codegen, expr_dst, second_operand);
-                if (!expr_size) {
-                    return 0;
+                expr_info_t expr_info = expr_parse(codegen, expr_dst, second_operand);
+                if (!expr_info.size) {
+                    return (expr_info_t){ 0, MICRO_TYPE_NULL };
                 }
                 
                 if (expr_dst.type == MICRO_STORAGE_STACK) {
@@ -81,7 +81,7 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                         })[micro_type_to_size[ident->vreg.type]], { .reg = ident->vreg.storage.stack.ebp_offset }, { .reg = expr_dst.reg.reg });
                     }
                 }
-                return 2 + expr_size;
+                return (expr_info_t){ 2 + expr_info.size, ident->vreg.type };
             }
             if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
                 micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
@@ -122,11 +122,11 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                             })[micro_type_to_size[ident->vreg.type]], { .reg = ident->vreg.storage.stack.ebp_offset }, { .reg = ident2->vreg.storage.reg.reg });
                         }
                     }
-                    return 3;
+                    return (expr_info_t){ 3, ident->vreg.type };
                 }
             }
         }
-        return 0;
+        return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_op(first_operand->type)) {
         int free_space = get_last_free_space(codegen);
@@ -140,12 +140,12 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
             expr_dst.reg.size = MICRO_SIZE_32;
         }
 
-        size_t expr_size = expr_parse(codegen, expr_dst, first_operand);
-        if (!expr_size) {
-            return 0;
+        expr_info_t expr_info = expr_parse(codegen, expr_dst, first_operand);
+        if (!expr_info.size) {
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
         }
 
-        micro_expr_tok_t *second_operand = start + expr_size + 1;
+        micro_expr_tok_t *second_operand = start + expr_info.size + 1;
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
 
@@ -186,7 +186,7 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                     }
                 }
             }
-            return 2 + expr_size;
+            return (expr_info_t){ 2 + expr_info.size, expr_info.type };
         }
         if (_micro_expr_is_lit(second_operand->type)) {
             char *end;
@@ -198,7 +198,7 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
             if (expr_dst.type == MICRO_STORAGE_REG) {
                 push_asm_instr(MICRO_ASM386_INSTR_CMP_R32I32, { .reg = expr_dst.reg.reg }, { .imm = micro_imm_le_gen(lit) });
             }
-            return 2 + expr_size;
+            return (expr_info_t){ 2 + expr_info.size, expr_info.type };
         }
         if (_micro_expr_is_op(second_operand->type)) {
             int free_space2 = get_last_free_space(codegen);
@@ -218,9 +218,9 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
                 expr2_dst.reg.size = MICRO_SIZE_32;
             }
 
-            size_t expr2_size = expr_parse(codegen, expr2_dst, second_operand);
-            if (!expr2_size) {
-                return 0;
+            expr_info_t expr2_info = expr_parse(codegen, expr2_dst, second_operand);
+            if (!expr2_info.size) {
+                return (expr_info_t){ 0, MICRO_TYPE_NULL };
             }
 
             if (expr_dst.type == MICRO_STORAGE_STACK) {
@@ -235,7 +235,7 @@ int cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst
             }
         }
     }
-    return 0;
+    return (expr_info_t){ 0, MICRO_TYPE_NULL };
 }
 
 #endif

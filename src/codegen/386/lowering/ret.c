@@ -43,7 +43,7 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
 
     if (instr_ret.val_expr) {
-        size_t expr_size = expr_parse(codegen, (micro_codegen386_storage_t){
+        expr_info_t expr_info = expr_parse(codegen, (micro_codegen386_storage_t){
             .type = MICRO_STORAGE_REG,
             .reg = {
                 .reg = MICRO_ASM386_REG32_EAX,
@@ -51,7 +51,7 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
             }
         }, instr_ret.val_expr);
 
-        if (!expr_size) {
+        if (!expr_info.size) {
             // micro_push_err((micro_error_t){
             //     .err = MICRO_ERROR_EXPR_PARSE,
             //     .instr = MICRO_INSTR_RET

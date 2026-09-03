@@ -11,6 +11,11 @@
         .operand2 = (micro_asm386_instruction_operand_t)op2,  \
     })
 
+typedef struct {
+    size_t       size;
+    micro_type_t type;
+} expr_info_t;
+
 static const micro_asm386_instruction_type_t movRS_tbl[3] = {
     [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_MOV_R8S32,
     [MICRO_SIZE_16] = MICRO_ASM386_INSTR_MOV_R16S32,
@@ -53,18 +58,18 @@ int asmopting(micro_codegen_t *codegen);
 
 int label_resulting(micro_codegen_t *codegen);
 
-size_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
-size_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);
-size_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
-size_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t *vreg);
+expr_info_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
+expr_info_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);
+expr_info_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
+expr_info_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t *vreg);
 
 // return offset to next token after expr or 0 if err
-size_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start);
+expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start);
 
 // return number of register or ebp offset, do not change ebp_offset
 int get_last_free_space(micro_codegen_t *codegen);
 
 // sets only flags
-size_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start);
+expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start);
 
 #endif

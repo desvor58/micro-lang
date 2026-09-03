@@ -259,10 +259,25 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JZ_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x84 });
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNZ_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x85 });
+
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JL_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x8C });
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNL_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x8D });
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JG_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x8F });
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNG_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x8E });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JB_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x82 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNB_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x83 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JA_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x87 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNA_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x86 });
+
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JLE_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x8E });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNLE_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x8F });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JGE_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x8D });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNGE_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x8C });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JBE_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x86 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNBE_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x87 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JAE_L32,  2, instr->operand1.lbl_name, { 0x0F, 0x83 });
+        instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNAE_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x82 });
+
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JMP_L32, 1, instr->operand1.lbl_name, { 0xE9 });
 
         instr_handle(MICRO_ASM386_INSTR_XCHG_R32R32, 2, {       0x87, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });

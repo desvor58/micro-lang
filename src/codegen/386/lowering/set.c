@@ -61,8 +61,8 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     if (!instr_set.val_expr) return 0;
 
-    size_t expr_size = expr_parse(codegen, dst, instr_set.val_expr);
-    if (!expr_size) {
+    expr_info_t expr_info = expr_parse(codegen, dst, instr_set.val_expr);
+    if (!expr_info.size) {
         // micro_push_err((micro_error_t){
         //     .err = MICRO_ERROR_EXPR_PARSE,
         //     .instr = MICRO_INSTR_SET

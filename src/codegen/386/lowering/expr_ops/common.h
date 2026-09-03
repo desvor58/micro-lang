@@ -32,7 +32,7 @@ static void op_lit_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, mi
     }
 }
 
-static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_expr_tok_t *expr)
+static expr_info_t op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_expr_tok_t *expr)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
@@ -49,8 +49,8 @@ static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, mi
         expr_dst.reg.size = MICRO_SIZE_32;
     }
 
-    int expr_size = expr_parse(codegen, expr_dst, expr);
-    if (!expr_size) return 0;
+    expr_info_t expr_info = expr_parse(codegen, expr_dst, expr);
+    if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 
     if (expr_dst.type == MICRO_STORAGE_REG) {
         switch (dst.type) {
@@ -98,7 +98,7 @@ static int op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, mi
                 break;
         }
     }
-    return expr_size;
+    return expr_info;
 }
 
 static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_codegen386_ident_vreg_t vreg)
