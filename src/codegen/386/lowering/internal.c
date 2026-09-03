@@ -146,6 +146,68 @@ expr_info_t expr_vreg_parse(micro_codegen_t *codegen, micro_codegen386_storage_t
     return (expr_info_t){ 0, MICRO_TYPE_NULL };
 }
 
+static micro_asm386_instruction_type_t get_set_instr(micro_expr_tok_t *tok, micro_type_t expr_type)
+{
+    micro_asm386_instruction_type_t instr = MICRO_ASM386_INSTR_JNZ_L32;
+
+    if (tok->type == MICRO_EXPR_TOK_EXCLAMATION) {
+        instr = get_set_instr(tok + 1, expr_type);
+        instr = (micro_asm386_instruction_type_t[]){
+            [MICRO_ASM386_INSTR_SETZ_R8]   = MICRO_ASM386_INSTR_SETNZ_R8,
+            [MICRO_ASM386_INSTR_SETNZ_R8]  = MICRO_ASM386_INSTR_SETZ_R8,
+            [MICRO_ASM386_INSTR_SETL_R8]   = MICRO_ASM386_INSTR_SETNL_R8,
+            [MICRO_ASM386_INSTR_SETNL_R8]  = MICRO_ASM386_INSTR_SETL_R8,
+            [MICRO_ASM386_INSTR_SETG_R8]   = MICRO_ASM386_INSTR_SETNG_R8,
+            [MICRO_ASM386_INSTR_SETNG_R8]  = MICRO_ASM386_INSTR_SETG_R8,
+            [MICRO_ASM386_INSTR_SETB_R8]   = MICRO_ASM386_INSTR_SETNB_R8,
+            [MICRO_ASM386_INSTR_SETNB_R8]  = MICRO_ASM386_INSTR_SETB_R8,
+            [MICRO_ASM386_INSTR_SETA_R8]   = MICRO_ASM386_INSTR_SETNA_R8,
+            [MICRO_ASM386_INSTR_SETNA_R8]  = MICRO_ASM386_INSTR_SETA_R8,
+            [MICRO_ASM386_INSTR_SETLE_R8]  = MICRO_ASM386_INSTR_SETNLE_R8,
+            [MICRO_ASM386_INSTR_SETNLE_R8] = MICRO_ASM386_INSTR_SETLE_R8,
+            [MICRO_ASM386_INSTR_SETGE_R8]  = MICRO_ASM386_INSTR_SETNGE_R8,
+            [MICRO_ASM386_INSTR_SETNGE_R8] = MICRO_ASM386_INSTR_SETGE_R8,
+            [MICRO_ASM386_INSTR_SETBE_R8]  = MICRO_ASM386_INSTR_SETNBE_R8,
+            [MICRO_ASM386_INSTR_SETNBE_R8] = MICRO_ASM386_INSTR_SETBE_R8,
+            [MICRO_ASM386_INSTR_SETAE_R8]  = MICRO_ASM386_INSTR_SETNAE_R8,
+            [MICRO_ASM386_INSTR_SETNAE_R8] = MICRO_ASM386_INSTR_SETAE_R8,
+        }[instr];
+        return instr;
+    } else
+    if (tok->type == MICRO_EXPR_TOK_EQ) {
+        instr = MICRO_ASM386_INSTR_SETZ_R8;
+    } else
+    if (tok->type == MICRO_EXPR_TOK_LESS) {
+        if (micro_type_is_unsigned(expr_type)) {
+            instr = MICRO_ASM386_INSTR_SETB_R8;
+        } else {
+            instr = MICRO_ASM386_INSTR_SETL_R8;
+        }
+    } else
+    if (tok->type == MICRO_EXPR_TOK_GREAT) {
+        if (micro_type_is_unsigned(expr_type)) {
+            instr = MICRO_ASM386_INSTR_SETA_R8;
+        } else {
+            instr = MICRO_ASM386_INSTR_SETG_R8;
+        }
+    } else
+    if (tok->type == MICRO_EXPR_TOK_LESS_OR_EQ) {
+        if (micro_type_is_unsigned(expr_type)) {
+            instr = MICRO_ASM386_INSTR_SETBE_R8;
+        } else {
+            instr = MICRO_ASM386_INSTR_SETLE_R8;
+        }
+    } else
+    if (tok->type == MICRO_EXPR_TOK_GREAT_OR_EQ) {
+        if (micro_type_is_unsigned(expr_type)) {
+            instr = MICRO_ASM386_INSTR_SETAE_R8;
+        } else {
+            instr = MICRO_ASM386_INSTR_SETGE_R8;
+        }
+    }
+    return instr;
+}
+
 expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
@@ -192,6 +254,34 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
     if (_micro_expr_is_op(start->type)) {
         op_info_t op_info = op_tbl[start->type];
         res = op_info.handler(codegen, dst, start);
+        if (op_info.is_cond) {
+            micro_asm386_instruction_type_t set_instr = get_set_instr(start, res.type);
+
+            if (dst.type == MICRO_STORAGE_REG) {
+                push_asm_instr(set_instr, { .reg = dst.reg.reg }, {});
+                goto exit;
+            }
+
+            int need_pop_eax = 0;
+            int free_reg = get_last_free_space(codegen);
+            if (free_reg < 0) {
+                need_pop_eax = 1;
+                push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+                free_reg = 0;
+            }
+
+            push_asm_instr(set_instr, { .reg = free_reg }, {});
+
+            if (dst.type == MICRO_STORAGE_DATASEC) {
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_M8R8, { .imm = micro_imm_le_gen(dst.datasec.address) }, { .reg = free_reg });
+            } else {
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R8, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = free_reg });
+            }
+
+            if (need_pop_eax) {
+                push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+            }
+        }
         goto exit;
     }
 

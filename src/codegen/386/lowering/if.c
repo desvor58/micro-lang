@@ -1,6 +1,6 @@
 #include "../internal.h"
 
-static size_t get_jump_instr(micro_expr_tok_t *tok, micro_type_t cond_expr_type)
+static micro_asm386_instruction_type_t get_jump_instr(micro_expr_tok_t *tok, micro_type_t cond_expr_type)
 {
     micro_asm386_instruction_type_t instr = MICRO_ASM386_INSTR_JNZ_L32;
 

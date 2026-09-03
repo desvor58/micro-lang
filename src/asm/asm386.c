@@ -235,13 +235,6 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_CMP_R16S32, 7, { 0x66, 0x3B, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_CMP_R8S32,  6, {       0x3A, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
 
-        instr_handle(MICRO_ASM386_INSTR_SETZ_R8,   3, { 0x0F, 0x94, 0xC0 | instr->operand1.reg });
-        instr_handle(MICRO_ASM386_INSTR_SETNZ_R8,  3, { 0x0F, 0x95, 0xC0 | instr->operand1.reg });
-        instr_handle(MICRO_ASM386_INSTR_SETG_R8,   3, { 0x0F, 0x9F, 0xC0 | instr->operand1.reg });
-        instr_handle(MICRO_ASM386_INSTR_SETGE_R8,  3, { 0x0F, 0x9D, 0xC0 | instr->operand1.reg });
-        instr_handle(MICRO_ASM386_INSTR_SETL_R8,   3, { 0x0F, 0x9C, 0xC0 | instr->operand1.reg });
-        instr_handle(MICRO_ASM386_INSTR_SETLE_R8,  3, { 0x0F, 0x9E, 0xC0 | instr->operand1.reg });
-
         instr_handle(MICRO_ASM386_INSTR_MOVZX_R32R8, 3, {       0x0F, 0xB6, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_MOVZX_R16R8, 4, { 0x66, 0x0F, 0xB6, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
 
@@ -279,6 +272,27 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JNAE_L32, 2, instr->operand1.lbl_name, { 0x0F, 0x82 });
 
         instr_handle_rel_lbl(MICRO_ASM386_INSTR_JMP_L32, 1, instr->operand1.lbl_name, { 0xE9 });
+
+        instr_handle(MICRO_ASM386_INSTR_SETZ_R8,   3, { 0x0F, 0x94, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNZ_R8,  3, { 0x0F, 0x95, 0xC0 | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_SETL_R8,   3, { 0x0F, 0x9C, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNL_R8,  3, { 0x0F, 0x9D, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETG_R8,   3, { 0x0F, 0x9F, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNG_R8,  3, { 0x0F, 0x9E, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETB_R8,   3, { 0x0F, 0x92, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNB_R8,  3, { 0x0F, 0x93, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETA_R8,   3, { 0x0F, 0x97, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNA_R8,  3, { 0x0F, 0x96, 0xC0 | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_SETLE_R8,  3, { 0x0F, 0x9E, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNLE_R8, 3, { 0x0F, 0x9F, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETGE_R8,  3, { 0x0F, 0x9D, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNGE_R8, 3, { 0x0F, 0x9C, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETBE_R8,  3, { 0x0F, 0x96, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNBE_R8, 3, { 0x0F, 0x97, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETAE_R8,  3, { 0x0F, 0x93, 0xC0 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SETNAE_R8, 3, { 0x0F, 0x92, 0xC0 | instr->operand1.reg });
 
         instr_handle(MICRO_ASM386_INSTR_XCHG_R32R32, 2, {       0x87, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });
         instr_handle(MICRO_ASM386_INSTR_XCHG_R16R16, 3, { 0x66, 0x87, 0b11000000 | (instr->operand1.reg << 3) | instr->operand2.reg });

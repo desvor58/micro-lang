@@ -278,13 +278,6 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_CMP_S32I16]  = A("cmpS32I16",   'V', 16, 'V', 16),
     [MICRO_ASM386_INSTR_CMP_S32I8]   = A("cmpS32I8",    'V', 8,  'V', 8),
 
-    [MICRO_ASM386_INSTR_SETZ_R8]     = A1("setzR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETNZ_R8]    = A1("setnzR8",    'R', 8),
-    [MICRO_ASM386_INSTR_SETG_R8]     = A1("setgR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETGE_R8]    = A1("setgeR8",    'R', 8),
-    [MICRO_ASM386_INSTR_SETL_R8]     = A1("setlR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETLE_R8]    = A1("setleR8",    'R', 8),
-
     [MICRO_ASM386_INSTR_MOVZX_R32R8] = A("movzxR32R8",  'R', 32, 'R', 8),
     [MICRO_ASM386_INSTR_MOVZX_R16R8] = A("movzxR16R8",  'R', 16, 'R', 8),
 
@@ -319,7 +312,27 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_JAE_L32]     = A1("jae",        'L', 0),
     [MICRO_ASM386_INSTR_JNAE_L32]    = A1("jnae",       'L', 0),
 
+    [MICRO_ASM386_INSTR_SETZ_R8]     = A1("setz",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNZ_R8]    = A1("setnz",      'R', 8),
+
+    [MICRO_ASM386_INSTR_SETL_R8]     = A1("setl",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNL_R8]    = A1("setnl",      'R', 8),
+    [MICRO_ASM386_INSTR_SETG_R8]     = A1("setg",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNG_R8]    = A1("setng",      'R', 8),
+    [MICRO_ASM386_INSTR_SETB_R8]     = A1("setb",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNB_R8]    = A1("setnb",      'R', 8),
+    [MICRO_ASM386_INSTR_SETA_R8]     = A1("seta",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNA_R8]    = A1("setna",      'R', 8),
     
+    [MICRO_ASM386_INSTR_SETLE_R8]    = A1("setle",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNLE_R8]   = A1("setnle",     'R', 8),
+    [MICRO_ASM386_INSTR_SETGE_R8]    = A1("setge",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNGE_R8]   = A1("setnge",     'R', 8),
+    [MICRO_ASM386_INSTR_SETBE_R8]    = A1("setbe",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNBE_R8]   = A1("setnbe",     'R', 8),
+    [MICRO_ASM386_INSTR_SETAE_R8]    = A1("setae",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNAE_R8]   = A1("setnae",     'R', 8),
+
     [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),
