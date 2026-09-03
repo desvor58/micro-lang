@@ -20,15 +20,16 @@
 typedef struct {
     char inputfile[MICRO_MAX_SYMBOL_SIZE];
     char outfile[MICRO_MAX_SYMBOL_SIZE];
-    u8   toks_put   : 1;
-    u8   instrs_put : 1;
-    u8   asm_put    : 1;
+    u8   toks_put       : 1;
+    u8   instrs_put     : 1;
+    u8   asm_put        : 1;
+    u8   skip_asmopting : 1;
     enum {
         STOPAFTER_NONE,
         STOPAFTER_FILE_READ,
         STOPAFTER_LEXER,
         STOPAFTER_INSTRGEN,
-        STOPAFTER_OPTIMIZER,
+        STOPAFTER_ASMOPTING,
     } stop_at;
     micro_codegen_flags_t codegen_flags;
 } mc_args_t;
@@ -51,8 +52,10 @@ void print_usage()
         "      r                  - stop after reading file\n"
         "      l                  - stop after lexing\n"
         "      i                  - stop after instruction generation\n"
-        "      o                  - stop after optimization stage (non supported now)\n"
+        "      a                  - stop after asm optimization stage\n"
         "    -Fno-err-outside-fun - disable errors like \"instruction 'set' can be only in function body\"\n"
+        "    -N                   - skip stage of compiling\n"
+        "      a                  - skip asm optimizing\n"
     );
     exit(0);
 }
@@ -99,10 +102,17 @@ mc_args_t mc_args_parse(int argc, char **argv)
                 if (argv[i][2] == 'i') {
                     args.stop_at = STOPAFTER_INSTRGEN;
                 } else
-                if (argv[i][2] == 'o') {
-                    args.stop_at = STOPAFTER_OPTIMIZER;
+                if (argv[i][2] == 'a') {
+                    args.stop_at = STOPAFTER_ASMOPTING;
                 } else {
                     printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'o')", argv[i][2]);
+                }
+            } else
+            if (argv[i][1] == 'N') {
+                for (size_t j = 2; argv[i][j]; j++) {
+                    if (argv[i][j] == 'a') {
+                        args.skip_asmopting = 1;
+                    }
                 }
             } else
             if (!strcmp(argv[i], "-Fno-err-outside-fun")) {
@@ -216,12 +226,20 @@ int main(int argc, char **argv)
                     return 4;
                 }
 
+        mc_instrgen_deinit(&instrgen);
+        sct_vector_deinit(&toks);
+
+                if (!args.skip_asmopting) {
+                    micro_asm386_optimize(&asm_instrs);
+                }
+
                 if (args.asm_put) {
                     micro_debug_put_asm(&asm_instrs);
                 }
 
-        mc_instrgen_deinit(&instrgen);
-        sct_vector_deinit(&toks);
+                if (STOPAFTER_ASMOPTING) {
+                    exit(0);
+                }
 
                 micro_asm386_emit(&asm_instrs, &outbuf);
 

@@ -367,3 +367,64 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 
     sct_hashmap_deinit(&lbls);
 }
+
+// bool return (1 - optimized, 0 - no)
+static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro_asm386_instruction_t *instr)
+{
+    if (instr->opcode == MICRO_ASM386_INSTR_MOV_R32R32
+     || instr->opcode == MICRO_ASM386_INSTR_MOV_R16R16
+     || instr->opcode == MICRO_ASM386_INSTR_MOV_R8R8) {
+        if (instr->operand1.reg == instr->operand2.reg) {
+            sct_vector_erase(instrs, i);
+            return 1;
+        }
+    }
+
+    if (instr->opcode == MICRO_ASM386_INSTR_SUB_R32I32
+     || instr->opcode == MICRO_ASM386_INSTR_SUB_R16I16
+     || instr->opcode == MICRO_ASM386_INSTR_SUB_R8I8
+     || instr->opcode == MICRO_ASM386_INSTR_ADD_R32I32
+     || instr->opcode == MICRO_ASM386_INSTR_ADD_R16I16
+     || instr->opcode == MICRO_ASM386_INSTR_ADD_R8I8) {
+        if (instr->operand2.imm.val == 0) {
+            sct_vector_erase(instrs, i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// bool return (1 - optimized, 0 - no)
+static inline size_t optimize_double_instr(sct_vector_t *instrs, size_t i, micro_asm386_instruction_t *instr1, micro_asm386_instruction_t *instr2)
+{
+    if (instr1->opcode == MICRO_ASM386_INSTR_JMP_L32 && instr2->opcode == MICRO_ASM386_INSTR_LBL) {
+        if (!strcmp(instr1->operand1.lbl_name, instr2->operand1.lbl_name)) {
+            sct_vector_erase(instrs, i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void micro_asm386_optimize(sct_vector_t *instrs)
+{
+    for (size_t i = 0; i < instrs->size; i++) {
+        micro_asm386_instruction_t *instr1 = sct_vector_get(instrs, i);
+
+        size_t instr1_optimized = optimize_single_instr(instrs, i, instr1);
+        if (instr1_optimized && i > 0) {
+            i--;
+        }
+
+        if (i == instrs->size - 1) {
+            return;
+        }
+
+        micro_asm386_instruction_t *instr2 = sct_vector_get(instrs, i + 1);
+
+        size_t instr2_optimized = optimize_double_instr(instrs, i, instr1, instr2);
+        if (instr2_optimized && i > 0) {
+            i--;
+        }
+    }
+}

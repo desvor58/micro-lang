@@ -271,6 +271,8 @@ typedef struct {
     micro_asm386_instruction_operand_t operand2;
 } micro_asm386_instruction_t;
 
+void micro_asm386_optimize(sct_vector_t *instrs);
+
 void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf);
 
 #endif
