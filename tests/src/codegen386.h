@@ -608,6 +608,66 @@ MunitResult test_codegen_call(const MunitParameter params[], void *data)
     return MUNIT_OK;
 }
 
+MunitResult test_codegen_call_spills_results(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    /* Recursion test: two bare sets, then a call for each, then `ret + f1 f2`.
+     * Registers holding f1/f2 must be spilled to the stack frame before the
+     * calls (the callee clobbers eax/ecx/edx) and each result must be written
+     * back to its own stack slot, otherwise `ret` reads garbage. */
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun fib\n"
+                 "    i32 n\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    if <= n 1 : end_rec;\n"
+                 "    set i32 f1;\n"
+                 "    set i32 f2;\n"
+                 "    call f1 fib - n 1;\n"
+                 "    call f2 fib - n 2;\n"
+                 "    ret + f1 f2;\n"
+                 "end_rec:\n"
+                 "    ret n;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // spill f1 (eax) and f2 (ecx) to [ebp-4] and [ebp-8]
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_MOV_S32R32);
+    cg_assert_asm_imm(&ctx, 6, 1, -4);
+    cg_assert_asm_reg(&ctx, 6, 2, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&ctx, 7, MICRO_ASM386_INSTR_MOV_S32R32);
+    cg_assert_asm_imm(&ctx, 7, 1, -8);
+    cg_assert_asm_reg(&ctx, 7, 2, MICRO_ASM386_REG32_ECX);
+
+    // first call result stored to f1's slot
+    cg_assert_asm_opcode(&ctx, 13, MICRO_ASM386_INSTR_MOV_S32R32);
+    cg_assert_asm_imm(&ctx, 13, 1, -4);
+    cg_assert_asm_reg(&ctx, 13, 2, MICRO_ASM386_REG32_EAX);
+
+    // second call result stored to f2's slot
+    cg_assert_asm_opcode(&ctx, 19, MICRO_ASM386_INSTR_MOV_S32R32);
+    cg_assert_asm_imm(&ctx, 19, 1, -8);
+    cg_assert_asm_reg(&ctx, 19, 2, MICRO_ASM386_REG32_EAX);
+
+    // ret + f1 f2: eax = [ebp-4] ; add eax, [ebp-8]
+    cg_assert_asm_opcode(&ctx, 20, MICRO_ASM386_INSTR_MOV_R32S32);
+    cg_assert_asm_reg(&ctx, 20, 1, MICRO_ASM386_REG32_EAX);
+    cg_assert_asm_imm(&ctx, 20, 2, -4);
+
+    cg_assert_asm_opcode(&ctx, 21, MICRO_ASM386_INSTR_ADD_R32S32);
+    cg_assert_asm_reg(&ctx, 21, 1, MICRO_ASM386_REG32_EAX);
+    cg_assert_asm_imm(&ctx, 21, 2, -8);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_two_funs(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1278,6 +1338,7 @@ static MunitTest codegen386_tests[] = {
     { "/ret_expr", test_codegen_ret_expr, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/ret_vreg", test_codegen_ret_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/call", test_codegen_call, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/call_spills_results", test_codegen_call_spills_results, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/two_funs", test_codegen_two_funs, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lbl", test_codegen_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/goto", test_codegen_goto, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

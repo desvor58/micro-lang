@@ -59,6 +59,10 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         sct_hashmap_add(&ext->idents, instr_set.reg_name, &new_ident);
     }
 
+    if (dst.type == MICRO_STORAGE_REG) {
+        ext->used_regs[dst.reg.reg] = 1;
+    }
+
     if (!instr_set.val_expr) return 0;
 
     expr_info_t expr_info = expr_parse(codegen, dst, instr_set.val_expr);
@@ -68,9 +72,6 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
         //     .instr = MICRO_INSTR_SET
         // });
         return 1;
-    }
-    if (dst.type == MICRO_STORAGE_REG) {
-        ext->used_regs[dst.reg.reg] = 1;
     }
     return 0;
 }
