@@ -386,9 +386,16 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_MUL_R32]     = A1("mulR32",     'R', 32),
     [MICRO_ASM386_INSTR_MUL_R16]     = A1("mulR16",     'R', 16),
     [MICRO_ASM386_INSTR_MUL_R8]      = A1("mulR8",      'R', 8),
+
+    [MICRO_ASM386_INSTR_IMUL_R32]    = A1("imulR32",     'R', 32),
+    [MICRO_ASM386_INSTR_IMUL_R16]    = A1("imulR16",     'R', 16),
+    [MICRO_ASM386_INSTR_IMUL_R8]     = A1("imulR8",      'R', 8),
+
     [MICRO_ASM386_INSTR_IMUL_R32R32] = A("imulR32R32",  'R', 32, 'R', 32),
     [MICRO_ASM386_INSTR_IMUL_R16R16] = A("imulR16R16",  'R', 16, 'R', 16),
-    [MICRO_ASM386_INSTR_IMUL_R8R8]   = A("imulR8R8",    'R', 8,  'R', 8),
+
+    [MICRO_ASM386_INSTR_IMUL_R32I32] = A("imulR32I32",  'R', 32, 'V', 0),
+    [MICRO_ASM386_INSTR_IMUL_R16I16] = A("imulR16I16",  'R', 16, 'V', 0),
 
     [MICRO_ASM386_INSTR_DIV_R32]     = A1("divR32",     'R', 32),
     [MICRO_ASM386_INSTR_DIV_R16]     = A1("divR16",     'R', 16),
