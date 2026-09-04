@@ -108,7 +108,7 @@ u8 micro_debug_op_args_num[] = {
 
 void micro_debug_put_err(const char *file, micro_error_t err)
 {
-    printf("Error: %s%s%s: %s\n", file, err.instr ? "[" : "", err.instr ? micro_debug_instr_str[err.instr] : "", micro_debug_err_str[err.err]);
+    printf("Error: %s[%s]: %s\n", file, micro_debug_instr_str[err.instr], micro_debug_err_str[err.err]);
 }
 
 void micro_debug_put_tok(mc_token_t tok)
@@ -278,13 +278,6 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_CMP_S32I16]  = A("cmpS32I16",   'V', 16, 'V', 16),
     [MICRO_ASM386_INSTR_CMP_S32I8]   = A("cmpS32I8",    'V', 8,  'V', 8),
 
-    [MICRO_ASM386_INSTR_SETZ_R8]     = A1("setzR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETNZ_R8]    = A1("setnzR8",    'R', 8),
-    [MICRO_ASM386_INSTR_SETG_R8]     = A1("setgR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETGE_R8]    = A1("setgeR8",    'R', 8),
-    [MICRO_ASM386_INSTR_SETL_R8]     = A1("setlR8",     'R', 8),
-    [MICRO_ASM386_INSTR_SETLE_R8]    = A1("setleR8",    'R', 8),
-
     [MICRO_ASM386_INSTR_MOVZX_R32R8] = A("movzxR32R8",  'R', 32, 'R', 8),
     [MICRO_ASM386_INSTR_MOVZX_R16R8] = A("movzxR16R8",  'R', 16, 'R', 8),
 
@@ -298,12 +291,48 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_TEST_S32I16] = A("testS32I16",  'V', 0,  'V', 0),
     [MICRO_ASM386_INSTR_TEST_S32I8]  = A("testS32I8",   'V', 0,  'V', 0),
 
-    [MICRO_ASM386_INSTR_JZ_S32]      = A1("jzS32",      'V', 0),
-    [MICRO_ASM386_INSTR_JNZ_S32]     = A1("jnzS32",     'V', 0),
-    [MICRO_ASM386_INSTR_JMP_S32]     = A1("jmpS32",     'V', 0),
-
     [MICRO_ASM386_INSTR_JZ_L32]      = A1("jzL32",      'L', 0),
     [MICRO_ASM386_INSTR_JNZ_L32]     = A1("jnzL32",     'L', 0),
+
+    [MICRO_ASM386_INSTR_JL_L32]      = A1("jlL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNL_L32]     = A1("jnlL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JG_L32]      = A1("jgL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNG_L32]     = A1("jngL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JB_L32]      = A1("jbL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNB_L32]     = A1("jnbL32",     'L', 0),
+    [MICRO_ASM386_INSTR_JA_L32]      = A1("jaL32",      'L', 0),
+    [MICRO_ASM386_INSTR_JNA_L32]     = A1("jnaL32",     'L', 0),
+
+    [MICRO_ASM386_INSTR_JLE_L32]     = A1("jle",        'L', 0),
+    [MICRO_ASM386_INSTR_JNLE_L32]    = A1("jnle",       'L', 0),
+    [MICRO_ASM386_INSTR_JGE_L32]     = A1("jge",        'L', 0),
+    [MICRO_ASM386_INSTR_JNGE_L32]    = A1("jnge",       'L', 0),
+    [MICRO_ASM386_INSTR_JBE_L32]     = A1("jbe",        'L', 0),
+    [MICRO_ASM386_INSTR_JNBE_L32]    = A1("jnbe",       'L', 0),
+    [MICRO_ASM386_INSTR_JAE_L32]     = A1("jae",        'L', 0),
+    [MICRO_ASM386_INSTR_JNAE_L32]    = A1("jnae",       'L', 0),
+
+    [MICRO_ASM386_INSTR_SETZ_R8]     = A1("setz",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNZ_R8]    = A1("setnz",      'R', 8),
+
+    [MICRO_ASM386_INSTR_SETL_R8]     = A1("setl",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNL_R8]    = A1("setnl",      'R', 8),
+    [MICRO_ASM386_INSTR_SETG_R8]     = A1("setg",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNG_R8]    = A1("setng",      'R', 8),
+    [MICRO_ASM386_INSTR_SETB_R8]     = A1("setb",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNB_R8]    = A1("setnb",      'R', 8),
+    [MICRO_ASM386_INSTR_SETA_R8]     = A1("seta",       'R', 8),
+    [MICRO_ASM386_INSTR_SETNA_R8]    = A1("setna",      'R', 8),
+    
+    [MICRO_ASM386_INSTR_SETLE_R8]    = A1("setle",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNLE_R8]   = A1("setnle",     'R', 8),
+    [MICRO_ASM386_INSTR_SETGE_R8]    = A1("setge",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNGE_R8]   = A1("setnge",     'R', 8),
+    [MICRO_ASM386_INSTR_SETBE_R8]    = A1("setbe",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNBE_R8]   = A1("setnbe",     'R', 8),
+    [MICRO_ASM386_INSTR_SETAE_R8]    = A1("setae",      'R', 8),
+    [MICRO_ASM386_INSTR_SETNAE_R8]   = A1("setnae",     'R', 8),
+
     [MICRO_ASM386_INSTR_JMP_L32]     = A1("jmpL32",     'L', 0),
 
     [MICRO_ASM386_INSTR_XCHG_R32R32] = A("xchgR32R32",  'R', 32, 'R', 32),
@@ -357,9 +386,16 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_MUL_R32]     = A1("mulR32",     'R', 32),
     [MICRO_ASM386_INSTR_MUL_R16]     = A1("mulR16",     'R', 16),
     [MICRO_ASM386_INSTR_MUL_R8]      = A1("mulR8",      'R', 8),
+
+    [MICRO_ASM386_INSTR_IMUL_R32]    = A1("imulR32",     'R', 32),
+    [MICRO_ASM386_INSTR_IMUL_R16]    = A1("imulR16",     'R', 16),
+    [MICRO_ASM386_INSTR_IMUL_R8]     = A1("imulR8",      'R', 8),
+
     [MICRO_ASM386_INSTR_IMUL_R32R32] = A("imulR32R32",  'R', 32, 'R', 32),
     [MICRO_ASM386_INSTR_IMUL_R16R16] = A("imulR16R16",  'R', 16, 'R', 16),
-    [MICRO_ASM386_INSTR_IMUL_R8R8]   = A("imulR8R8",    'R', 8,  'R', 8),
+
+    [MICRO_ASM386_INSTR_IMUL_R32I32] = A("imulR32I32",  'R', 32, 'V', 0),
+    [MICRO_ASM386_INSTR_IMUL_R16I16] = A("imulR16I16",  'R', 16, 'V', 0),
 
     [MICRO_ASM386_INSTR_DIV_R32]     = A1("divR32",     'R', 32),
     [MICRO_ASM386_INSTR_DIV_R16]     = A1("divR16",     'R', 16),

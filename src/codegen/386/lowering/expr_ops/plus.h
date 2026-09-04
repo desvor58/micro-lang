@@ -29,12 +29,12 @@ static const op_tbls_t plus_op_tbls = {
     .opSR_fn = MICRO_ASM386_INSTR_ADD_S32R32,
 };
 
-int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
+expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     if (unlikely(start->type != MICRO_EXPR_TOK_PLUS)) {
-        return 0;
+        return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
 
     micro_expr_tok_t *first_operand = start + 1;
@@ -42,8 +42,8 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
 
         if (ident->type == MICRO_IDENT_VREG) {
-            int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
-            if (!ok) return 0;
+            expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
         }
         
         micro_expr_tok_t *second_operand = start + 2;
@@ -53,23 +53,23 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             i32 lit = strtol(second_operand->val, &end, 10);
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, lit);
-            return 3;
+            return (expr_info_t){ 3, ident->vreg.type };
         }
         if (_micro_expr_is_op(second_operand->type)) {
-            int expr_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
-            if (!expr_size) return 0;
-            return 2 + expr_size;
+            expr_info_t expr_info = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
+            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            return (expr_info_t){ 2 + expr_info.size, ident->vreg.type };
         }
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
 
             if (ident2->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident2->vreg);
-                return 3;
+                return (expr_info_t){ 3, ident->vreg.type };
             }
-            return 0;
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
         }
-        return 0;
+        return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_lit(first_operand->type)) {
         char *end;
@@ -81,61 +81,63 @@ int op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t dst, mi
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
-            int ok = expr_lit_parse(codegen, dst, first_lit);
-            if (!ok) return 0;
+            expr_info_t first_info = expr_lit_parse(codegen, dst, first_lit);
+            if (!first_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
-            return 3;
+            return (expr_info_t){ 3, first_info.type };
         }
         if (_micro_expr_is_op(second_operand->type)) {
-            int expr_size = expr_parse(codegen, dst, second_operand);
-            if (!expr_size) return 0;
+            expr_info_t expr_info = expr_parse(codegen, dst, second_operand);
+            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
-            return 2 + expr_size;
+            return (expr_info_t){ 2 + expr_info.size, (first_lit < 0) ? MICRO_TYPE_I32 : MICRO_TYPE_U32 };
         }
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+
+            expr_info_t expr_info = (expr_info_t){ 0, MICRO_TYPE_NULL };
             if (ident->type == MICRO_IDENT_VREG) {
-                int ok = expr_vreg_parse(codegen, dst, &ident->vreg);
-                if (!ok) return 0;
+                expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+                if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
             }
             op_lit_to_dst(codegen, &plus_op_tbls, dst, first_lit);
-            return 3;
+            return (expr_info_t){ 3, expr_info.type };
         }
-        return 0;
+        return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_op(first_operand->type)) {
-        int expr_size = expr_parse(codegen, dst, first_operand);
-        if (!expr_size) return 0;
+        expr_info_t expr_info = expr_parse(codegen, dst, first_operand);
+        if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 
         if (dst.type == MICRO_STORAGE_REG) {
             ext->used_regs[dst.reg.reg] = 1;
         }
 
-        micro_expr_tok_t *second_operand = start + expr_size + 1;
+        micro_expr_tok_t *second_operand = start + expr_info.size + 1;
         if (_micro_expr_is_lit(second_operand->type)) {
             char *end;
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
             op_lit_to_dst(codegen, &plus_op_tbls, dst, second_lit);
-            return 2 + expr_size;
+            return (expr_info_t){ 2 + expr_info.size, expr_info.type };
         }
         if (_micro_expr_is_op(second_operand->type)) {
-            int expr2_size = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
-            if (!expr2_size) return 0;
-            return 1 + expr_size + expr2_size;
+            expr_info_t expr2_info = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
+            if (!expr2_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            return (expr_info_t){ 1 + expr_info.size + expr2_info.size, expr_info.type };
         }
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
             if (ident->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &plus_op_tbls, dst, ident->vreg);
             }
-            return 2 + expr_size;
+            return (expr_info_t){ 2 + expr_info.size, expr_info.type };
         }
     }
-    return 0;
+    return (expr_info_t){ 0, MICRO_TYPE_NULL };
 }
 
 #endif

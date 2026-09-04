@@ -42,6 +42,12 @@ typedef enum {
     MICRO_TYPE_PTR,
 } micro_type_t;
 
+#define micro_type_is_unsigned(T)  \
+    ((T) == MICRO_TYPE_U8 ||  \
+     (T) == MICRO_TYPE_U16 ||  \
+     (T) == MICRO_TYPE_U32 ||  \
+     (T) == MICRO_TYPE_PTR)
+
 typedef enum {
     MICRO_SIZE_8  = 0,
     MICRO_SIZE_16 = 1,
