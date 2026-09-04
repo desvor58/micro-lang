@@ -40,6 +40,13 @@ expr_info_t op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_
     micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
+        if (!ident) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_UNDEFINED_IDENT,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
 
         if (ident->type == MICRO_IDENT_VREG) {
             expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
@@ -62,6 +69,13 @@ expr_info_t op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_
         }
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (!ident2) {
+                micro_push_err((micro_error_t){
+                    .err = MICRO_ERROR_UNDEFINED_IDENT,
+                    .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+                });
+                return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
 
             if (ident2->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &minus_op_tbls, dst, ident2->vreg);
@@ -100,6 +114,14 @@ expr_info_t op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_
             if (!first_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (!ident) {
+                micro_push_err((micro_error_t){
+                    .err = MICRO_ERROR_UNDEFINED_IDENT,
+                    .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+                });
+                return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
+
             if (ident->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &minus_op_tbls, dst, ident->vreg);
             }
@@ -131,6 +153,14 @@ expr_info_t op_minus_handler(micro_codegen_t *codegen, micro_codegen386_storage_
         }
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (!ident) {
+                micro_push_err((micro_error_t){
+                    .err = MICRO_ERROR_UNDEFINED_IDENT,
+                    .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+                });
+                return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
+            
             if (ident->type == MICRO_IDENT_VREG) {
                 op_vreg_to_dst(codegen, &minus_op_tbls, dst, ident->vreg);
             }

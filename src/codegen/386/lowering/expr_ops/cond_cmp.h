@@ -10,6 +10,13 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
     micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
+        if (!ident) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_UNDEFINED_IDENT,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
 
         micro_expr_tok_t *second_operand = start + 2;
         if (ident->type == MICRO_IDENT_VREG) {
@@ -85,6 +92,13 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
             }
             if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
                 micro_codegen386_ident_t *ident2 = sct_hashmap_get(&ext->idents, second_operand->val);
+                if (!ident2) {
+                    micro_push_err((micro_error_t){
+                        .err = MICRO_ERROR_UNDEFINED_IDENT,
+                        .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+                    });
+                    return (expr_info_t){ 0, MICRO_TYPE_NULL };
+                }
 
                 if (ident2->type == MICRO_IDENT_VREG) {
                     if (ident2->vreg.storage.type == MICRO_STORAGE_STACK) {
@@ -148,6 +162,13 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
         micro_expr_tok_t *second_operand = start + expr_info.size + 1;
         if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
             micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+            if (!ident) {
+                micro_push_err((micro_error_t){
+                    .err = MICRO_ERROR_UNDEFINED_IDENT,
+                    .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+                });
+                return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
 
             if (ident->type == MICRO_IDENT_VREG) {
                 if (expr_dst.type == MICRO_STORAGE_STACK) {
