@@ -4,11 +4,26 @@
 #include <micro/codegen/386/codegen386.h>
 #include <micro/asm/asm386.h>
 
+#define operand_reg(S, R)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_REG, .size = (S), .reg = (R) }
+
+#define operand_imm(S, I)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_IMM, .size = (S), .imm = (I) }
+
+#define operand_addr(A)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_REG, .size = MICRO_SIZE_32, .addr = (A) }
+
+#define operand_lbl(S, L)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_REG, .size = (S), .lbl_name = (L) }
+
+#define operand_none()  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE }
+
 #define push_asm_instr(instr, op1, op2)  \
     sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){  \
         .opcode = (instr),  \
-        .operand1 = (micro_asm386_instruction_operand_t)op1,  \
-        .operand2 = (micro_asm386_instruction_operand_t)op2,  \
+        .operand1 = (op1),  \
+        .operand2 = (op2),  \
     })
 
 typedef struct {

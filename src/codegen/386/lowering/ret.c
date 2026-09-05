@@ -29,13 +29,13 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
                 storage->type = MICRO_STORAGE_STACK;
                 storage->stack.ebp_offset = free_space;
 
-                push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(free_space) }, { .reg = 0 });
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(free_space)), operand_reg(MICRO_SIZE_32, 0));
             } else {
                 storage->type = MICRO_STORAGE_REG;
                 storage->reg.reg = free_space;
                 storage->reg.size = MICRO_SIZE_32;
             
-                push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, { .reg = free_space }, { .reg = 0 });
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, operand_reg(MICRO_SIZE_32, free_space), operand_reg(MICRO_SIZE_32, 0));
             }
 
             sct_hashmap_add(&ext->idents, name, ident);
@@ -63,7 +63,7 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
     char *end_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(ext->curent_function_name) + 1 + 4);
     strcpy(end_lbl_name, ext->curent_function_name);
     strcat(end_lbl_name, ".end");
-    push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = end_lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, operand_lbl(MICRO_SIZE_32, end_lbl_name), operand_none());
     
     return 0;
 }

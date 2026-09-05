@@ -35,6 +35,6 @@ int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr)
         return 1;
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, { .lbl_name = lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_JMP_L32, operand_lbl(MICRO_SIZE_32, lbl_name), operand_none());
     return 0;
 }

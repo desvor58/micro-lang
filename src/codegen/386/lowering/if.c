@@ -119,6 +119,6 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
         return 1;
     }
 
-    push_asm_instr(asm_instr, { .lbl_name = lbl_name }, {});
+    push_asm_instr(asm_instr, operand_lbl(MICRO_SIZE_32, lbl_name), operand_none());
     return 0;
 }

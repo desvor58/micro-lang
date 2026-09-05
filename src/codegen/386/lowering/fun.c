@@ -8,21 +8,21 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     char *fun_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1);
     strcpy(fun_lbl_name, instr_fun.name);
-    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = fun_lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, operand_lbl(MICRO_SIZE_32, fun_lbl_name), operand_none());
 
     ext->curent_function_name = fun_lbl_name;
 
-    push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, {0}, {0});
+    push_asm_instr(MICRO_ASM386_INSTR_PRELUDE, operand_none(), operand_none());
 
     size_t sub_instr_addr = codegen->asm_instrs->size;
 
-    push_asm_instr(MICRO_ASM386_INSTR_SUB_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(0) });
+    push_asm_instr(MICRO_ASM386_INSTR_SUB_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(0)));
     size_t callee_save_addr = codegen->asm_instrs->size - 1;
 
     char *start_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 6);
     strcpy(start_lbl_name, instr_fun.name);
     strcat(start_lbl_name, ".start");
-    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = start_lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, operand_lbl(MICRO_SIZE_32, start_lbl_name), operand_none());
 
     ext->ebp_top_offset = -4;
     ext->max_stack_offset = 0;
@@ -99,7 +99,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     char *exit_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 4);
     strcpy(exit_lbl_name, instr_fun.name);
     strcat(exit_lbl_name, ".end");
-    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = exit_lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, operand_lbl(MICRO_SIZE_32, exit_lbl_name), operand_none());
 
     if (ext->use_callee_save_regs) {
         sct_vector_insert(codegen->asm_instrs, callee_save_addr, &(micro_asm386_instruction_t){
@@ -129,9 +129,9 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         });
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset)) });
+    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP), operand_imm(MICRO_SIZE_32, micro_imm_le_gen((i32)(0x100000000 - ext->max_stack_offset))));
 
-    push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, {0}, {0});
+    push_asm_instr(MICRO_ASM386_INSTR_EPILOGUE, operand_none(), operand_none());
 
     for (size_t i = 0; i < ext->goto_unfound_labels.size; i++) {
         micro_push_err((micro_error_t){

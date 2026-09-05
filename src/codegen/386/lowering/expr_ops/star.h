@@ -42,11 +42,11 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
     int need_pop_eax = 0;
     int need_pop_edx = 0;
     if (ext->used_regs[MICRO_ASM386_REG32_EAX]) {
-        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
         need_pop_eax = 1;
     }
     if (ext->used_regs[MICRO_ASM386_REG32_EDX]) {
-        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
         need_pop_edx = 1;
     }
 
@@ -92,7 +92,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
 
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(lit) });
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(lit)));
             res = (expr_info_t){ 3, ident->vreg.type };
             goto exit;
         }
@@ -102,7 +102,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                 res = (expr_info_t){ 0, MICRO_TYPE_NULL };
                 goto exit;
             }
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
             res = (expr_info_t){ 2 + expr_info.size, ident->vreg.type };
             goto exit;
         }
@@ -123,7 +123,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                     res = (expr_info_t){ 0, MICRO_TYPE_NULL };
                     goto exit;
                 }
-                push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+                push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
                 res = (expr_info_t){ 3, ident->vreg.type };
                 goto exit;
             }
@@ -146,7 +146,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                 res = (expr_info_t){ 0, MICRO_TYPE_NULL };
                 goto exit;
             }
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(second_lit) });
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(second_lit)));
             res = (expr_info_t){ 3, first_info.type };
             goto exit;
         }
@@ -157,7 +157,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                 goto exit;
             }
 
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(first_lit) });
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(first_lit)));
             res = (expr_info_t){ 2 + expr_info.size, (first_lit < 0) ? MICRO_TYPE_I32 : MICRO_TYPE_U32 };
             goto exit;
         }
@@ -180,7 +180,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                     goto exit;
                 }
             }
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(first_lit) });
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(first_lit)));
             res = (expr_info_t){ 3, expr_info.type };
             goto exit;
         }
@@ -204,7 +204,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
 
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, { .reg = MICRO_ASM386_REG32_EAX }, { .imm = micro_imm_le_gen(second_lit) });
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(second_lit)));
             res = (expr_info_t){ 2 + expr_info.size, expr_info.type };
             goto exit;
         }
@@ -214,7 +214,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                 res = (expr_info_t){ 0, MICRO_TYPE_NULL };
                 goto exit;
             }
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
             res = (expr_info_t){ 1 + expr_info.size + expr2_info.size, expr_info.type };
             goto exit;
         }
@@ -232,7 +232,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             if (ident->type == MICRO_IDENT_VREG) {
                 expr_vreg_parse(codegen, edx_dst, &ident->vreg);
             }
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
             res = (expr_info_t){ 2 + expr_info.size, expr_info.type };
             goto exit;
         }
@@ -242,22 +242,22 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
 exit:
     switch (dst.type) {
         case MICRO_STORAGE_DATASEC:
-            push_asm_instr(movMR_tbl[dst.datasec.size], { .addr = micro_imm_le_gen(dst.datasec.address) }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(movMR_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
             
         case MICRO_STORAGE_STACK:
-            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
             
         case MICRO_STORAGE_REG:
-            push_asm_instr(movRR_tbl[dst.reg.size], { .reg = dst.reg.reg }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(movRR_tbl[dst.reg.size], operand_reg(dst.reg.size, dst.reg.reg), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
     }
     if (need_pop_eax) {
-        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
     }
     if (need_pop_edx) {
-        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
     }
     return res;
 }

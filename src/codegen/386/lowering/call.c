@@ -35,7 +35,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
         int reg = vreg->storage.reg.reg;
         int offset = ext->ebp_top_offset;
-        push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(offset) }, { .reg = reg });
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(offset)), operand_reg(MICRO_SIZE_32, reg));
         ext->max_stack_offset -= 4;
         ext->ebp_top_offset -= 4;
 
@@ -52,7 +52,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         .type = MICRO_STORAGE_REG
     };
     if (free_space < 0) {
-        push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(ext->ebp_top_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(ext->ebp_top_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
         ext->max_stack_offset -= 4;
 
         arg_dst.reg.reg = 0;
@@ -82,13 +82,13 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         micro_expr_tok_t **arg_start_tok = sct_vector_get(&instr_call.arg_exprs, i);
         expr_info_t expr_info = expr_parse(codegen, arg_dst, *arg_start_tok);
         
-        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = arg_dst.reg.reg }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, arg_dst.reg.reg), operand_none());
         stack_cleanup_offset += 4;
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_CALL_L32, { .lbl_name = fun->instr_info.name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_CALL_L32, operand_lbl(MICRO_SIZE_32, fun->instr_info.name), operand_none());
 
-    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(stack_cleanup_offset) });
+    push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(stack_cleanup_offset)));
 
     micro_codegen386_ident_t *res_ident = sct_hashmap_get(&ext->idents, instr_call.ret_reg_name);
     if (!res_ident) {
@@ -116,11 +116,11 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     switch (res_ident->vreg.storage.type) {
         case MICRO_STORAGE_DATASEC: return 1;
         case MICRO_STORAGE_STACK:
-            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(res_ident->vreg.storage.stack.ebp_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(res_ident->vreg.storage.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
 
         case MICRO_STORAGE_REG:
-            push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, { .reg = res_ident->vreg.storage.reg.reg }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, operand_reg(MICRO_SIZE_32, res_ident->vreg.storage.reg.reg), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             ext->used_regs[res_ident->vreg.storage.reg.reg] = 1;
             break;
     }

@@ -19,7 +19,7 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
     strcat(lbl_name, ".");
     strcat(lbl_name, instr_lbl.name);
 
-    push_asm_instr(MICRO_ASM386_INSTR_LBL, { .lbl_name = lbl_name }, {});
+    push_asm_instr(MICRO_ASM386_INSTR_LBL, operand_lbl(MICRO_SIZE_32, lbl_name), operand_none());
 
     micro_codegen386_ident_t ident = {
         .type = MICRO_IDENT_LBL,
