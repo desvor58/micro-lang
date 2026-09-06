@@ -420,48 +420,53 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
 #undef A1
 #undef A0
 
+void micro_debug_put_asm_instr(micro_asm386_instruction_t *instr)
+{
+    if (instr->opcode == MICRO_ASM386_INSTR_NONE ||
+        instr->opcode >= sizeof(asm_tbl) / sizeof(asm_tbl[0])) {
+        return;
+    }
+
+    char tab[] = "    ";
+
+    if (instr->opcode == MICRO_ASM386_INSTR_LBL) {
+        printf("%s:\n", instr->operand1.lbl_name);
+        return;
+    }
+    if (instr->opcode == MICRO_ASM386_INSTR_CALL_L32) {
+        printf("%scallL32 %s\n", tab, instr->operand1.lbl_name);
+        return;
+    }
+
+    const micro_debug_asm_fmt_t *fmt = &asm_tbl[instr->opcode];
+    printf("%s%s", tab, fmt->name);
+
+    const u8 kinds[2] = { fmt->kind1, fmt->kind2 };
+    const u8 sizes[2] = { fmt->size1, fmt->size2 };
+    const micro_asm386_instruction_operand_t *ops[2] = { &instr->operand1, &instr->operand2 };
+
+    for (int n = 0; n < 2; n++) {
+        if (!kinds[n]) break;
+        printf(n == 0 ? " " : ", ");
+        if (kinds[n] == 'R') {
+            const char **tbl = (sizes[n] == 32) ? reg32
+                                : (sizes[n] == 16) ? reg16
+                                :                    reg8;
+            printf("%s", tbl[ops[n]->reg]);
+        } else
+        if (kinds[n] == 'L') {
+            printf("%s", ops[n]->lbl_name);
+        } else {
+            printf("%d", ops[n]->imm.val);
+        }
+    }
+    puts("");
+}
+
 void micro_debug_put_asm(sct_vector_t *asm_instrs)
 {
     for (size_t i = 0; i < asm_instrs->size; i++) {
         micro_asm386_instruction_t *instr = sct_vector_get(asm_instrs, i);
-        if (instr->opcode == MICRO_ASM386_INSTR_NONE ||
-            instr->opcode >= sizeof(asm_tbl) / sizeof(asm_tbl[0])) {
-            continue;
-        }
-
-        char tab[] = "    ";
-
-        if (instr->opcode == MICRO_ASM386_INSTR_LBL) {
-            printf("%s:\n", instr->operand1.lbl_name);
-            continue;
-        }
-        if (instr->opcode == MICRO_ASM386_INSTR_CALL_L32) {
-            printf("%scallL32 %s\n", tab, instr->operand1.lbl_name);
-            continue;
-        }
-
-        const micro_debug_asm_fmt_t *fmt = &asm_tbl[instr->opcode];
-        printf("%s%s", tab, fmt->name);
-
-        const u8 kinds[2] = { fmt->kind1, fmt->kind2 };
-        const u8 sizes[2] = { fmt->size1, fmt->size2 };
-        const micro_asm386_instruction_operand_t *ops[2] = { &instr->operand1, &instr->operand2 };
-
-        for (int n = 0; n < 2; n++) {
-            if (!kinds[n]) break;
-            printf(n == 0 ? " " : ", ");
-            if (kinds[n] == 'R') {
-                const char **tbl = (sizes[n] == 32) ? reg32
-                                 : (sizes[n] == 16) ? reg16
-                                 :                    reg8;
-                printf("%s", tbl[ops[n]->reg]);
-            } else
-            if (kinds[n] == 'L') {
-                printf("%s", ops[n]->lbl_name);
-            } else {
-                printf("%d", ops[n]->imm.val);
-            }
-        }
-        puts("");
+        micro_debug_put_asm_instr(instr);
     }
 }

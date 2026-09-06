@@ -292,13 +292,15 @@ typedef enum {
     MICRO_ASM386_INSTR_OPERAND_LBL,
 } micro_asm386_instruction_operand_type_t;
 
-typedef union {
+typedef struct {
     micro_asm386_instruction_operand_type_t type;
     micro_size_t                            size;
-    micro_asm386_reg_t                      reg;
-    micro_imm_le_t                          imm;
-    micro_addr_le_t                         addr;
-    char                                   *lbl_name;
+    union {
+        micro_asm386_reg_t reg;
+        micro_imm_le_t     imm;
+        micro_addr_le_t    addr;
+        char              *lbl_name;
+    };
 } micro_asm386_instruction_operand_t;
 
 typedef struct {
