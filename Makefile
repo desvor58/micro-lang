@@ -7,7 +7,7 @@ SCT_INC_DIR := $(SCT_DIR)/include
 CFLAGS := -Wall -Wextra -Wshadow -Wpointer-arith  \
           -Wno-format -Wno-missing-braces -Wno-unused-parameter -Wno-unused-variable  -Wno-switch  \
           -fno-strict-aliasing  \
-          -std=c99 -Iinclude -I$(SCT_INC_DIR)
+          -std=c99 -Iinclude -I$(SCT_INC_DIR) -m32
 LDFLAGS :=
 AR := gcc-ar
 
@@ -44,11 +44,6 @@ else
     MKDIR = mkdir -p "$(1)"
     SCT_LIB_FILE := sct-elf
     EXE_EXT :=
-
-    ifeq ($(MODE),debug)
-        CFLAGS +=  -fsanitize=address
-        LDFLAGS += -fsanitize=address
-    endif
 
     SCT_SM_CHECK := @if [ ! -f "$@" ]; then git submodule update --init --recursive --remote --merge || (exit 1;); fi
     SCT_CLEAN    := @if [ -f "$(SCT_DIR)/Makefile" ]; then $(MAKE) -C $(SCT_DIR) clean; fi
