@@ -70,10 +70,6 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
 
-int asmopting(micro_codegen_t *codegen);
-
-int label_resulting(micro_codegen_t *codegen);
-
 expr_info_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
 expr_info_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);
 expr_info_t expr_fun_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_fun_t *fun);
