@@ -53,6 +53,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
 
 int asmopting(micro_codegen_t *codegen);
 

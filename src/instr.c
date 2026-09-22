@@ -28,7 +28,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
             char buf[MICRO_MAX_SYMBOL_SIZE];
             size_t i = 0;
             while ((c && isalnum(c)) || c == '_') {
-                if (i >= MICRO_MAX_SYMBOL_SIZE) {
+                if (i >= MICRO_MAX_SYMBOL_SIZE - 1) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_IDENT_NAME_TOO_LONG,
                     });
@@ -51,14 +51,14 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
             char buf[MICRO_MAX_SYMBOL_SIZE];
             size_t i = 0;
             do {
-                if (i >= MICRO_MAX_SYMBOL_SIZE) {
+                if (i >= MICRO_MAX_SYMBOL_SIZE - 1) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_DIGIT_TOO_LONG,
                     });
                     return 0;
                 }
                 buf[i++] = str_expr[pos++];
-                if (str_expr[pos] == '.') {
+                if (str_expr[pos] == '.' && i < MICRO_MAX_SYMBOL_SIZE - 1) {
                     buf[i++] = str_expr[pos++];
                     type = MICRO_EXPR_TOK_LIT_FLOAT;
                 }
@@ -77,15 +77,22 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
             size_t i = 0;
             char prev_c = c;
             while (str_expr[++pos] != '"' || prev_c == '\\') {
-                if (i >= MICRO_MAX_SYMBOL_SIZE) {
+                if (!str_expr[pos]) {
+                    micro_push_err((micro_error_t){
+                        .err = MICRO_ERROR_EXPECTED_STRING_CLOSE,
+                    });
+                    return 0;
+                }
+                if (i >= MICRO_MAX_SYMBOL_SIZE - 1) {
                     micro_push_err((micro_error_t){
                         .err = MICRO_ERROR_STR_LIT_TOO_LONG,
                     });
                     return 0;
                 }
-                buf[i] = str_expr[pos];
+                buf[i++] = str_expr[pos];
                 prev_c = str_expr[pos];
             }
+            pos++;  /* consume the closing quote */
             buf[i] = '\0';
 
             micro_expr_tok_t tok = {
@@ -123,7 +130,17 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
         parse_opch('>', MICRO_EXPR_TOK_GREAT, 1)        else
         parse_opch('<', MICRO_EXPR_TOK_LESS, 1)
 
-        pos++;
+        if (!str_expr[pos]) {
+            break;
+        }
+
+        if (isspace((unsigned char)str_expr[pos])) {
+            pos++;
+        } else if (!(isalnum((unsigned char)str_expr[pos]) || str_expr[pos] == '_' ||
+                     str_expr[pos] == '"' ||
+                     strchr("+-/*&$#`~=!<>", str_expr[pos]))) {
+            pos++;
+        }
     }
 
     if (expected_toks_num) {

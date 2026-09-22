@@ -404,6 +404,8 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_IDIV_R16]    = A1("idivR16",    'R', 16),
     [MICRO_ASM386_INSTR_IDIV_R8]     = A1("idivR8",     'R', 8),
 
+    [MICRO_ASM386_INSTR_CDQ]         = A0("cdq"),
+
     [MICRO_ASM386_INSTR_NEG_R32]     = A1("negR32",     'R', 32),
     [MICRO_ASM386_INSTR_NEG_R16]     = A1("negR16",     'R', 16),
     [MICRO_ASM386_INSTR_NEG_R8]      = A1("negR8",      'R', 8),

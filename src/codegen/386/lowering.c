@@ -35,6 +35,10 @@ int lowering(micro_codegen_t *codegen)
             case MICRO_INSTR_IF:
                 res |= lowering_if(codegen, instr);
                 break;
+
+            case MICRO_INSTR_DRSET:
+                res |= lowering_drset(codegen, instr);
+                break;
         }
 
         codegen->pos++;

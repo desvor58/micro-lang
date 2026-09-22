@@ -41,14 +41,20 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
 
     int need_pop_eax = 0;
     int need_pop_edx = 0;
-    if (ext->used_regs[MICRO_ASM386_REG32_EAX]) {
+    int dst_is_eax = dst.type == MICRO_STORAGE_REG && dst.reg.reg == MICRO_ASM386_REG32_EAX;
+    int dst_is_edx = dst.type == MICRO_STORAGE_REG && dst.reg.reg == MICRO_ASM386_REG32_EDX;
+    int prev_used_eax = ext->used_regs[MICRO_ASM386_REG32_EAX];
+    int prev_used_edx = ext->used_regs[MICRO_ASM386_REG32_EDX];
+    if (prev_used_eax && !dst_is_eax) {
         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
         need_pop_eax = 1;
     }
-    if (ext->used_regs[MICRO_ASM386_REG32_EDX]) {
+    if (prev_used_edx && !dst_is_edx) {
         push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
         need_pop_edx = 1;
     }
+    ext->used_regs[MICRO_ASM386_REG32_EAX] = 1;
+    ext->used_regs[MICRO_ASM386_REG32_EDX] = 1;
 
     micro_codegen386_storage_t eax_dst = {
         .type = MICRO_STORAGE_REG,
@@ -207,6 +213,12 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
     res = (expr_info_t){ 0, MICRO_TYPE_NULL };
 
 exit:
+    ext->used_regs[MICRO_ASM386_REG32_EAX] = prev_used_eax;
+    ext->used_regs[MICRO_ASM386_REG32_EDX] = prev_used_edx;
+    
+    if (need_pop_edx) {
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+    }
     switch (dst.type) {
         case MICRO_STORAGE_DATASEC:
             push_asm_instr(movMR_tbl[dst.datasec.size], { .addr = micro_imm_le_gen(dst.datasec.address) }, { .reg = MICRO_ASM386_REG32_EAX });
@@ -222,9 +234,6 @@ exit:
     }
     if (need_pop_eax) {
         push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
-    }
-    if (need_pop_edx) {
-        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
     }
     return res;
 }

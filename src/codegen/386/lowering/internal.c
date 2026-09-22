@@ -259,6 +259,7 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
 
             if (dst.type == MICRO_STORAGE_REG) {
                 push_asm_instr(set_instr, { .reg = dst.reg.reg }, {});
+                push_asm_instr(MICRO_ASM386_INSTR_MOVZX_R32R8, { .reg = dst.reg.reg }, { .reg = dst.reg.reg });
                 goto exit;
             }
 
@@ -271,11 +272,12 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
             }
 
             push_asm_instr(set_instr, { .reg = free_reg }, {});
+            push_asm_instr(MICRO_ASM386_INSTR_MOVZX_R32R8, { .reg = free_reg }, { .reg = free_reg });
 
             if (dst.type == MICRO_STORAGE_DATASEC) {
                 push_asm_instr(MICRO_ASM386_INSTR_MOV_M8R8, { .imm = micro_imm_le_gen(dst.datasec.address) }, { .reg = free_reg });
             } else {
-                push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R8, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = free_reg });
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = free_reg });
             }
 
             if (need_pop_eax) {

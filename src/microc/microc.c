@@ -237,7 +237,7 @@ int main(int argc, char **argv)
                     micro_debug_put_asm(&asm_instrs);
                 }
 
-                if (STOPAFTER_ASMOPTING) {
+                if (args.stop_at == STOPAFTER_ASMOPTING) {
                     exit(0);
                 }
 

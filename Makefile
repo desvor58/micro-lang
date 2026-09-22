@@ -138,7 +138,7 @@ tests/bin/$(MODE)/tests$(EXE_EXT): $(MICRO_OBJS) $(MICROC_OBJS) tests/src/munit.
 
 $(OBJDIR)/%.o: src/%.c
 	@$(call MKDIR,$(dir $@))
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 

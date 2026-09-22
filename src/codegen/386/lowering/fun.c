@@ -17,7 +17,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     size_t sub_instr_addr = codegen->asm_instrs->size;
 
     push_asm_instr(MICRO_ASM386_INSTR_SUB_R32I32, { .reg = MICRO_ASM386_REG32_ESP }, { .imm = micro_imm_le_gen(0) });
-    size_t callee_save_addr = codegen->asm_instrs->size - 1;
+    size_t callee_save_addr = codegen->asm_instrs->size;
 
     char *start_lbl_name = sct_arena_alloc(ext->arena, sizeof(char) * strlen(instr_fun.name) + 1 + 6);
     strcpy(start_lbl_name, instr_fun.name);

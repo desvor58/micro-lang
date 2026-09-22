@@ -493,10 +493,10 @@ MunitResult test_codegen_stack_overflow(const MunitParameter params[], void *dat
     cg_assert_asm_reg(&ctx, 11, 1, MICRO_ASM386_REG32_ESI);
     cg_assert_asm_imm(&ctx, 11, 2, 5);
 
-    // callee-save regs are pushed/popped when a reg above edx was used
-    cg_assert_asm_opcode(&ctx, 2, MICRO_ASM386_INSTR_PUSH_R32);
+    cg_assert_asm_opcode(&ctx, 2, MICRO_ASM386_INSTR_SUB_R32I32);
     cg_assert_asm_opcode(&ctx, 3, MICRO_ASM386_INSTR_PUSH_R32);
     cg_assert_asm_opcode(&ctx, 4, MICRO_ASM386_INSTR_PUSH_R32);
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_PUSH_R32);
     cg_assert_asm_opcode(&ctx, 13, MICRO_ASM386_INSTR_POP_R32);
     cg_assert_asm_opcode(&ctx, 14, MICRO_ASM386_INSTR_POP_R32);
     cg_assert_asm_opcode(&ctx, 15, MICRO_ASM386_INSTR_POP_R32);
@@ -881,17 +881,18 @@ MunitResult test_codegen_if_eq(const MunitParameter params[], void *data)
 
     munit_assert_size(micro_err_stk_size, ==, 0);
 
-    // comparison generates a CMP and a SET* ; then a TEST + JNZ jump
-    int found_jnz = 0;
+    // `if = n 1` is lowered as CMP n,1 + a conditional jump on the live
+    // flags: jump to target when equal (JZ). (No SETz/TEST roundtrip.)
+    int found_jz = 0;
     for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
         micro_asm386_instruction_t *instr = cg_asm(&ctx, i);
-        if (instr && instr->opcode == MICRO_ASM386_INSTR_JNZ_L32 &&
+        if (instr && instr->opcode == MICRO_ASM386_INSTR_JZ_L32 &&
             !strcmp(instr->operand1.lbl_name, "f.target")) {
-            found_jnz = 1;
+            found_jz = 1;
             break;
         }
     }
-    munit_assert_int(found_jnz, ==, 1);
+    munit_assert_int(found_jz, ==, 1);
 
     cg_cleanup(&ctx);
 
