@@ -18,11 +18,11 @@ expr_info_t op_dollar_handler(micro_codegen_t *codegen, micro_codegen386_storage
     int dst_is_eax = dst.type == MICRO_STORAGE_REG && dst.reg.reg == MICRO_ASM386_REG32_EAX;
     int dst_is_edx = dst.type == MICRO_STORAGE_REG && dst.reg.reg == MICRO_ASM386_REG32_EDX;
     if (ext->used_regs[MICRO_ASM386_REG32_EAX] && !dst_is_eax) {
-        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
         need_pop_eax = 1;
     }
     if (ext->used_regs[MICRO_ASM386_REG32_EDX] && !dst_is_edx) {
-        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
         need_pop_edx = 1;
     }
 
@@ -63,31 +63,31 @@ expr_info_t op_dollar_handler(micro_codegen_t *codegen, micro_codegen386_storage
         goto exit;
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_MOV_R32MR32, { .reg = MICRO_ASM386_REG32_EAX }, { .reg = MICRO_ASM386_REG32_EAX });
+    push_asm_instr(MICRO_ASM386_INSTR_MOV_R32MR32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
 
     res = (expr_info_t){ 2, MICRO_TYPE_I32 };
 
 exit:
     if (need_pop_edx) {
-        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EDX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EDX), operand_none());
     }
 
     switch (dst.type) {
         case MICRO_STORAGE_DATASEC:
-            push_asm_instr(movMR_tbl[dst.datasec.size], { .addr = micro_imm_le_gen(dst.datasec.address) }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(movMR_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
 
         case MICRO_STORAGE_STACK:
-            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, { .imm = micro_imm_le_gen(dst.stack.ebp_offset) }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
 
         case MICRO_STORAGE_REG:
-            push_asm_instr(movRR_tbl[dst.reg.size], { .reg = dst.reg.reg }, { .reg = MICRO_ASM386_REG32_EAX });
+            push_asm_instr(movRR_tbl[dst.reg.size], operand_reg(dst.reg.size, dst.reg.reg), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
             break;
     }
 
     if (need_pop_eax) {
-        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, { .reg = MICRO_ASM386_REG32_EAX }, {});
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
     }
     return res;
 }

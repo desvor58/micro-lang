@@ -33,6 +33,9 @@ fun fib
     ret i32
 start
     if <= n 1 : end_rec;
+
+    set i32 f1;
+    set i32 f2;
     
     call f1 fib - n 1;
     call f2 fib - n 2;

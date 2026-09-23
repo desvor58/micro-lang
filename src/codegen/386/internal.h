@@ -4,12 +4,28 @@
 #include <micro/codegen/386/codegen386.h>
 #include <micro/asm/asm386.h>
 
-#define push_asm_instr(instr, op1, op2)  \
-    sct_vector_push(codegen->asm_instrs, &(micro_asm386_instruction_t){  \
-        .opcode = (instr),  \
-        .operand1 = (micro_asm386_instruction_operand_t)op1,  \
-        .operand2 = (micro_asm386_instruction_operand_t)op2,  \
-    })
+#define operand_reg(S, R)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_REG, .size = (S), .reg = (R) }
+
+#define operand_imm(S, I)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_IMM, .size = (S), .imm = (I) }
+
+#define operand_addr(A)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_ADDR, .size = MICRO_SIZE_32, .addr = (A) }
+
+#define operand_lbl(S, L)  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_IMM, .size = (S), .lbl_name = (L) }
+
+#define operand_none()  \
+    (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE }
+
+#define push_asm_instr(instr, op1, op2) do {     \
+    micro_asm386_instruction_t tmp;              \
+    tmp.opcode   = (instr);                      \
+    tmp.operand1 = (op1);                        \
+    tmp.operand2 = (op2);                        \
+    sct_vector_push(codegen->asm_instrs, &tmp);  \
+} while(0)
 
 typedef struct {
     size_t       size;
@@ -54,10 +70,6 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
-
-int asmopting(micro_codegen_t *codegen);
-
-int label_resulting(micro_codegen_t *codegen);
 
 expr_info_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
 expr_info_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);

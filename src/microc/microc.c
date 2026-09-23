@@ -1,7 +1,7 @@
 /*************************************************
  *               micro-lang compiler
  *                   by Desvor
- *               Version: dev-0.0.1
+ *               Version: dev-0.0.2
  * 
  * Compiler crated as util for
  * compiling ir-language of micro

@@ -45,4 +45,6 @@ void micro_debug_print_instructions(sct_vector_t *instrs, size_t tab);
 /* print a vector of micro_asm386_instruction_t as pseudo-assembly */
 void micro_debug_put_asm(sct_vector_t *asm_instrs);
 
+void micro_debug_put_asm_instr(micro_asm386_instruction_t *instr);
+
 #endif
