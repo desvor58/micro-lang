@@ -16,8 +16,6 @@
         _instr_handle_rel_lbl(outbuf, N, S, (u8[])__VA_ARGS__);  \
         break
 
-sct_hashmap_t lbls;
-
 typedef struct {
     size_t addr;
     char  *lbl_name;
@@ -25,7 +23,16 @@ typedef struct {
     i32    rel_pos;
 } deferred_lbl_t;
 
-sct_vector_t deferred_lbls;
+typedef struct {
+    char  *lbl_name;
+    size_t addr;
+} lbl_def_t;
+
+// kept alive across emit calls (init-once, size reset per call) — building
+// the label table costs zero allocations this way
+static sct_vector_t deferred_lbls;
+static sct_vector_t lbl_defs;
+static int emit_state_ready;
 
 static inline void _instr_handle_lbl(sct_vector_t *outbuf, char *N, size_t S, u8 *V)
 {
@@ -330,7 +337,13 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
             return;
 
         case MICRO_ASM386_INSTR_LBL:
-            sct_hashmap_add(&lbls, instr->operand1.lbl_name, &outbuf->size);
+            // int lbl_align = outbuf->size % 16;
+            // t = 0x90;
+            // while (lbl_align) {
+            //     sct_vector_push(outbuf, &t);
+            //     lbl_align--;
+            // }
+            sct_vector_push(&lbl_defs, &(lbl_def_t){ .lbl_name = instr->operand1.lbl_name, .addr = outbuf->size });
             return;
         
         default:
@@ -341,8 +354,15 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
 void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 {
-    sct_hashmap_init(&lbls, sizeof(size_t));
-    sct_vector_init(&deferred_lbls, sizeof(deferred_lbl_t));
+    if (!emit_state_ready) {
+        sct_vector_init(&deferred_lbls, sizeof(deferred_lbl_t));
+        sct_vector_init(&lbl_defs, sizeof(lbl_def_t));
+        emit_state_ready = 1;
+    }
+    // reuse the buffers across calls instead of init/deinit (which cost
+    // two allocations per emit)
+    deferred_lbls.size = 0;
+    lbl_defs.size = 0;
 
     for (size_t i = 0; i < instrs->size; i++) {
         micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
@@ -355,30 +375,44 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
     for (size_t i = 0; i < deferred_lbls.size; i++) {
         deferred_lbl_t *dlbl = sct_vector_get(&deferred_lbls, i);
 
-        size_t *lbl_val = sct_hashmap_get(&lbls, dlbl->lbl_name);
-        if (!lbl_val) {
+        // linear scan over the label table (a handful of labels per
+        // function) — replaces the old hashmap: no bucket/sentinel
+        // allocations and no hashing per reference. Scan backwards so a
+        // duplicated label resolves to its last definition, matching the
+        // old update-on-add behaviour.
+        int found = 0;
+        size_t lbl_addr = 0;
+        for (size_t j = lbl_defs.size; j-- > 0; ) {
+            lbl_def_t *def = sct_vector_get(&lbl_defs, j);
+            if (!strcmp(def->lbl_name, dlbl->lbl_name)) {
+                lbl_addr = def->addr;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
             puts("Internal asm error: undefined label");
             continue;
         }
 
         micro_imm_le_t insert_imm;
         if (dlbl->is_rel_offset) {
-            insert_imm = micro_imm_le_gen(*lbl_val - dlbl->rel_pos);
+            insert_imm = micro_imm_le_gen(lbl_addr - dlbl->rel_pos);
         } else {
-            insert_imm = micro_imm_le_gen(*lbl_val);
+            insert_imm = micro_imm_le_gen(lbl_addr);
         }
 
-        sct_vector_set(outbuf, dlbl->addr,     &insert_imm.bytes[0]);
-        sct_vector_set(outbuf, dlbl->addr + 1, &insert_imm.bytes[1]);
-        sct_vector_set(outbuf, dlbl->addr + 2, &insert_imm.bytes[2]);
-        sct_vector_set(outbuf, dlbl->addr + 3, &insert_imm.bytes[3]);
+        // patch all 4 bytes in one bounds-checked write (was 4 separate
+        // bounds-checked sct_vector_set calls)
+        if (dlbl->addr + 4 <= outbuf->size) {
+            memcpy(outbuf->data + dlbl->addr, insert_imm.bytes, 4);
+        }
     }
 
-    sct_vector_deinit(&deferred_lbls);
-    sct_vector_deinit(instrs);
-    sct_vector_init(instrs, sizeof(micro_asm386_instruction_t));
-
-    sct_hashmap_deinit(&lbls);
+    // reset the instruction list but keep its capacity: callers either
+    // refill it or deinit it, both work with a retained buffer (the old
+    // deinit+init pair cost a free + malloc per emit)
+    instrs->size = 0;
 }
 
 #define MAX_PEEPHOLE_SIZE 2
