@@ -40,6 +40,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     sct_hashmap_add(&ext->idents, instr_fun.name, &(micro_codegen386_ident_t){
         .type = MICRO_IDENT_FUN,
+        .lifetime = instr->hints.lifetime,
         .fun  = fun,
     });
 

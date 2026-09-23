@@ -51,7 +51,7 @@ void mc_instrgen_parse_call(mc_instrgen_t *instrgen)
             });
             return;
         }
-        if (tok->type == MC_TOK_SEMICOLON) {
+        if (tok->type == MC_TOK_SEMICOLON || tok->type == MC_TOK_LBRACE) {
             break;
         }
         if (!_micro_expr_is_expr_start(tok->type)) {
@@ -71,8 +71,23 @@ void mc_instrgen_parse_call(mc_instrgen_t *instrgen)
         tok = sct_vector_get(instrgen->toks, instrgen->pos);
     }
 
+    micro_instruction_hints_t hints;
+    if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_CALL)) {
+        goto exit;
+    }
+
+    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
+        micro_push_err((micro_error_t) {
+            .err = MICRO_ERROR_EXPECTED_SEMICOLON,
+            .instr = MICRO_INSTR_CALL
+        });
+        goto exit;
+    }
+
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_CALL,
+        .hints = hints,
         .call = call_instr
     });
 

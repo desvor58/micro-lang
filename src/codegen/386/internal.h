@@ -65,11 +65,11 @@ int lowering(micro_codegen_t *codegen);
 int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
-int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
 
 expr_info_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
 expr_info_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);

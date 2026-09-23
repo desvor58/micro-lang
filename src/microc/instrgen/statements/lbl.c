@@ -28,11 +28,27 @@ void mc_instrgen_parse_lbl(mc_instrgen_t *instrgen)
         return;
     }
 
+    micro_instruction_hints_t hints;
+    mc_token_t *hint_tok = sct_vector_get(instrgen->toks, instrgen->pos + 1);
+    if (hint_tok && hint_tok->type == MC_TOK_LBRACE) {
+        instrgen->pos++;
+        if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_LBL)) {
+            return;
+        }
+        mc_token_t *next_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        if (!next_tok || next_tok->type != MC_TOK_SEMICOLON) {
+            instrgen->pos--;
+        }
+    } else {
+        hints = (micro_instruction_hints_t){0};
+    }
+
     micro_instruction_lbl_t lbl;
     strcpy(lbl.name, name_tok->val);
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_LBL,
+        .hints = hints,
         .lbl = lbl
     });
 }

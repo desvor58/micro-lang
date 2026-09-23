@@ -58,6 +58,7 @@ typedef struct {
 
 typedef struct {
     micro_codegen386_ident_type_t type;
+    ptrdiff_t                     lifetime;
     union {
         micro_codegen386_ident_fun_t  fun;
         micro_codegen386_ident_vreg_t vreg;

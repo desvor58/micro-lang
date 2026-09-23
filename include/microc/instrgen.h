@@ -26,6 +26,8 @@ void mc_instrgen_deinit(mc_instrgen_t *instrgen);
 
 void mc_instrgen_gen(mc_instrgen_t *instrgen);
 
+int mc_instrgen_parse_hints(mc_instrgen_t *instrgen, micro_instruction_hints_t *hints, micro_instruction_type_t instr_type);
+
 void mc_instrgen_parse_set(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_fun(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_ret(mc_instrgen_t *instrgen);

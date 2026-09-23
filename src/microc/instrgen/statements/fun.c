@@ -33,8 +33,20 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     sct_vector_init(&instr.args, sizeof(micro_instruction_fun_arg_t));
     instr.ret_type = MICRO_TYPE_NULL;
 
+    micro_instruction_hints_t hints = {0};
     mc_token_t *tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    while (tok && tok->type != MC_TOK_KW_RET && tok->type != MC_TOK_KW_START) {
+    if (tok && tok->type == MC_TOK_LBRACE) {
+        if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_FUN)) {
+            goto exit;
+        }
+        tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        if (tok && tok->type == MC_TOK_SEMICOLON) {
+            instrgen->pos++;
+            tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        }
+    }
+
+    while (tok && tok->type != MC_TOK_KW_RET && tok->type != MC_TOK_KW_START && tok->type != MC_TOK_LBRACE) {
         mc_token_t *arg_type_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
         if (!arg_type_tok || arg_type_tok->type != MC_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
@@ -62,7 +74,18 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         tok = sct_vector_get(instrgen->toks, instrgen->pos);
     }
 
-    if (tok->type == MC_TOK_KW_RET) {
+    if (tok && tok->type == MC_TOK_LBRACE) {
+        if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_FUN)) {
+            goto exit;
+        }
+        tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        if (tok && tok->type == MC_TOK_SEMICOLON) {
+            instrgen->pos++;
+            tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        }
+    }
+
+    if (tok && tok->type == MC_TOK_KW_RET) {
         mc_token_t *ret_type_tok = sct_vector_get(instrgen->toks, ++instrgen->pos);
         if (!ret_type_tok || ret_type_tok->type != MC_TOK_TYPE_NAME) {
             micro_push_err((micro_error_t){
@@ -73,14 +96,25 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         }
 
         instr.ret_type = mc_type_str_parse(ret_type_tok->val);
-    } else {
-        instrgen->pos--;
+        tok = sct_vector_get(instrgen->toks, instrgen->pos + 1);
+        if (tok && tok->type == MC_TOK_LBRACE) {
+            instrgen->pos++;
+            if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_FUN)) {
+                goto exit;
+            }
+            tok = sct_vector_get(instrgen->toks, instrgen->pos);
+            if (tok && tok->type == MC_TOK_SEMICOLON) {
+                instrgen->pos++;
+            }
+        } else {
+            instrgen->pos++;
+        }
     }
 
     sct_vector_t body;
     sct_vector_init(&body, sizeof(mc_token_t));
 
-    tok = sct_vector_get(instrgen->toks, ++instrgen->pos);
+    tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!tok || tok->type != MC_TOK_KW_START) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_START_KW,
@@ -105,6 +139,18 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
         tok = sct_vector_get(instrgen->toks, ++instrgen->pos);
     }
 
+    mc_token_t *end_hint_tok = sct_vector_get(instrgen->toks, instrgen->pos + 1);
+    if (end_hint_tok && end_hint_tok->type == MC_TOK_LBRACE) {
+        instrgen->pos++;
+        if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_FUN)) {
+            goto exit;
+        }
+        mc_token_t *next_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        if (!next_tok || next_tok->type != MC_TOK_SEMICOLON) {
+            instrgen->pos--;
+        }
+    }
+
     mc_instrgen_t body_instrgen;
     mc_instrgen_init(&body_instrgen, &body);
     body_instrgen.code_in_function = 1;
@@ -119,8 +165,10 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_FUN,
+        .hints = hints,
         .fun = instr,
     });
+    return;
 
 exit:
     while (instrgen->pos < instrgen->toks->size

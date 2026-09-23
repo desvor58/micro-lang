@@ -154,7 +154,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
 
 #undef parse_opch
 
-int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr)
+int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr, micro_instruction_hints_t hints)
 {
     if (!instrs || type == MICRO_TYPE_NULL || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1) {
         return 1;
@@ -167,13 +167,14 @@ int micro_instr_gen_set(sct_vector_t *instrs, micro_type_t type, const char *nam
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_SET,
+        .hints = hints,
         .set = instr_set,
     });
 
     return 0;
 }
 
-int micro_instr_gen_drset(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr)
+int micro_instr_gen_drset(sct_vector_t *instrs, micro_type_t type, const char *name, sct_vector_t *expr, micro_instruction_hints_t hints)
 {
     if (!instrs || type == MICRO_TYPE_NULL || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1) {
         return 1;
@@ -186,13 +187,14 @@ int micro_instr_gen_drset(sct_vector_t *instrs, micro_type_t type, const char *n
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_DRSET,
+        .hints = hints,
         .drset = instr_drset,
     });
 
     return 0;
 }
 
-int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, sct_vector_t *body)
+int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, sct_vector_t *body, micro_instruction_hints_t hints)
 {
     if (!instrs || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1 || !args || !body) {
         return 1;
@@ -206,13 +208,14 @@ int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *ar
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_FUN,
+        .hints = hints,
         .fun = instr_fun,
     });
 
     return 0;
 }
 
-int micro_instr_gen_ret(sct_vector_t *instrs, sct_vector_t *expr)
+int micro_instr_gen_ret(sct_vector_t *instrs, sct_vector_t *expr, micro_instruction_hints_t hints)
 {
     if (!instrs) {
         return 1;
@@ -223,13 +226,14 @@ int micro_instr_gen_ret(sct_vector_t *instrs, sct_vector_t *expr)
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_RET,
+        .hints = hints,
         .ret = instr_ret,
     });
 
     return 0;
 }
 
-int micro_instr_gen_call(sct_vector_t *instrs, const char *reg_name, const char *fun_name, sct_vector_t *args)
+int micro_instr_gen_call(sct_vector_t *instrs, const char *reg_name, const char *fun_name, sct_vector_t *args, micro_instruction_hints_t hints)
 {
     if (!instrs || !reg_name || !fun_name || strlen(reg_name) > MICRO_MAX_SYMBOL_SIZE - 1 || strlen(fun_name) > MICRO_MAX_SYMBOL_SIZE - 1 || !args) {
         return 1;
@@ -242,13 +246,14 @@ int micro_instr_gen_call(sct_vector_t *instrs, const char *reg_name, const char 
     
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_CALL,
+        .hints = hints,
         .call = instr_call,
     });
 
     return 0;
 }
 
-int micro_instr_gen_lbl(sct_vector_t *instrs, const char *name)
+int micro_instr_gen_lbl(sct_vector_t *instrs, const char *name, micro_instruction_hints_t hints)
 {
     if (!instrs || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1) {
         return 1;
@@ -259,13 +264,14 @@ int micro_instr_gen_lbl(sct_vector_t *instrs, const char *name)
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_LBL,
+        .hints = hints,
         .lbl = instr_lbl,
     });
 
     return 0;
 }
 
-int micro_instr_gen_goto(sct_vector_t *instrs, const char *name)
+int micro_instr_gen_goto(sct_vector_t *instrs, const char *name, micro_instruction_hints_t hints)
 {
     if (!instrs || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1) {
         return 1;
@@ -276,13 +282,14 @@ int micro_instr_gen_goto(sct_vector_t *instrs, const char *name)
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_GOTO,
+        .hints = hints,
         .goto_lbl = instr_goto,
     });
 
     return 0;
 }
 
-int micro_instr_gen_if(sct_vector_t *instrs, sct_vector_t *cond_expr, const char *lbl_name)
+int micro_instr_gen_if(sct_vector_t *instrs, sct_vector_t *cond_expr, const char *lbl_name, micro_instruction_hints_t hints)
 {
     if (!instrs || !cond_expr || !lbl_name || strlen(lbl_name) > MICRO_MAX_SYMBOL_SIZE - 1) {
         return 1;
@@ -294,6 +301,7 @@ int micro_instr_gen_if(sct_vector_t *instrs, sct_vector_t *cond_expr, const char
 
     sct_vector_push(instrs, &(micro_instruction_t){
         .type = MICRO_INSTR_IF,
+        .hints = hints,
         .if_goto = instr_if,
     });
 
