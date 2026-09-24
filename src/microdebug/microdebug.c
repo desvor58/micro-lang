@@ -274,9 +274,16 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_CMP_R16I16]  = A("cmpR16I16",   'R', 16, 'V', 16),
     [MICRO_ASM386_INSTR_CMP_R8I8]    = A("cmpR8I8",     'R', 8,  'V', 8),
 
+    [MICRO_ASM386_INSTR_CMP_R32S32]  = A("cmpR32S32",   'R', 32, 'V', 32),
+    [MICRO_ASM386_INSTR_CMP_R16S32]  = A("cmpR16S32",   'R', 16, 'V', 32),
+    [MICRO_ASM386_INSTR_CMP_R8S32]   = A("cmpR8S32",    'R', 8,  'V', 32),
+
     [MICRO_ASM386_INSTR_CMP_S32I32]  = A("cmpS32I32",   'V', 32, 'V', 32),
     [MICRO_ASM386_INSTR_CMP_S32I16]  = A("cmpS32I16",   'V', 16, 'V', 16),
     [MICRO_ASM386_INSTR_CMP_S32I8]   = A("cmpS32I8",    'V', 8,  'V', 8),
+    [MICRO_ASM386_INSTR_CMP_S32R32]  = A("cmpS32R32",   'V', 32, 'R', 32),
+    [MICRO_ASM386_INSTR_CMP_S32R16]  = A("cmpS32R16",   'V', 32, 'R', 16),
+    [MICRO_ASM386_INSTR_CMP_S32R8]   = A("cmpS32R8",    'V', 8,  'R', 8),
 
     [MICRO_ASM386_INSTR_MOVZX_R32R8] = A("movzxR32R8",  'R', 32, 'R', 8),
     [MICRO_ASM386_INSTR_MOVZX_R16R8] = A("movzxR16R8",  'R', 16, 'R', 8),
@@ -386,6 +393,10 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_MUL_R32]     = A1("mulR32",     'R', 32),
     [MICRO_ASM386_INSTR_MUL_R16]     = A1("mulR16",     'R', 16),
     [MICRO_ASM386_INSTR_MUL_R8]      = A1("mulR8",      'R', 8),
+
+    [MICRO_ASM386_INSTR_MOV_MR32_R32] = A("movMR32R32", 'R', 32, 'R', 32),
+    [MICRO_ASM386_INSTR_MOV_MR16_R16] = A("movMR16R16", 'R', 16, 'R', 16),
+    [MICRO_ASM386_INSTR_MOV_MR8_R8]   = A("movMR8R8",   'R', 8,  'R', 8),
 
     [MICRO_ASM386_INSTR_IMUL_R32]    = A1("imulR32",     'R', 32),
     [MICRO_ASM386_INSTR_IMUL_R16]    = A1("imulR16",     'R', 16),

@@ -53,7 +53,10 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     for (size_t i = 0; i < instr_fun.args.size; i++) {
         micro_instruction_fun_arg_t *arg = sct_vector_get(&instr_fun.args, i);
         
-        micro_codegen386_ident_t ident = { .type = MICRO_IDENT_VREG };
+        micro_codegen386_ident_t ident = {
+            .type = MICRO_IDENT_VREG,
+            .lifetime = -1,
+        };
         strcpy(ident.vreg.name, arg->name);
         ident.vreg.type = arg->type;
         ident.vreg.storage.type = MICRO_STORAGE_STACK;

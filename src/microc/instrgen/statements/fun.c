@@ -33,7 +33,11 @@ void mc_instrgen_parse_fun(mc_instrgen_t *instrgen)
     sct_vector_init(&instr.args, sizeof(micro_instruction_fun_arg_t));
     instr.ret_type = MICRO_TYPE_NULL;
 
-    micro_instruction_hints_t hints = {0};
+    micro_instruction_hints_t hints = {
+        .lifetime = -1,
+        .forced_stack = 0,
+        .lazy_init = 0,
+    };
     mc_token_t *tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (tok && tok->type == MC_TOK_LBRACE) {
         if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_FUN)) {

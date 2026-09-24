@@ -40,7 +40,11 @@ void mc_instrgen_parse_lbl(mc_instrgen_t *instrgen)
             instrgen->pos--;
         }
     } else {
-        hints = (micro_instruction_hints_t){0};
+        hints = (micro_instruction_hints_t){
+            .lifetime = -1,
+            .forced_stack = 0,
+            .lazy_init = 0,
+        };
     }
 
     micro_instruction_lbl_t lbl;

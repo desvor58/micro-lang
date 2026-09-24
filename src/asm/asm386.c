@@ -417,31 +417,6 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 
 #define MAX_PEEPHOLE_SIZE 2
 
-static inline size_t find_reg_usages_in_fun(sct_vector_t *instrs, size_t i, micro_asm386_reg_t reg)
-{
-    size_t usages = 0;
-    micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
-    while (i < instrs->size && instr->opcode != MICRO_ASM386_INSTR_EPILOGUE) {
-        if (instr->opcode > MICRO_ASM386_INSTR_XCHG && instr->opcode < MICRO_ASM386_INSTR_XCHG_END) {
-            if ((instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg)
-             || (instr->operand2.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand2.reg == reg)) {
-                return usages;
-            }
-        }
-        if (instr->opcode > MICRO_ASM386_INSTR_MOV && instr->opcode < MICRO_ASM386_INSTR_MOV_END) {
-            if (instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg) {
-                return usages;
-            }
-        }
-        if ((instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg)
-         || (instr->operand2.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand2.reg == reg)) {
-            usages++;
-        }
-        instr = sct_vector_get(instrs, ++i);
-    }
-    return usages;
-}
-
 // bool return (1 - optimized, 0 - no)
 static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro_asm386_instruction_t *instr)
 {
@@ -449,13 +424,6 @@ static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro
      || instr->opcode == MICRO_ASM386_INSTR_MOV_R16R16
      || instr->opcode == MICRO_ASM386_INSTR_MOV_R8R8) {
         if (instr->operand1.reg == instr->operand2.reg) {
-            sct_vector_erase(instrs, i);
-            return 1;
-        }
-    }
-
-    if (instr->opcode > MICRO_ASM386_INSTR_MOV && instr->opcode < MICRO_ASM386_INSTR_MOV_END) {
-        if (instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg != 0 && !find_reg_usages_in_fun(instrs, i + 1, instr->operand1.reg)) {
             sct_vector_erase(instrs, i);
             return 1;
         }
@@ -482,30 +450,6 @@ static inline size_t optimize_double_instr(sct_vector_t *instrs, size_t i, micro
         if (!strcmp(instr1->operand1.lbl_name, instr2->operand1.lbl_name)) {
             sct_vector_erase(instrs, i);
             return 1;
-        }
-    }
-    if ((instr1->opcode == MICRO_ASM386_INSTR_MOV_R32R32
-      || instr1->opcode == MICRO_ASM386_INSTR_MOV_R16R16
-      || instr1->opcode == MICRO_ASM386_INSTR_MOV_R8R8)
-     && (instr2->opcode == MICRO_ASM386_INSTR_MOV_R32R32
-      || instr2->opcode == MICRO_ASM386_INSTR_MOV_R16R16
-      || instr2->opcode == MICRO_ASM386_INSTR_MOV_R8R8)) {
-        if (instr1->operand1.reg == instr2->operand2.reg) {
-            if (!find_reg_usages_in_fun(instrs, i + 2, instr1->operand1.reg)) {
-                micro_asm386_instruction_type_t new_instr = instr1->opcode;
-                micro_asm386_reg_t new_dst = instr2->operand1.reg;
-                micro_asm386_reg_t new_src = instr1->operand2.reg;
-
-                sct_vector_erase(instrs, i);
-                sct_vector_erase(instrs, i);
-
-                sct_vector_insert(instrs, i, &(micro_asm386_instruction_t){
-                    .opcode = new_instr,
-                    .operand1 = { .type = MICRO_ASM386_INSTR_OPERAND_REG, .reg = new_dst },
-                    .operand2 = { .type = MICRO_ASM386_INSTR_OPERAND_REG, .reg = new_src },
-                });
-                return 2;
-            }
         }
     }
     return 0;
