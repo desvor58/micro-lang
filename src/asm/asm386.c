@@ -184,8 +184,12 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_NEG_R16, 3, { 0x66, 0xF7, 0b11011000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_NEG_R8,  2, {       0xF6, 0b11011000 | instr->operand1.reg });
 
-        instr_handle(MICRO_ASM386_INSTR_LEA_R32S32, 7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
-        instr_handle(MICRO_ASM386_INSTR_LEA_R16S32, 8, { 0x66, 0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32S32,    7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R16S32,    8, { 0x66, 0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIB,    3, {       0x8D, 0b00000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBI8,  4, {       0x8D, 0b01000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBI32, 7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBABS, 7, {       0x8D, 0b00000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
 
         instr_handle(MICRO_ASM386_INSTR_RET,        1, { 0xC3 });
         instr_handle(MICRO_ASM386_INSTR_CALL_S32,   5, { 0xE8, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });

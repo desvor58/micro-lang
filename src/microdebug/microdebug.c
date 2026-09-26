@@ -423,6 +423,10 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
 
     [MICRO_ASM386_INSTR_LEA_R32S32]  = A("leaR32S32",   'R', 32, 'V', 0),
     [MICRO_ASM386_INSTR_LEA_R16S32]  = A("leaR16S32",   'R', 16, 'V', 0),
+    [MICRO_ASM386_INSTR_LEA_R32SIB]    = A1("leaR32SIB",    'R', 32),
+    [MICRO_ASM386_INSTR_LEA_R32SIBI8]  = A("leaR32SIBI8",  'R', 32, 'V', 0),
+    [MICRO_ASM386_INSTR_LEA_R32SIBI32] = A("leaR32SIBI32", 'R', 32, 'V', 0),
+    [MICRO_ASM386_INSTR_LEA_R32SIBABS] = A("leaR32SIBABS", 'R', 32, 'V', 0),
 
     [MICRO_ASM386_INSTR_CALL_L32]    = A1("lbl", 'L', 0),
 
@@ -433,6 +437,36 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
 #undef A1
 #undef A0
 
+static void micro_debug_put_asm_sib(const micro_asm386_instruction_t *instr)
+{
+    const char *name;
+    switch (instr->opcode) {
+        case MICRO_ASM386_INSTR_LEA_R32SIB:    name = "leaR32SIB";    break;
+        case MICRO_ASM386_INSTR_LEA_R32SIBI8:  name = "leaR32SIBI8";  break;
+        case MICRO_ASM386_INSTR_LEA_R32SIBI32: name = "leaR32SIBI32"; break;
+        default:                               name = "leaR32SIBABS"; break;
+    }
+
+    printf("    %s %s, [", name, reg32[instr->operand1.reg]);
+
+    int terms = 0;
+    if (instr->sib.base != MICRO_ASM386_REG32_NO_BASE) {
+        printf("%s", reg32[instr->sib.base]);
+        terms++;
+    }
+    if (instr->sib.index != MICRO_ASM386_REG32_NO_INDEX) {
+        if (terms++) printf(" + ");
+        printf("%s*%d", reg32[instr->sib.index], 1 << instr->sib.scale);
+    }
+    if (instr->opcode != MICRO_ASM386_INSTR_LEA_R32SIB) {
+        if (terms++) printf(" + ");
+        printf("%d", instr->opcode == MICRO_ASM386_INSTR_LEA_R32SIBI8
+                         ? (i32)(i8)instr->operand2.imm.bytes[0]
+                         : instr->operand2.imm.val);
+    }
+    puts("]");
+}
+
 void micro_debug_put_asm_instr(micro_asm386_instruction_t *instr)
 {
     if (instr->opcode == MICRO_ASM386_INSTR_NONE ||
@@ -441,6 +475,12 @@ void micro_debug_put_asm_instr(micro_asm386_instruction_t *instr)
     }
 
     char tab[] = "    ";
+
+    if (instr->opcode >= MICRO_ASM386_INSTR_LEA_R32SIB &&
+        instr->opcode <= MICRO_ASM386_INSTR_LEA_R32SIBABS) {
+        micro_debug_put_asm_sib(instr);
+        return;
+    }
 
     if (instr->opcode == MICRO_ASM386_INSTR_LBL) {
         printf("%s:\n", instr->operand1.lbl_name);

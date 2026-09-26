@@ -255,6 +255,10 @@ typedef enum {
 
     MICRO_ASM386_INSTR_LEA_R32S32,
     MICRO_ASM386_INSTR_LEA_R16S32,
+    MICRO_ASM386_INSTR_LEA_R32SIB,
+    MICRO_ASM386_INSTR_LEA_R32SIBI8,
+    MICRO_ASM386_INSTR_LEA_R32SIBI32,
+    MICRO_ASM386_INSTR_LEA_R32SIBABS,
 
     MICRO_ASM386_INSTR_CALL_L32,
 
@@ -290,6 +294,9 @@ typedef enum {
     MICRO_ASM386_REG8_BH = 7,
 } micro_asm386_reg_t;
 
+#define MICRO_ASM386_REG32_NO_INDEX 0b100
+#define MICRO_ASM386_REG32_NO_BASE  0b101
+
 typedef enum {
     MICRO_ASM386_INSTR_OPERAND_NONE,
     MICRO_ASM386_INSTR_OPERAND_REG,
@@ -310,9 +317,16 @@ typedef struct {
 } micro_asm386_instruction_operand_t;
 
 typedef struct {
-    micro_asm386_instruction_type_t  opcode;
+    u8 scale : 2;
+    micro_asm386_reg_t index;
+    micro_asm386_reg_t base;
+} micro_asm386_instruction_sib_t;
+
+typedef struct {
+    micro_asm386_instruction_type_t    opcode;
     micro_asm386_instruction_operand_t operand1;
     micro_asm386_instruction_operand_t operand2;
+    micro_asm386_instruction_sib_t     sib;
 } micro_asm386_instruction_t;
 
 void micro_asm386_optimize(sct_vector_t *instrs);

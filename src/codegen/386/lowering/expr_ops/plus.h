@@ -37,6 +37,15 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
 
+    {
+        micro_codegen386_ident_t *i1 = 0, *i2 = 0;
+        i32 n_add = 0, n_mul = 0;
+        if (lea_match_add_scaled(codegen, start, &i1, &n_add, &i2, &n_mul) &&
+            !code_selection_lea(codegen, dst, i1, i2, n_add, n_mul)) {
+            return (expr_info_t){ 5, (i1 ? i1 : i2)->vreg.type };
+        }
+    }
+
     micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
@@ -47,11 +56,6 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             });
             return (expr_info_t){ 0, MICRO_TYPE_NULL };
         }
-
-        if (ident->type == MICRO_IDENT_VREG) {
-            expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
-            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
-        }
         
         micro_expr_tok_t *second_operand = start + 2;
         if (_micro_expr_is_lit(second_operand->type)) {
@@ -59,9 +63,20 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
 
+            if (ident->type == MICRO_IDENT_VREG) {
+                expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+                if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
+
             op_lit_to_dst(codegen, &plus_op_tbls, dst, lit);
             return (expr_info_t){ 3, ident->vreg.type };
         }
+
+        if (ident->type == MICRO_IDENT_VREG) {
+            expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
+
         if (_micro_expr_is_op(second_operand->type)) {
             expr_info_t expr_info = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
@@ -129,6 +144,36 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_op(first_operand->type)) {
+        if (first_operand->type == MICRO_EXPR_TOK_STAR) {
+            micro_codegen386_ident_t *i2;
+            i32 n_mul;
+            if (lea_match_scale_mul(codegen, start + 2, start + 3, &i2, &n_mul)) {
+                micro_expr_tok_t *addend = start + 4;
+                i32 n_add = 0;
+                micro_codegen386_ident_t *i1 = 0;
+                if (addend->type == MICRO_EXPR_TOK_LIT_INT) {
+                    n_add = strtol(addend->val, NULL, 10);
+                } else
+                if (addend->type == MICRO_EXPR_TOK_IDENT) {
+                    i1 = sct_hashmap_get(&ext->idents, addend->val);
+                    if (!i1 || i1->type != MICRO_IDENT_VREG) i1 = 0;
+                }
+                if ((i1 || n_add) && !code_selection_lea(codegen, dst, i1, i2, n_add, n_mul)) {
+                    return (expr_info_t){ 5, (i1 ? i1 : i2)->vreg.type };
+                }
+            }
+        } else
+        if (first_operand->type == MICRO_EXPR_TOK_PLUS && (start + 6)->type == MICRO_EXPR_TOK_LIT_INT) {
+            micro_codegen386_ident_t *i1 = 0, *i2 = 0;
+            i32 n_add = 0, n_mul = 0;
+            i32 disp = strtol((start + 6)->val, NULL, 10);
+            if (lea_match_add_scaled(codegen, first_operand, &i1, &n_add, &i2, &n_mul) &&
+                lea_disp_add_ok(n_add, disp) &&
+                !code_selection_lea(codegen, dst, i1, i2, n_add + disp, n_mul)) {
+                return (expr_info_t){ 7, (i1 ? i1 : i2)->vreg.type };
+            }
+        }
+
         expr_info_t expr_info = expr_parse(codegen, dst, first_operand);
         if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 

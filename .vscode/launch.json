@@ -2,17 +2,171 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "lldb-debug",
-            "type": "lldb",
+            "name": "GDB: microc (compile test.micro)",
+            "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/microc.exe",
+            "program": "${workspaceFolder}/bin/microc",
             "args": [
-                "./test.micro",
+                "${workspaceFolder}/test.micro",
                 "-o",
-                "./test.bin"
+                "${workspaceFolder}/test.bin"
             ],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "build debug"
+            "preLaunchTask": "build: debug (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable GDB pretty printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: unit tests (debug)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/bin/debug/tests",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: tests (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: micro_runner (test.bin)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/micro_runner",
+            "args": [
+                "${workspaceFolder}/test.bin",
+                "1"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: micro runner (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: micro API benchmark (bubble sort)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/comp/bench_micro_lib32",
+            "args": [
+                "bubblesort",
+                "100",
+                "plain"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: benchmarks (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: LLVM API benchmark (bubble sort)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/comp/bench_llvm_lib",
+            "args": [
+                "${workspaceFolder}/comp/bubblesort.ll",
+                "100"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: benchmarks (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: MIR API benchmark (bubble sort)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/comp/bench_mir_lib",
+            "args": [
+                "${workspaceFolder}/comp/bubblesort.mir",
+                "100",
+                "2"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: benchmarks (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "GDB: LLVM i386 AOT benchmark (bubble sort)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/comp/bench_llvm_i386_O2",
+            "args": [
+                "bubblesort",
+                "100",
+                "O2"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build: benchmarks (gcc)",
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
+            "externalConsole": false,
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Use Intel syntax",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

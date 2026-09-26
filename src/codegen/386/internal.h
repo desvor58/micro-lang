@@ -19,13 +19,28 @@
 #define operand_none()  \
     (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE }
 
-#define push_asm_instr(instr, op1, op2) do {     \
-    micro_asm386_instruction_t tmp;              \
-    tmp.opcode   = (instr);                      \
-    tmp.operand1 = (op1);                        \
-    tmp.operand2 = (op2);                        \
-    sct_vector_push(codegen->asm_instrs, &tmp);  \
+static const u8 _sib_scale_tbl[] = {
+    [1] = 0b00,
+    [2] = 0b01,
+    [4] = 0b10,
+    [8] = 0b11,
+};
+
+static inline int sib_scale_valid(i32 scale)
+{
+    return scale == 1 || scale == 2 || scale == 4 || scale == 8;
+}
+
+#define push_asm_instr_with_sib(instr, op1, op2, S, I, B) do {                                                   \
+    micro_asm386_instruction_t tmp;                                                                              \
+    tmp.opcode   = (instr);                                                                                      \
+    tmp.operand1 = (op1);                                                                                        \
+    tmp.operand2 = (op2);                                                                                        \
+    tmp.sib      = (micro_asm386_instruction_sib_t){ .scale = _sib_scale_tbl[(S)], .index = (I), .base = (B) };  \
+    sct_vector_push(codegen->asm_instrs, &tmp);                                                                  \
 } while(0)
+
+#define push_asm_instr(instr, op1, op2) push_asm_instr_with_sib((instr), (op1), (op2), 0, 0, 0)
 
 typedef struct {
     size_t       size;
