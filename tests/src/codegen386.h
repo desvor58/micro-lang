@@ -1771,6 +1771,115 @@ MunitResult test_codegen_add_two_stays_add(const MunitParameter params[], void *
     return MUNIT_OK;
 }
 
+MunitResult test_codegen_err_unimplemented_op(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    set i32 b ~ a;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPR_PARSE);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_SET);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_unimplemented_op_in_if(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    if ~ = a 1 : end_if;\n"
+                 "end_if:\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPR_PARSE);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_drset_keeps_operand_reg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ptr p\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 v $p;\n"
+                 "    set i32 $p + v 1;\n"
+                 "    ret v;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // v is allocated to eax, the deref target must not be computed there
+    micro_asm386_emit(&ctx.asm_instrs, &ctx.outbuf);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_call_discard_result(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun add\n"
+                 "    i32 a\n"
+                 "    i32 b\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    ret + a b;\n"
+                 "end\n"
+                 "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    call _ add 3 4;\n"
+                 "    set i32 res 1;\n"
+                 "    ret res;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int calls = 0;
+    for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
+        if (cg_asm(&ctx, i)->opcode == MICRO_ASM386_INSTR_CALL_L32) {
+            calls++;
+        }
+    }
+    munit_assert_int(calls, ==, 1);
+
+    micro_asm386_emit(&ctx.asm_instrs, &ctx.outbuf);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_err_vreg_type_mismatch(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1909,6 +2018,10 @@ static MunitTest codegen386_tests[] = {
     { "/err_too_many_args", test_codegen_err_too_many_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_too_few_args", test_codegen_err_too_few_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_vreg_type_mismatch", test_codegen_err_vreg_type_mismatch, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/drset_keeps_operand_reg", test_codegen_drset_keeps_operand_reg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/call_discard_result", test_codegen_call_discard_result, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_unimplemented_op", test_codegen_err_unimplemented_op, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_unimplemented_op_in_if", test_codegen_err_unimplemented_op_in_if, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_call_result_undef", test_codegen_err_call_result_undef, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_call_result_type", test_codegen_err_call_result_type, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }

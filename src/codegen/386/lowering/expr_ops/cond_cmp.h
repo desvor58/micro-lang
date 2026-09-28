@@ -226,13 +226,14 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
             micro_codegen386_storage_t expr2_dst;
 
             int need_pop_eax = 0;
+            int prev_used_eax = ext->used_regs[MICRO_ASM386_REG32_EAX];
             if (free_space2 < 0) {
                 need_pop_eax = 1;
                 push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
-                ext->ebp_top_offset += 4;
                 expr2_dst.type = MICRO_STORAGE_REG;
-                expr2_dst.stack.ebp_offset = MICRO_ASM386_REG32_EAX;
+                expr2_dst.reg.reg = MICRO_ASM386_REG32_EAX;
                 expr2_dst.reg.size = MICRO_SIZE_32;
+                ext->used_regs[MICRO_ASM386_REG32_EAX] = 1;
             } else {
                 expr2_dst.type = MICRO_STORAGE_REG;
                 expr2_dst.reg.reg = free_space2;
@@ -241,6 +242,7 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
 
             expr_info_t expr2_info = expr_parse(codegen, expr2_dst, second_operand);
             if (!expr2_info.size) {
+                ext->used_regs[MICRO_ASM386_REG32_EAX] = prev_used_eax;
                 return (expr_info_t){ 0, MICRO_TYPE_NULL };
             }
 
@@ -250,6 +252,8 @@ expr_info_t cond_op_cmp_handler(micro_codegen_t *codegen, micro_codegen386_stora
             if (expr_dst.type == MICRO_STORAGE_REG) {
                 push_asm_instr(MICRO_ASM386_INSTR_CMP_R32R32, operand_reg(MICRO_SIZE_32, expr_dst.reg.reg), operand_reg(MICRO_SIZE_32, expr2_dst.reg.reg));
             }
+
+            ext->used_regs[MICRO_ASM386_REG32_EAX] = prev_used_eax;
 
             if (need_pop_eax) {
                 push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());

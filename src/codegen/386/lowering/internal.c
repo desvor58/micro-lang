@@ -233,6 +233,7 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
             });
             goto exit;
         }
@@ -253,6 +254,13 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
     }
     if (_micro_expr_is_op(start->type)) {
         op_info_t op_info = op_tbl[start->type];
+        if (unlikely(!op_info.handler)) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_EXPR_PARSE,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            goto exit;
+        }
         res = op_info.handler(codegen, dst, start);
         if (op_info.is_cond) {
             micro_asm386_instruction_type_t set_instr = get_set_instr(start, res.type);
@@ -338,6 +346,7 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
         if (!ident) {
             micro_push_err((micro_error_t){
                 .err = MICRO_ERROR_UNDEFINED_IDENT,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
             });
             goto exit;
         }
@@ -348,6 +357,14 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
         }
     } else
     if (_micro_expr_is_op(start->type)) {
+        op_info_t op_info = op_tbl[start->type];
+        if (unlikely(!op_info.handler)) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_EXPR_PARSE,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            goto exit;
+        }
         int free_space = get_last_free_space(codegen);
         micro_codegen386_storage_t dst;
         if (free_space < 0) {
@@ -358,7 +375,6 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
             dst.reg.reg = free_space;
             dst.reg.size = MICRO_SIZE_32;
         }
-        op_info_t op_info = op_tbl[start->type];
         res = op_info.handler(codegen, dst, start);
         if (!op_info.is_cond) {
             if (dst.type == MICRO_STORAGE_STACK) {

@@ -34,7 +34,7 @@ typedef struct {
     micro_codegen_flags_t codegen_flags;
 } mc_args_t;
 
-void print_usage()
+static void print_usage(void)
 {
     printf(
         "micro-lang dev-1.0.0\n"
@@ -42,39 +42,43 @@ void print_usage()
         "usage:\n"
         "    microc [flags] <input file>\n"
         "flags:\n"
-        "    --help (-h)          - put this menu\n"
-        "    --output (-o) <file> - set output file\n"
-        "    -P                   - put some info\n"
-        "      t                  - put tokens\n"
-        "      i                  - put instructions\n"
-        "      a                  - put assembly\n"
-        "    -S                   - stop compiling\n"
-        "      r                  - stop after reading file\n"
-        "      l                  - stop after lexing\n"
-        "      i                  - stop after instruction generation\n"
-        "      a                  - stop after asm optimization stage\n"
-        "    -Fno-err-outside-fun - disable errors like \"instruction 'set' can be only in function body\"\n"
-        "    -N                   - skip stage of compiling\n"
-        "      a                  - skip asm optimizing\n"
+        "    --help (-h)           - put this menu\n"
+        "    --output (-o) <file>  - set output file (default: a.out)\n"
+        "    -P                    - put some info\n"
+        "      t                   - put tokens\n"
+        "      i                   - put instructions\n"
+        "      a                   - put assembly\n"
+        "    -S                    - stop compiling\n"
+        "      r                   - stop after reading file\n"
+        "      l                   - stop after lexing\n"
+        "      i                   - stop after instruction generation\n"
+        "      a                   - stop after asm optimization stage\n"
+        "    -N                    - skip stage of compiling\n"
+        "      a                   - skip asm optimizing\n"
+        "    -Fno-err-outside-fun  - allow instructions outside of a function\n"
     );
-    exit(0);
 }
 
-mc_args_t mc_args_parse(int argc, char **argv)
+static mc_args_t mc_args_parse(int argc, char **argv)
 {
     mc_args_t args = {0};
-    args.inputfile[0] = 0;
-    strcpy(args.outfile, "a");
-    args.toks_put = 0;
-    args.instrs_put = 0;
-    args.stop_at = STOPAFTER_NONE;
+    strcpy(args.outfile, "a.out");
 
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             if (argv[i][1] == 'h' || !strcmp(argv[i], "--help")) {
                 print_usage();
+                exit(0);
             }
             if (!strcmp(argv[i], "--output") || !strcmp(argv[i], "-o")) {
+                if (i + 1 == argc) {
+                    puts("Error: Expected file name after output flag");
+                    exit(1);
+                }
+                if (strlen(argv[i + 1]) > MICRO_MAX_SYMBOL_SIZE - 1) {
+                    puts("Error: Output file name is too long");
+                    exit(1);
+                }
                 strcpy(args.outfile, argv[++i]);
             } else
             if (argv[i][1] == 'P') {
@@ -88,7 +92,8 @@ mc_args_t mc_args_parse(int argc, char **argv)
                     if (argv[i][j] == 'a') {
                         args.asm_put = 1;
                     } else {
-                        printf("Error: Unexpected symbol: '%c' (expected 't', 'i', 'a')", argv[i][j]);
+                        printf("Error: Unexpected symbol: '%c' (expected 't', 'i', 'a')\n", argv[i][j]);
+                        exit(1);
                     }
                 }
             } else
@@ -105,7 +110,8 @@ mc_args_t mc_args_parse(int argc, char **argv)
                 if (argv[i][2] == 'a') {
                     args.stop_at = STOPAFTER_ASMOPTING;
                 } else {
-                    printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'o')", argv[i][2]);
+                    printf("Error: Unexpected symbol: '%c' (expected 'r', 'l', 'i', 'a')\n", argv[i][2]);
+                    exit(1);
                 }
             } else
             if (argv[i][1] == 'N') {
@@ -120,11 +126,17 @@ mc_args_t mc_args_parse(int argc, char **argv)
             } else {
                 printf("Error: Undefined flag %s\n", argv[i]);
                 print_usage();
+                exit(1);
             }
         } else {
             if (args.inputfile[0]) {
-                printf("Error: Input file already set");
+                puts("Error: Input file already set");
                 print_usage();
+                exit(1);
+            }
+            if (strlen(argv[i]) > MICRO_MAX_SYMBOL_SIZE - 1) {
+                puts("Error: Input file name is too long");
+                exit(1);
             }
             strcpy(args.inputfile, argv[i]);
         }
@@ -135,15 +147,11 @@ mc_args_t mc_args_parse(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    mc_args_t args = {0};
-    args = mc_args_parse(argc, argv);
+    mc_args_t args = mc_args_parse(argc, argv);
 
     if (args.inputfile[0] == 0) {
         puts("Error: Expected input file name");
-        return 1;
-    }
-    if (args.outfile[0] == 0) {
-        puts("Error: Expected output file name");
+        print_usage();
         return 1;
     }
 
@@ -152,7 +160,7 @@ int main(int argc, char **argv)
 
     FILE *infile = fopen(args.inputfile, "r");
     if (!infile) {
-        puts("Error: Input file not be opening");
+        puts("Error: Cannot open input file");
         return 1;
     }
     char c = 0;
@@ -238,7 +246,7 @@ int main(int argc, char **argv)
                 }
 
                 if (args.stop_at == STOPAFTER_ASMOPTING) {
-                    exit(0);
+                    return 0;
                 }
 
                 micro_asm386_emit(&asm_instrs, &outbuf);
@@ -248,6 +256,10 @@ int main(int argc, char **argv)
                 sct_vector_deinit(&asm_instrs);
 
                 FILE *outfile = fopen(args.outfile, "wb");
+                if (!outfile) {
+                    puts("Error: Cannot open output file");
+                    return 5;
+                }
                 fwrite(outbuf.data, sizeof(u8), outbuf.size, outfile);
                 fclose(outfile);
             micro_codegen386_deinit(&codegen);

@@ -165,11 +165,11 @@ static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, m
 }
 
 typedef struct {
-    micro_codegen386_ident_t *base;   // may be null
-    micro_codegen386_ident_t *index;  // may be null
+    micro_codegen386_ident_t *base;
+    micro_codegen386_ident_t *index;
     i32                        scale;
     i32                        disp;
-    size_t                     size;   // consumed tokens
+    size_t                     size;
 } lea_pattern_t;
 
 static i32 lea_scale_of_lit(i32 lit)

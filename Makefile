@@ -1,4 +1,6 @@
-CC ?= gcc
+ifeq ($(origin CC),default)
+    CC := gcc
+endif
 
 SCT_DIR := lib/sct
 SCT_LIB_DIR := $(SCT_DIR)/lib
@@ -13,6 +15,10 @@ AR := gcc-ar
 
 MODE ?= release-fast
 
+ifeq ($(filter $(MODE),debug release-fast release-size),)
+    $(error unknown MODE '$(MODE)': expected debug, release-fast or release-size)
+endif
+
 ifeq ($(MODE), debug)
 	CFLAGS += -O0 -g
 endif
@@ -25,7 +31,8 @@ ifeq ($(MODE), release-size)
     LDFLAGS += -flto
 endif
 
-OBJDIR := obj/$(MODE)
+CC_ID := $(notdir $(firstword $(CC)))
+OBJDIR := obj/$(MODE)/$(CC_ID)
 
 ifeq ($(OS),Windows_NT)
     RM_DIR = if exist "$(subst /,\,$(1))" rmdir /s /q "$(subst /,\,$(1))"
@@ -53,12 +60,10 @@ ifeq ($(CC),clang)
     ifeq ($(OS),Windows_NT)
         TARGET_FLAGS := --target=i686-w64-windows-gnu
         CFLAGS += $(TARGET_FLAGS)
-        LDFLAGS += $(TARGET_FLAGS)
-         LDFLAGS += -fuse-ld=lld
+        LDFLAGS += $(TARGET_FLAGS) -fuse-ld=lld
     endif
     AR := llvm-ar
 endif
-
 
 MICRO_SRC := src/common.c \
              src/instr.c \
@@ -85,16 +90,16 @@ MICROC_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICROC_SRCS))
 MICRODEBUG_OBJS := $(patsubst src/%.c, $(OBJDIR)/%.o, $(MICRODEBUG_SRC))
 DEPS := $(MICRO_OBJS:.o=.d) $(MICROC_OBJS:.o=.d) $(MICRODEBUG_OBJS:.o=.d)
 
-TEST_CFLAGS := $(CFLAGS) -Itests/include -I$(SCT_INC_DIR) -O3
+TEST_CFLAGS := $(CFLAGS) -Itests/include
 MICROC_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 TEST_LDFLAGS := $(LDFLAGS) -L$(SCT_LIB_DIR) -l$(SCT_LIB_FILE)
 MICRODEBUG_LDFLAGS := $(LDFLAGS) -Llib -lmicro-debug
 
 EXAMPLES_SRCS := $(wildcard examples/*/main.c)
 EXAMPLES_BINS := $(patsubst examples/%/main.c, bin/examples/%, $(EXAMPLES_SRCS))
-EXAMPLES_CFLAGS := $(CFLAGS) -Iinclude -I$(SCT_INC_DIR) -O3
+EXAMPLES_CFLAGS := $(CFLAGS)
 
-.PHONY: all libmicro microc test test-debug test-release _run_tests examples clean SCT
+.PHONY: all libmicro libmicro-debug microc test test-debug test-release _run_tests examples clean SCT
 
 all: microc libmicro libmicro-debug
 

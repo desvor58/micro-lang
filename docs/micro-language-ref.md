@@ -1,16 +1,21 @@
 # Micro Language Reference
 
+Version: **dev-1.0.0** (unstable MVP)
+
 ## Contents
 1. [Introduction](#introduction)
 2. [Comments](#comments)
 3. [Types](#types)
 4. [Expressions](#expressions)
 5. [Virtual registers](#virtual-registers)
-6. [Functions](#functions)
-7. [Calling functions](#calling-functions)
-8. [Returning values](#returning-values)
-9. [Labels and jumps](#labels-and-jumps)
-10. [Conditional jumps](#conditional-jumps)
+6. [Lifetime hints](#lifetime-hints)
+7. [Functions](#functions)
+8. [Calling functions](#calling-functions)
+9. [Returning values](#returning-values)
+10. [Labels and jumps](#labels-and-jumps)
+11. [Conditional jumps](#conditional-jumps)
+12. [Code selection](#code-selection)
+13. [Full example](#full-example)
 
 ---
 
@@ -23,6 +28,8 @@ exactly what should happen, step by step.
 
 A program is a set of functions. Each function has a name, a list of
 arguments, an optional return type, and a body.
+
+The dev-1.0.0 backend generates raw 32 bit x86 code.
 
 ---
 
@@ -60,6 +67,14 @@ Notes:
 - `ptr` is the type of every pointer and address.
 - Integer literals are signed unless they are stored into an unsigned type.
 - Literals in micro are written the usual way: `5`, `-3`, `2.5`.
+- Comparison operators pick the signed or the unsigned form from the type
+  of their operands.
+- `f32` is parsed and takes 4 bytes, but arithmetic on floats is not
+  implemented yet: a float literal is truncated to an integer.
+- Every virtual register is allocated to a 32 bit machine register, and
+  values narrower than 4 bytes are written with instructions of their own
+  width. Widening such a value back to 32 bits is not implemented yet, so
+  use `i32`, `u32` and `ptr` for values you read as a whole register.
 
 ---
 
@@ -84,40 +99,40 @@ my_vreg        \ also an expression \
 
 ### Operators
 
-The table below is the full set of operators micro targets. Each operator
+The table below is the full set of operators micro implements. Each operator
 takes its operands in prefix form.
 
-| operator          | C analog         | description                        |
-|-------------------|------------------|------------------------------------|
-| + <o1> <o2>       | <o1> + <o2>      | adds o1 and o2                     |
-| - <o1> <o2>       | <o1> - <o2>      | subtracts o2 from o1               |
-| ~ <o1>            | -<o1>            | negates o1                         |
-| * <o1> <o2>       | <o1> * <o2>      | multiplies o1 and o2               |
-| / <o1> <o2>       | <o1> / <o2>      | divides o1 by o2                   |
-| # <i>             | &<i>             | address of i                       |
-| $ <p>             | *<p>             | value at address p (see note 1)    |
-| & <o1> <o2>       | <o1> & <o2>      | bitwise and of o1 and o2           |
-| | <o1> <o2>       | <o1> | <o2>      | bitwise or of o1 and o2            |
-| ^ <o1> <o2>       | <o1> ^ <o2>      | bitwise xor of o1 and o2           |
-| ` <o1>            | ~<o1>            | bitwise not of o1                  |
-| && <o1> <o2>      | <o1> && <o2>     | logical and of o1 and o2           |
-| || <o1> <o2>      | <o1> || <o2>     | logical or of o1 and o2            |
-| ! <o1>            | !<o1>            | logical not of o1                  |
-| = <o1> <o2>       | <o1> == <o2>     | true if o1 equals o2               |
-| > <o1> <o2>       | <o1> > <o2>      | true if o1 is bigger than o2       |
-| < <o1> <o2>       | <o1> < <o2>      | true if o1 is less than o2         |
-| >= <o1> <o2>      | <o1> >= <o2>     | true if o1 is bigger or equal      |
-| <= <o1> <o2>      | <o1> <= <o2>     | true if o1 is less or equal        |
+| operator      | C analog     | description                                  |
+|---------------|--------------|----------------------------------------------|
+| + <o1> <o2>   | <o1> + <o2>  | adds o1 and o2                               |
+| - <o1> <o2>   | <o1> - <o2>  | subtracts o2 from o1                         |
+| * <o1> <o2>   | <o1> * <o2>  | multiplies o1 and o2                         |
+| / <o1> <o2>   | <o1> / <o2>  | divides o1 by o2                             |
+| $ <p>         | *<p>         | value at address p (see note 1)              |
+| = <o1> <o2>   | <o1> == <o2> | 1 if o1 equals o2, otherwise 0               |
+| < <o1> <o2>   | <o1> < <o2>  | 1 if o1 is less than o2, otherwise 0         |
+| > <o1> <o2>   | <o1> > <o2>  | 1 if o1 is bigger than o2, otherwise 0       |
+| <= <o1> <o2>  | <o1> <= <o2> | 1 if o1 is less or equal, otherwise 0        |
+| >= <o1> <o2>  | <o1> >= <o2> | 1 if o1 is bigger or equal, otherwise 0     |
 
 Notes:
 
-1. `$` reads the value of the expected type from the given address.
+1. `$` reads a 32 bit value from the given address.
 
 ```
-set i32 val 4;
-set ptr p #val;
-set i16 other $val;  \ reads val as a pointer to i16 \
+fun f
+    ptr p
+    ret i32
+start
+    set i32 val $p;      \ read through the pointer \
+    set i32 $p + val 1;  \ write back through it \
+end
 ```
+
+The symbols `&`, `#`, `` ` `` and `~` are reserved: the lexer knows them,
+but there is no code behind them yet. Using one gives an
+`Expression parse error`. `!` is not an expression operator either, it
+negates an `if` jump, see [conditional jumps](#conditional-jumps).
 
 Expressions can be nested without limit, as long as each operator receives
 the right number of operands.
@@ -155,13 +170,40 @@ To store a value through a pointer, put `$` before the name. The value is
 written to the address stored in that register:
 
 ```
-set i32 tmp 5;
-set ptr slot #tmp;
-set i32 $slot 42;        \ write 42 into tmp \
+set ptr slot;
+set i32 $slot 42;
 ```
 
-All virtual registers live only inside the function where they were
-created. They disappear when the function ends.
+A register cannot have the same name as a function, and it cannot change
+its type after it is created.
+
+---
+
+## Lifetime hints
+
+By default a virtual register lives until the end of its function and keeps
+its machine register. A hint tells the compiler to release it earlier, so
+that later registers can reuse that machine register:
+
+```
+set <type> <name> [<expression>] { <hint>: <value>, ... };
+```
+
+| hint           | value | description                                  |
+|----------------|-------|----------------------------------------------|
+| `lifetime`     | int   | release the register after this many further instructions |
+| `forced_stack` | bool  | reserved, parsed and ignored                 |
+| `lazy_init`    | bool  | reserved, parsed and ignored                 |
+
+`lifetime: 0` releases the register right away, so the next instruction
+must not use it. `lifetime: 4` keeps it for four more instructions.
+
+```
+set i32 nn - n 1 { lifetime: 4 };  \ only needed by the next 4 instructions \
+```
+
+Using a name that is not a defined function, or as a jump target, gives
+`Identifier is not a virtual register`.
 
 ---
 
@@ -184,6 +226,7 @@ end
 - The list of arguments is optional.
 - The `ret <type>` line is optional and sets the return type.
 - The body sits between `start` and `end`.
+- A hint block, like the one of a `set`, can follow the `end` keyword.
 
 A minimal function:
 
@@ -215,8 +258,10 @@ start
 end
 ```
 
-Arguments act like virtual registers. Inside the body you can read them in
-expressions.
+Arguments are placed on the stack and are used as virtual registers inside
+the body. A copy of an argument placed into a new virtual register can live
+in a machine register, so read arguments through such a copy when the
+argument takes part in many computations.
 
 ---
 
@@ -232,10 +277,15 @@ call <result_register> <function_name> <arg1> <arg2> ... ;
 - If the function has no return value, or you do not want to keep it, use
   `_` as the result register.
 - Arguments are expressions, separated by spaces.
+- The called function must be defined before the call.
 
 Call without arguments:
 
 ```
+fun empty
+start
+end
+
 fun main
 start
     call _ empty;
@@ -243,16 +293,6 @@ end
 ```
 
 Call with arguments:
-
-```
-fun main
-    ret i32
-start
-    call _ add 3 4;
-end
-```
-
-A full example with a declared result register:
 
 ```
 fun add
@@ -266,9 +306,7 @@ end
 fun main
     ret i32
 start
-    set i32 res;
-    call res add 10 5;
-    ret res;
+    call _ add 3 4;
 end
 ```
 
@@ -279,7 +317,7 @@ end
 The `ret` keyword ends the current function and returns a value.
 
 ```
-ret <expression>;
+ret [<expression>];
 ```
 
 If the function has a return type, the expression result must match it:
@@ -323,7 +361,7 @@ fun loop
 start
     set i32 counter 0;
     goto my_lbl;
-    set counter 54;  \ this code never runs \
+    set i32 counter 54;  \ this code never runs \
 my_lbl:
     set i32 counter + counter 1;
     ret counter;
@@ -340,32 +378,64 @@ For conditional branching use [`if`](#conditional-jumps).
 The `if` keyword jumps to a label when a condition is true:
 
 ```
-if <condition> : <label>;
+if <expression> : <label>;
 ```
 
-Currently the condition must be a virtual register: the jump happens when it
-holds a non-zero value.
+The condition is a full expression. A virtual register is true when it
+holds a non-zero value, a comparison operator produces 1 or 0, and any
+other expression is true when its result is not zero.
 
 ```
 fun f
     i32 n
     ret i32
 start
-    if n : non_zero;   \ jump to non_zero when n != 0 \
+    if n : non_zero;          \ jump when n != 0 \
+    if <= n 1 : small;        \ jump when n <= 1 \
+    if = * n 4 8 : eight;     \ jump when n * 4 == 8 \
     ret 0;
-non_zero:
+small:
     ret 1;
+eight:
+    ret 8;
+non_zero:
+    ret 2;
 end
 ```
 
 To jump when the condition is *false* instead, prefix it with `!`:
 
 ```
-if ! n : done;   \ jump to done when n == 0 \
+if ! <= n 1 : big;   \ jump when n > 1 \
 ```
+
+Several `!` in a row are allowed: `if ! ! n : lbl;` jumps when `n` is
+zero.
 
 After the jump target, the code continues normally, so `if` acts like a
 conditional `goto`. If the target label does not exist, compilation fails.
+
+---
+
+## Code selection
+
+The code generator picks the shortest instruction sequence for the common
+addressing patterns. You do not have to ask for it, but writing the
+expression in the shape below lets the compiler find it.
+
+| expression             | generated                        |
+|------------------------|----------------------------------|
+| `* i 4`                | `lea r, [i * 4]`                 |
+| `+ b * i 4`            | `lea r, [b + i * 4]`             |
+| `+ + b * i 4 8`        | `lea r, [b + i * 4 + 8]`         |
+| `+ * i 4 8`            | `lea r, [i * 4 + 8]`             |
+| `+ b * + i 1 4`        | `lea r, [b + i * 4 + 4]`         |
+| `+ i 1`                | `inc r`                          |
+| `- i 1`                | `dec r`                          |
+
+A scale of 2, 4 or 8 fits into one instruction. Any other literal, and
+every value that does not live in a machine register, falls back to the
+plain `imul` and `add` sequence.
 
 ---
 

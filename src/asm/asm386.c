@@ -450,8 +450,6 @@ static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro
             sct_vector_erase(instrs, i);
             return 1;
         }
-        // nothing reads the flags of an expression result, every consumer
-        // re-checks it with its own cmp/test
         if (instr->operand2.imm.val == 1) {
             static const micro_asm386_instruction_type_t inc_tbl[] = {
                 [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_INC_R8,

@@ -1,31 +1,94 @@
-# Coments
-between '\\'s one spaces
+# Good micro code style
+
+## Comments
+
+A comment is written between two backslashes. Everything inside is ignored
+by the lexer, so a comment can hold any text, including newlines.
+
 ```
-\ hello \
-```
-mutlinine coments:
-```
+\ one line comment \
+
 \
-hello
-its comment
+a comment
+over several lines
 \
-or
-\ hello
-| its comment
-\ by desvor
+
+set i32 x 5;  \ a comment after an instruction \
 ```
 
-# Naming
-In micro, I recommend sticking to snake_case naming, but micro is an IR language, so naming conventions in micro code can be the same as those in the source language that compiles to micro.
+An unclosed comment is an error, so every `\` needs its pair.
 
-# Function declaration
-I recommend declarate function like this:
+## Naming
+
+Use `snake_case` for virtual registers, labels and function names:
+
+```
+fun bubble_sort
+    i32 elem_count
+    ret i32
+start
+swap_again:
+    ...
+end
+```
+
+Micro is an IR language, so a name that comes from the source language can
+keep the naming of that source language: `myStruct`, `my_field` and
+`MyClass::method` style names are all valid.
+
+## Function declaration
+
+Declare a function like this:
+
 ```
 fun <function name>
-    <param T 1> <param N 1>
-    <param T N> <param N N>
-    ret <ret type>
+    <param type> <param name>
+    ...
+    ret <return type>
 start
     <body>
 end
+```
+
+The argument list comes first, then the return type, then the body between
+`start` and `end`.
+
+## Statements
+
+End every instruction with a semicolon. Write one instruction per line and
+use four spaces of indentation inside a function:
+
+```
+fun sum_to
+    i32 n
+    ret i32
+start
+    set i32 sum 0;
+    set i32 i 0;
+loop:
+    if >= i n : done;
+    set i32 sum + sum i;
+    set i32 i + i 1;
+    goto loop;
+done:
+    ret sum;
+end
+```
+
+## Expressions
+
+Write expressions in prefix form, in the shape the code generator can fold
+into a single instruction when it can:
+
+```
+set i32 addr base * index 4;       \ one lea \
+set i32 next index + index 1;      \ one inc \
+```
+
+Put a space around every operator, keep the operand order that reads best
+for you, and use a [lifetime hint](micro-language-ref.md#lifetime-hints) when
+a register is not needed for the rest of the function:
+
+```
+set i32 limit - n 1 { lifetime: 2 };
 ```
