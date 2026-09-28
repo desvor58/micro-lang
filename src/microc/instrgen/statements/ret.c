@@ -20,7 +20,8 @@ void mc_instrgen_parse_ret(mc_instrgen_t *instrgen)
     }
 
     mc_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    if (!expr_start_tok || (expr_start_tok->type != MC_TOK_SEMICOLON && !_micro_expr_is_expr_start(expr_start_tok->type))) {
+    if (!expr_start_tok || (expr_start_tok->type != MC_TOK_SEMICOLON &&
+        expr_start_tok->type != MC_TOK_LBRACE && !_micro_expr_is_expr_start(expr_start_tok->type))) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .instr = MICRO_INSTR_RET
@@ -28,25 +29,33 @@ void mc_instrgen_parse_ret(mc_instrgen_t *instrgen)
         goto exit;
     }
 
-    if (expr_start_tok->type == MC_TOK_SEMICOLON) {
+    if (expr_start_tok->type == MC_TOK_SEMICOLON || expr_start_tok->type == MC_TOK_LBRACE) {
         expr_start_tok = 0;
     } else {
         size_t expr_size = mc_scroll_expr(instrgen->toks, instrgen->pos);
         if (!expr_size) {
             goto exit;
         }
-        mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_size);
-        if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
-            micro_push_err((micro_error_t) {
-                .err = MICRO_ERROR_EXPECTED_SEMICOLON,
-                .instr = MICRO_INSTR_RET
-            });
-            goto exit;
-        }
+        instrgen->pos += expr_size;
+    }
+
+    micro_instruction_hints_t hints;
+    if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_RET)) {
+        goto exit;
+    }
+
+    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
+        micro_push_err((micro_error_t) {
+            .err = MICRO_ERROR_EXPECTED_SEMICOLON,
+            .instr = MICRO_INSTR_RET
+        });
+        goto exit;
     }
 
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_RET,
+        .hints = hints,
         .ret = {
             .val_expr = (micro_expr_tok_t*)expr_start_tok
         }

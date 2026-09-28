@@ -37,6 +37,14 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
 
+    micro_expr_tok_t *first_operand = start + 1;
+    micro_expr_tok_t *second_operand = start + 2;
+
+    lea_pattern_t lea_pat;
+    if (lea_match_scaled(codegen, start, &lea_pat) && !code_selection_lea(codegen, dst, &lea_pat)) {
+        return (expr_info_t){ lea_pat.size, lea_pat.index->vreg.type };
+    }
+
     expr_info_t res;
 
     int need_pop_eax = 0;
@@ -72,7 +80,6 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         },
     };
 
-    micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
         if (!ident) {
@@ -83,6 +90,24 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             res = (expr_info_t){ 0, MICRO_TYPE_NULL };
             goto exit;
         }
+        
+        if (_micro_expr_is_lit(second_operand->type)) {
+            char *end;
+            errno = 0;
+            i32 lit = strtol(second_operand->val, &end, 10);
+
+            if (ident->type == MICRO_IDENT_VREG) {
+                expr_info_t expr_info = expr_vreg_parse(codegen, eax_dst, &ident->vreg);
+                if (!expr_info.size) {
+                    res = (expr_info_t){ 0, MICRO_TYPE_NULL };
+                    goto exit;
+                }
+            }
+
+            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(lit)));
+            res = (expr_info_t){ 3, ident->vreg.type };
+            goto exit;
+        }
 
         if (ident->type == MICRO_IDENT_VREG) {
             expr_info_t expr_info = expr_vreg_parse(codegen, eax_dst, &ident->vreg);
@@ -91,17 +116,7 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
                 goto exit;
             }
         }
-        
-        micro_expr_tok_t *second_operand = start + 2;
-        if (_micro_expr_is_lit(second_operand->type)) {
-            char *end;
-            errno = 0;
-            i32 lit = strtol(second_operand->val, &end, 10);
 
-            push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(lit)));
-            res = (expr_info_t){ 3, ident->vreg.type };
-            goto exit;
-        }
         if (_micro_expr_is_op(second_operand->type)) {
             expr_info_t expr_info = expr_parse(codegen, edx_dst, second_operand);
             if (!expr_info.size) {
@@ -142,7 +157,6 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         errno = 0;
         i32 first_lit = strtol(first_operand->val, &end, 10);
 
-        micro_expr_tok_t *second_operand = start + 2;
         if (_micro_expr_is_lit(second_operand->type)) {
             errno = 0;
             i32 second_lit = strtol(second_operand->val, &end, 10);
@@ -204,18 +218,18 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             ext->used_regs[dst.reg.reg] = 1;
         }
 
-        micro_expr_tok_t *second_operand = start + expr_info.size + 1;
-        if (_micro_expr_is_lit(second_operand->type)) {
+        micro_expr_tok_t *rest_operand = start + expr_info.size + 1;
+        if (_micro_expr_is_lit(rest_operand->type)) {
             char *end;
             errno = 0;
-            i32 second_lit = strtol(second_operand->val, &end, 10);
+            i32 second_lit = strtol(rest_operand->val, &end, 10);
 
             push_asm_instr(MICRO_ASM386_INSTR_IMUL_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(second_lit)));
             res = (expr_info_t){ 2 + expr_info.size, expr_info.type };
             goto exit;
         }
-        if (_micro_expr_is_op(second_operand->type)) {
-            expr_info_t expr2_info = expr_parse(codegen, edx_dst, second_operand);
+        if (_micro_expr_is_op(rest_operand->type)) {
+            expr_info_t expr2_info = expr_parse(codegen, edx_dst, rest_operand);
             if (!expr2_info.size) {
                 res = (expr_info_t){ 0, MICRO_TYPE_NULL };
                 goto exit;
@@ -224,8 +238,8 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             res = (expr_info_t){ 1 + expr_info.size + expr2_info.size, expr_info.type };
             goto exit;
         }
-        if (second_operand->type == MICRO_EXPR_TOK_IDENT) {
-            micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, second_operand->val);
+        if (rest_operand->type == MICRO_EXPR_TOK_IDENT) {
+            micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, rest_operand->val);
             if (!ident) {
                 micro_push_err((micro_error_t){
                     .err = MICRO_ERROR_UNDEFINED_IDENT,

@@ -19,13 +19,28 @@
 #define operand_none()  \
     (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE }
 
-#define push_asm_instr(instr, op1, op2) do {     \
-    micro_asm386_instruction_t tmp;              \
-    tmp.opcode   = (instr);                      \
-    tmp.operand1 = (op1);                        \
-    tmp.operand2 = (op2);                        \
-    sct_vector_push(codegen->asm_instrs, &tmp);  \
+static const u8 _sib_scale_tbl[] = {
+    [1] = 0b00,
+    [2] = 0b01,
+    [4] = 0b10,
+    [8] = 0b11,
+};
+
+static inline int sib_scale_valid(i32 scale)
+{
+    return scale == 1 || scale == 2 || scale == 4 || scale == 8;
+}
+
+#define push_asm_instr_with_sib(instr, op1, op2, S, I, B) do {                                                   \
+    micro_asm386_instruction_t tmp;                                                                              \
+    tmp.opcode   = (instr);                                                                                      \
+    tmp.operand1 = (op1);                                                                                        \
+    tmp.operand2 = (op2);                                                                                        \
+    tmp.sib      = (micro_asm386_instruction_sib_t){ .scale = _sib_scale_tbl[(S)], .index = (I), .base = (B) };  \
+    sct_vector_push(codegen->asm_instrs, &tmp);                                                                  \
 } while(0)
+
+#define push_asm_instr(instr, op1, op2) push_asm_instr_with_sib((instr), (op1), (op2), 0, 0, 0)
 
 typedef struct {
     size_t       size;
@@ -65,11 +80,11 @@ int lowering(micro_codegen_t *codegen);
 int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_goto(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr);
-int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);
 
 expr_info_t expr_lit_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, i32 imm);
 expr_info_t expr_lbl_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_lbl_t *lbl);

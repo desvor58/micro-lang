@@ -40,7 +40,7 @@ void mc_instrgen_parse_set(mc_instrgen_t *instrgen)
     }
 
     mc_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
-    if (name_tok->type == MC_TOK_DOLLAR) {
+    if (name_tok && name_tok->type == MC_TOK_DOLLAR) {
         is_drset = 1;
         name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
     }
@@ -54,24 +54,32 @@ void mc_instrgen_parse_set(mc_instrgen_t *instrgen)
     }
 
     mc_token_t *expr_start_tok = sct_vector_get(instrgen->toks, instrgen->pos);
-    if (!expr_start_tok || (!_micro_expr_is_expr_start(expr_start_tok->type) && expr_start_tok->type != MC_TOK_SEMICOLON)) {
+    if (!expr_start_tok || (!_micro_expr_is_expr_start(expr_start_tok->type) &&
+        expr_start_tok->type != MC_TOK_SEMICOLON && expr_start_tok->type != MC_TOK_LBRACE)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_EXPECTED_EXPRESSION,
             .instr = MICRO_INSTR_SET
         });
         goto exit;
     }
+
     size_t expr_size = 0;
-    if (expr_start_tok->type == MC_TOK_SEMICOLON) {
+    if (expr_start_tok->type == MC_TOK_SEMICOLON || expr_start_tok->type == MC_TOK_LBRACE) {
         expr_start_tok = 0;
     } else {
         expr_size = mc_scroll_expr(instrgen->toks, instrgen->pos);
         if (!expr_size) {
             goto exit;
         }
+        instrgen->pos += expr_size;
     }
 
-    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos + expr_size);
+    micro_instruction_hints_t hints;
+    if (!mc_instrgen_parse_hints(instrgen, &hints, is_drset ? MICRO_INSTR_DRSET : MICRO_INSTR_SET)) {
+        goto exit;
+    }
+
+    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
     if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
         micro_push_err((micro_error_t) {
             .err = MICRO_ERROR_EXPECTED_SEMICOLON,
@@ -89,6 +97,7 @@ void mc_instrgen_parse_set(mc_instrgen_t *instrgen)
 
         instr = (micro_instruction_t){
             .type = MICRO_INSTR_DRSET,
+            .hints = hints,
             .drset = drset_instr
         };
     } else {
@@ -99,6 +108,7 @@ void mc_instrgen_parse_set(mc_instrgen_t *instrgen)
 
         instr = (micro_instruction_t){
             .type = MICRO_INSTR_SET,
+            .hints = hints,
             .set = set_instr
         };
     }

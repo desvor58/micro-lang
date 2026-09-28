@@ -44,12 +44,18 @@ void mc_instrgen_parse_if(mc_instrgen_t *instrgen)
         goto exit;
     }
 
+    micro_instruction_hints_t hints;
+    if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_IF)) {
+        goto exit;
+    }
+
     micro_instruction_if_t instr_if;
     instr_if.cond_expr = (micro_expr_tok_t*)expr_tok;
     strcpy(instr_if.lbl_name, lbl_tok->val);
-    
+
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_IF,
+        .hints = hints,
         .if_goto = instr_if,
     });
 

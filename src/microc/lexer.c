@@ -10,6 +10,8 @@ char *mc_token_type2str[] = {
     [MC_TOK_COMA]        = "coma",
     [MC_TOK_COLON]       = "colon",
     [MC_TOK_SEMICOLON]   = "semicolon",
+    [MC_TOK_LBRACE]      = "lbrace",
+    [MC_TOK_RBRACE]      = "rbrace",
     [MC_TOK_AMPERSAND]   = "ampersand",
     [MC_TOK_DOLLAR]      = "dollar",
     [MC_TOK_HASH]        = "hash",
@@ -243,6 +245,8 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
         _mc_single_chlex(',', MC_TOK_COMA)        else
         _mc_single_chlex(':', MC_TOK_COLON)       else
         _mc_single_chlex(';', MC_TOK_SEMICOLON)   else
+        _mc_single_chlex('{', MC_TOK_LBRACE)      else
+        _mc_single_chlex('}', MC_TOK_RBRACE)      else
         _mc_single_chlex('&', MC_TOK_AMPERSAND)   else
         _mc_single_chlex('$', MC_TOK_DOLLAR)      else
         _mc_single_chlex('#', MC_TOK_HASH)        else

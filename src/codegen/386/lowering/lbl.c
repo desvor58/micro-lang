@@ -23,6 +23,7 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_codegen386_ident_t ident = {
         .type = MICRO_IDENT_LBL,
+        .lifetime = instr->hints.lifetime,
     };
     strcpy(ident.lbl.name, lbl_name);
 

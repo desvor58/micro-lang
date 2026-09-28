@@ -47,6 +47,8 @@ typedef enum {
     MC_TOK_KW_RET,
     MC_TOK_KW_CALL,
     MC_TOK_KW_GOTO,
+    MC_TOK_LBRACE,
+    MC_TOK_RBRACE,
 } mc_token_type_t;
 
 extern char *mc_token_type2str[];

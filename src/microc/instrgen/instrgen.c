@@ -1,4 +1,7 @@
 #include <microc/instrgen.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 struct {
     char name[4];
@@ -70,6 +73,122 @@ size_t mc_scroll_expr(sct_vector_t *toks, size_t pos)
         .err = MICRO_ERROR_EXPECTED_EXPRESSION,
     });
     return 0;
+}
+
+static int mc_hints_error(micro_instruction_type_t instr_type)
+{
+    micro_push_err((micro_error_t){
+        .err = MICRO_ERROR_UNEXPECTED_TOKEN,
+        .instr = instr_type,
+    });
+    return 0;
+}
+
+static int mc_hint_bool(const mc_token_t *tok, size_t *value)
+{
+    if (tok->type == MC_TOK_IDENT) {
+        if (!strcmp(tok->val, "true")) {
+            *value = 1;
+            return 1;
+        }
+        if (!strcmp(tok->val, "false")) {
+            *value = 0;
+            return 1;
+        }
+    }
+    if (tok->type == MC_TOK_LIT_INT) {
+        if (!strcmp(tok->val, "0")) {
+            *value = 0;
+            return 1;
+        }
+        if (!strcmp(tok->val, "1")) {
+            *value = 1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int mc_instrgen_parse_hints(mc_instrgen_t *instrgen, micro_instruction_hints_t *hints, micro_instruction_type_t instr_type)
+{
+    if (!instrgen || !hints) {
+        return 0;
+    }
+
+    *hints = (micro_instruction_hints_t){
+        .lifetime = -1,
+        .forced_stack = 0,
+        .lazy_init = 0,
+    };
+
+    mc_token_t *tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (!tok || tok->type != MC_TOK_LBRACE) {
+        return 1;
+    }
+
+    instrgen->pos++;
+    tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (tok && tok->type == MC_TOK_RBRACE) {
+        instrgen->pos++;
+        return 1;
+    }
+
+    for (;;) {
+        mc_token_t *name_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+        if (!name_tok || name_tok->type != MC_TOK_IDENT) {
+            return mc_hints_error(instr_type);
+        }
+
+        mc_token_t *colon_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+        if (!colon_tok || colon_tok->type != MC_TOK_COLON) {
+            return mc_hints_error(instr_type);
+        }
+
+        mc_token_t *value_tok = sct_vector_get(instrgen->toks, instrgen->pos++);
+        if (!value_tok) {
+            return mc_hints_error(instr_type);
+        }
+
+        if (!strcmp(name_tok->val, "livetime") || !strcmp(name_tok->val, "lifetime")) {
+            char *end;
+            long long value;
+            if (value_tok->type != MC_TOK_LIT_INT) {
+                return mc_hints_error(instr_type);
+            }
+            errno = 0;
+            value = strtoll(value_tok->val, &end, 10);
+            if (errno == ERANGE || end == value_tok->val || *end || value < PTRDIFF_MIN || value > PTRDIFF_MAX) {
+                return mc_hints_error(instr_type);
+            }
+            hints->lifetime = (ptrdiff_t)value;
+        } else {
+            size_t bool_value;
+            if (!strcmp(name_tok->val, "forced_stack")) {
+                if (!mc_hint_bool(value_tok, &bool_value)) {
+                    return mc_hints_error(instr_type);
+                }
+                hints->forced_stack = bool_value;
+            } else
+            if (!strcmp(name_tok->val, "lazy_init")) {
+                if (!mc_hint_bool(value_tok, &bool_value)) {
+                    return mc_hints_error(instr_type);
+                }
+                hints->lazy_init = bool_value;
+            } else {
+                return mc_hints_error(instr_type);
+            }
+        }
+
+        tok = sct_vector_get(instrgen->toks, instrgen->pos);
+        if (tok && tok->type == MC_TOK_RBRACE) {
+            instrgen->pos++;
+            return 1;
+        }
+        if (!tok || tok->type != MC_TOK_COMA) {
+            return mc_hints_error(instr_type);
+        }
+        instrgen->pos++;
+    }
 }
 
 void mc_instrgen_init(mc_instrgen_t *instrgen, sct_vector_t *toks)

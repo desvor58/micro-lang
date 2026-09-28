@@ -28,10 +28,25 @@ void mc_instrgen_parse_goto(mc_instrgen_t *instrgen)
         goto exit;
     }
 
+    micro_instruction_hints_t hints;
+    if (!mc_instrgen_parse_hints(instrgen, &hints, MICRO_INSTR_GOTO)) {
+        goto exit;
+    }
+
+    mc_token_t *semicolon_tok = sct_vector_get(instrgen->toks, instrgen->pos);
+    if (!semicolon_tok || semicolon_tok->type != MC_TOK_SEMICOLON) {
+        micro_push_err((micro_error_t) {
+            .err = MICRO_ERROR_EXPECTED_SEMICOLON,
+            .instr = MICRO_INSTR_GOTO
+        });
+        goto exit;
+    }
+
     micro_instruction_goto_t goto_instr;
     strcpy(goto_instr.lbl, lbl_tok->val);
     sct_vector_push(&instrgen->instructions, &(micro_instruction_t){
         .type = MICRO_INSTR_GOTO,
+        .hints = hints,
         .goto_lbl = goto_instr
     });
 

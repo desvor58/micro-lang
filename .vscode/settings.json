@@ -20,5 +20,6 @@
     "evenBetterToml.schema.associations": {
         "^(.*[/\\\\])?dcr\\.toml$": "file:///home/desvor/.vscode/extensions/dexoron-labs.dcr-0.1.4/schemas/dcr.toml.schema.json"
     },
-    "cmake.sourceDirectory": "/home/desvor/dev/micro-lang/mir"
+    "cmake.sourceDirectory": "/home/desvor/dev/micro-lang/mir",
+    "C_Cpp.debugger": "gdb"
 }

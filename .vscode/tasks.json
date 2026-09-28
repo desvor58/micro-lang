@@ -2,13 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "build: debug (gcc)",
             "type": "shell",
-            "label": "build debug",
             "command": "make",
             "args": [
-                "microc",
-                "CC=clang",
-                "MODE=debug"
+                "MODE=debug",
+                "microc"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -17,7 +16,57 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": ["$clang"]
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build: tests (gcc)",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "MODE=debug",
+                "tests/bin/debug/tests"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build: micro runner (gcc)",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-m32",
+                "-g",
+                "-O0",
+                "-o",
+                "micro_runner",
+                "micro_runner.c",
+                "-lm"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "build: benchmarks (gcc)",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "comp/build_bench.py",
+                "--skip-microc"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
         }
     ]
 }

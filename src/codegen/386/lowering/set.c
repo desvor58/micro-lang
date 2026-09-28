@@ -50,6 +50,7 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
 
         micro_codegen386_ident_t new_ident = {
             .type = MICRO_IDENT_VREG,
+            .lifetime = instr->hints.lifetime,
             .vreg = (micro_codegen386_ident_vreg_t){
                 .storage = dst,
                 .type = instr_set.type,

@@ -16,8 +16,6 @@
         _instr_handle_rel_lbl(outbuf, N, S, (u8[])__VA_ARGS__);  \
         break
 
-sct_hashmap_t lbls;
-
 typedef struct {
     size_t addr;
     char  *lbl_name;
@@ -25,7 +23,16 @@ typedef struct {
     i32    rel_pos;
 } deferred_lbl_t;
 
-sct_vector_t deferred_lbls;
+typedef struct {
+    char  *lbl_name;
+    size_t addr;
+} lbl_def_t;
+
+// kept alive across emit calls (init-once, size reset per call) — building
+// the label table costs zero allocations this way
+static sct_vector_t deferred_lbls;
+static sct_vector_t lbl_defs;
+static int emit_state_ready;
 
 static inline void _instr_handle_lbl(sct_vector_t *outbuf, char *N, size_t S, u8 *V)
 {
@@ -177,8 +184,19 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_NEG_R16, 3, { 0x66, 0xF7, 0b11011000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_NEG_R8,  2, {       0xF6, 0b11011000 | instr->operand1.reg });
 
-        instr_handle(MICRO_ASM386_INSTR_LEA_R32S32, 7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
-        instr_handle(MICRO_ASM386_INSTR_LEA_R16S32, 8, { 0x66, 0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_INC_R32, 1, {       0x40 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_INC_R16, 2, { 0x66, 0x40 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_INC_R8,  2, {       0xFE, 0b11000000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R32, 1, {       0x48 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R16, 2, { 0x66, 0x48 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R8,  2, {       0xFE, 0b11001000 | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32S32,    7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R16S32,    8, { 0x66, 0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIB,    3, {       0x8D, 0b00000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBI8,  4, {       0x8D, 0b01000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBI32, 7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_LEA_R32SIBABS, 7, {       0x8D, 0b00000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
 
         instr_handle(MICRO_ASM386_INSTR_RET,        1, { 0xC3 });
         instr_handle(MICRO_ASM386_INSTR_CALL_S32,   5, { 0xE8, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
@@ -330,7 +348,13 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
             return;
 
         case MICRO_ASM386_INSTR_LBL:
-            sct_hashmap_add(&lbls, instr->operand1.lbl_name, &outbuf->size);
+            // int lbl_align = outbuf->size % 16;
+            // t = 0x90;
+            // while (lbl_align) {
+            //     sct_vector_push(outbuf, &t);
+            //     lbl_align--;
+            // }
+            sct_vector_push(&lbl_defs, &(lbl_def_t){ .lbl_name = instr->operand1.lbl_name, .addr = outbuf->size });
             return;
         
         default:
@@ -341,8 +365,15 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
 void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
 {
-    sct_hashmap_init(&lbls, sizeof(size_t));
-    sct_vector_init(&deferred_lbls, sizeof(deferred_lbl_t));
+    if (!emit_state_ready) {
+        sct_vector_init(&deferred_lbls, sizeof(deferred_lbl_t));
+        sct_vector_init(&lbl_defs, sizeof(lbl_def_t));
+        emit_state_ready = 1;
+    }
+    // reuse the buffers across calls instead of init/deinit (which cost
+    // two allocations per emit)
+    deferred_lbls.size = 0;
+    lbl_defs.size = 0;
 
     for (size_t i = 0; i < instrs->size; i++) {
         micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
@@ -355,58 +386,47 @@ void micro_asm386_emit(sct_vector_t *instrs, sct_vector_t *outbuf)
     for (size_t i = 0; i < deferred_lbls.size; i++) {
         deferred_lbl_t *dlbl = sct_vector_get(&deferred_lbls, i);
 
-        size_t *lbl_val = sct_hashmap_get(&lbls, dlbl->lbl_name);
-        if (!lbl_val) {
+        // linear scan over the label table (a handful of labels per
+        // function) — replaces the old hashmap: no bucket/sentinel
+        // allocations and no hashing per reference. Scan backwards so a
+        // duplicated label resolves to its last definition, matching the
+        // old update-on-add behaviour.
+        int found = 0;
+        size_t lbl_addr = 0;
+        for (size_t j = lbl_defs.size; j-- > 0; ) {
+            lbl_def_t *def = sct_vector_get(&lbl_defs, j);
+            if (!strcmp(def->lbl_name, dlbl->lbl_name)) {
+                lbl_addr = def->addr;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
             puts("Internal asm error: undefined label");
             continue;
         }
 
         micro_imm_le_t insert_imm;
         if (dlbl->is_rel_offset) {
-            insert_imm = micro_imm_le_gen(*lbl_val - dlbl->rel_pos);
+            insert_imm = micro_imm_le_gen(lbl_addr - dlbl->rel_pos);
         } else {
-            insert_imm = micro_imm_le_gen(*lbl_val);
+            insert_imm = micro_imm_le_gen(lbl_addr);
         }
 
-        sct_vector_set(outbuf, dlbl->addr,     &insert_imm.bytes[0]);
-        sct_vector_set(outbuf, dlbl->addr + 1, &insert_imm.bytes[1]);
-        sct_vector_set(outbuf, dlbl->addr + 2, &insert_imm.bytes[2]);
-        sct_vector_set(outbuf, dlbl->addr + 3, &insert_imm.bytes[3]);
+        // patch all 4 bytes in one bounds-checked write (was 4 separate
+        // bounds-checked sct_vector_set calls)
+        if (dlbl->addr + 4 <= outbuf->size) {
+            memcpy(outbuf->data + dlbl->addr, insert_imm.bytes, 4);
+        }
     }
 
-    sct_vector_deinit(&deferred_lbls);
-    sct_vector_deinit(instrs);
-    sct_vector_init(instrs, sizeof(micro_asm386_instruction_t));
-
-    sct_hashmap_deinit(&lbls);
+    // reset the instruction list but keep its capacity: callers either
+    // refill it or deinit it, both work with a retained buffer (the old
+    // deinit+init pair cost a free + malloc per emit)
+    instrs->size = 0;
 }
 
 #define MAX_PEEPHOLE_SIZE 2
-
-static inline size_t find_reg_usages_in_fun(sct_vector_t *instrs, size_t i, micro_asm386_reg_t reg)
-{
-    size_t usages = 0;
-    micro_asm386_instruction_t *instr = sct_vector_get(instrs, i);
-    while (i < instrs->size && instr->opcode != MICRO_ASM386_INSTR_EPILOGUE) {
-        if (instr->opcode > MICRO_ASM386_INSTR_XCHG && instr->opcode < MICRO_ASM386_INSTR_XCHG_END) {
-            if ((instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg)
-             || (instr->operand2.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand2.reg == reg)) {
-                return usages;
-            }
-        }
-        if (instr->opcode > MICRO_ASM386_INSTR_MOV && instr->opcode < MICRO_ASM386_INSTR_MOV_END) {
-            if (instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg) {
-                return usages;
-            }
-        }
-        if ((instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg == reg)
-         || (instr->operand2.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand2.reg == reg)) {
-            usages++;
-        }
-        instr = sct_vector_get(instrs, ++i);
-    }
-    return usages;
-}
 
 // bool return (1 - optimized, 0 - no)
 static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro_asm386_instruction_t *instr)
@@ -415,13 +435,6 @@ static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro
      || instr->opcode == MICRO_ASM386_INSTR_MOV_R16R16
      || instr->opcode == MICRO_ASM386_INSTR_MOV_R8R8) {
         if (instr->operand1.reg == instr->operand2.reg) {
-            sct_vector_erase(instrs, i);
-            return 1;
-        }
-    }
-
-    if (instr->opcode > MICRO_ASM386_INSTR_MOV && instr->opcode < MICRO_ASM386_INSTR_MOV_END) {
-        if (instr->operand1.type == MICRO_ASM386_INSTR_OPERAND_REG && instr->operand1.reg != 0 && !find_reg_usages_in_fun(instrs, i + 1, instr->operand1.reg)) {
             sct_vector_erase(instrs, i);
             return 1;
         }
@@ -437,6 +450,29 @@ static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro
             sct_vector_erase(instrs, i);
             return 1;
         }
+        // nothing reads the flags of an expression result, every consumer
+        // re-checks it with its own cmp/test
+        if (instr->operand2.imm.val == 1) {
+            static const micro_asm386_instruction_type_t inc_tbl[] = {
+                [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_INC_R8,
+                [MICRO_SIZE_16] = MICRO_ASM386_INSTR_INC_R16,
+                [MICRO_SIZE_32] = MICRO_ASM386_INSTR_INC_R32,
+            };
+            static const micro_asm386_instruction_type_t dec_tbl[] = {
+                [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_DEC_R8,
+                [MICRO_SIZE_16] = MICRO_ASM386_INSTR_DEC_R16,
+                [MICRO_SIZE_32] = MICRO_ASM386_INSTR_DEC_R32,
+            };
+            int is_add = instr->opcode == MICRO_ASM386_INSTR_ADD_R32I32
+                      || instr->opcode == MICRO_ASM386_INSTR_ADD_R16I16
+                      || instr->opcode == MICRO_ASM386_INSTR_ADD_R8I8;
+            micro_size_t size = instr->operand1.size;
+            if (size >= MICRO_SIZE_8 && size <= MICRO_SIZE_32) {
+                instr->opcode = is_add ? inc_tbl[size] : dec_tbl[size];
+                instr->operand2 = (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE };
+            }
+            return 1;
+        }
     }
     return 0;
 }
@@ -448,30 +484,6 @@ static inline size_t optimize_double_instr(sct_vector_t *instrs, size_t i, micro
         if (!strcmp(instr1->operand1.lbl_name, instr2->operand1.lbl_name)) {
             sct_vector_erase(instrs, i);
             return 1;
-        }
-    }
-    if ((instr1->opcode == MICRO_ASM386_INSTR_MOV_R32R32
-      || instr1->opcode == MICRO_ASM386_INSTR_MOV_R16R16
-      || instr1->opcode == MICRO_ASM386_INSTR_MOV_R8R8)
-     && (instr2->opcode == MICRO_ASM386_INSTR_MOV_R32R32
-      || instr2->opcode == MICRO_ASM386_INSTR_MOV_R16R16
-      || instr2->opcode == MICRO_ASM386_INSTR_MOV_R8R8)) {
-        if (instr1->operand1.reg == instr2->operand2.reg) {
-            if (!find_reg_usages_in_fun(instrs, i + 2, instr1->operand1.reg)) {
-                micro_asm386_instruction_type_t new_instr = instr1->opcode;
-                micro_asm386_reg_t new_dst = instr2->operand1.reg;
-                micro_asm386_reg_t new_src = instr1->operand2.reg;
-
-                sct_vector_erase(instrs, i);
-                sct_vector_erase(instrs, i);
-
-                sct_vector_insert(instrs, i, &(micro_asm386_instruction_t){
-                    .opcode = new_instr,
-                    .operand1 = { .type = MICRO_ASM386_INSTR_OPERAND_REG, .reg = new_dst },
-                    .operand2 = { .type = MICRO_ASM386_INSTR_OPERAND_REG, .reg = new_src },
-                });
-                return 2;
-            }
         }
     }
     return 0;

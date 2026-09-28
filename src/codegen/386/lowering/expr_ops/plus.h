@@ -37,6 +37,13 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
 
+    {
+        lea_pattern_t pat;
+        if (lea_match_add_scaled(codegen, start, &pat) && !code_selection_lea(codegen, dst, &pat)) {
+            return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
+        }
+    }
+
     micro_expr_tok_t *first_operand = start + 1;
     if (first_operand->type == MICRO_EXPR_TOK_IDENT) {
         micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, first_operand->val);
@@ -47,11 +54,6 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             });
             return (expr_info_t){ 0, MICRO_TYPE_NULL };
         }
-
-        if (ident->type == MICRO_IDENT_VREG) {
-            expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
-            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
-        }
         
         micro_expr_tok_t *second_operand = start + 2;
         if (_micro_expr_is_lit(second_operand->type)) {
@@ -59,9 +61,20 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
 
+            if (ident->type == MICRO_IDENT_VREG) {
+                expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+                if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+            }
+
             op_lit_to_dst(codegen, &plus_op_tbls, dst, lit);
             return (expr_info_t){ 3, ident->vreg.type };
         }
+
+        if (ident->type == MICRO_IDENT_VREG) {
+            expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+            if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
+
         if (_micro_expr_is_op(second_operand->type)) {
             expr_info_t expr_info = op_expr_to_dst(codegen, &plus_op_tbls, dst, second_operand);
             if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
@@ -129,6 +142,49 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_op(first_operand->type)) {
+        lea_pattern_t pat;
+        if (first_operand->type == MICRO_EXPR_TOK_STAR) {
+            if (lea_match_scaled(codegen, first_operand, &pat)) {
+                micro_expr_tok_t *addend = first_operand + pat.size;
+                int matched = 0;
+                if (addend->type == MICRO_EXPR_TOK_LIT_INT) {
+                    i32 lit = strtol(addend->val, NULL, 10);
+                    if (lea_disp_add_ok(pat.disp, lit)) {
+                        pat.disp += lit;
+                        matched = 1;
+                    }
+                } else
+                if (addend->type == MICRO_EXPR_TOK_IDENT && !pat.base) {
+                    micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, addend->val);
+                    if (ident && ident->type == MICRO_IDENT_VREG) {
+                        pat.base = ident;
+                        matched = 1;
+                    }
+                }
+                if (matched) {
+                    pat.size++;
+                    if (!code_selection_lea(codegen, dst, &pat)) {
+                        return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
+                    }
+                }
+            }
+        } else
+        if (first_operand->type == MICRO_EXPR_TOK_PLUS) {
+            if (lea_match_add_scaled(codegen, first_operand, &pat)) {
+                micro_expr_tok_t *disp_tok = start + pat.size + 1;
+                if (disp_tok->type == MICRO_EXPR_TOK_LIT_INT) {
+                    i32 lit = strtol(disp_tok->val, NULL, 10);
+                    if (lea_disp_add_ok(pat.disp, lit)) {
+                        pat.disp += lit;
+                        pat.size++;
+                        if (!code_selection_lea(codegen, dst, &pat)) {
+                            return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
+                        }
+                    }
+                }
+            }
+        }
+
         expr_info_t expr_info = expr_parse(codegen, dst, first_operand);
         if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
 

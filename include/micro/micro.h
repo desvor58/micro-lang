@@ -1,7 +1,7 @@
 /*************************************************
  *                  micro-lang
  *                   by Desvor
- *               Version: dev-0.0.3
+ *               Version: dev-1.0.0
  * 
  * Jit compiler-backend library orientated
  * to minimalism
