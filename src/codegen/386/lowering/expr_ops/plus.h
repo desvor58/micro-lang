@@ -38,11 +38,9 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
     }
 
     {
-        micro_codegen386_ident_t *i1 = 0, *i2 = 0;
-        i32 n_add = 0, n_mul = 0;
-        if (lea_match_add_scaled(codegen, start, &i1, &n_add, &i2, &n_mul) &&
-            !code_selection_lea(codegen, dst, i1, i2, n_add, n_mul)) {
-            return (expr_info_t){ 5, (i1 ? i1 : i2)->vreg.type };
+        lea_pattern_t pat;
+        if (lea_match_add_scaled(codegen, start, &pat) && !code_selection_lea(codegen, dst, &pat)) {
+            return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
         }
     }
 
@@ -144,33 +142,46 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
         return (expr_info_t){ 0, MICRO_TYPE_NULL };
     }
     if (_micro_expr_is_op(first_operand->type)) {
+        lea_pattern_t pat;
         if (first_operand->type == MICRO_EXPR_TOK_STAR) {
-            micro_codegen386_ident_t *i2;
-            i32 n_mul;
-            if (lea_match_scale_mul(codegen, start + 2, start + 3, &i2, &n_mul)) {
-                micro_expr_tok_t *addend = start + 4;
-                i32 n_add = 0;
-                micro_codegen386_ident_t *i1 = 0;
+            if (lea_match_scaled(codegen, first_operand, &pat)) {
+                micro_expr_tok_t *addend = first_operand + pat.size;
+                int matched = 0;
                 if (addend->type == MICRO_EXPR_TOK_LIT_INT) {
-                    n_add = strtol(addend->val, NULL, 10);
+                    i32 lit = strtol(addend->val, NULL, 10);
+                    if (lea_disp_add_ok(pat.disp, lit)) {
+                        pat.disp += lit;
+                        matched = 1;
+                    }
                 } else
-                if (addend->type == MICRO_EXPR_TOK_IDENT) {
-                    i1 = sct_hashmap_get(&ext->idents, addend->val);
-                    if (!i1 || i1->type != MICRO_IDENT_VREG) i1 = 0;
+                if (addend->type == MICRO_EXPR_TOK_IDENT && !pat.base) {
+                    micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, addend->val);
+                    if (ident && ident->type == MICRO_IDENT_VREG) {
+                        pat.base = ident;
+                        matched = 1;
+                    }
                 }
-                if ((i1 || n_add) && !code_selection_lea(codegen, dst, i1, i2, n_add, n_mul)) {
-                    return (expr_info_t){ 5, (i1 ? i1 : i2)->vreg.type };
+                if (matched) {
+                    pat.size++;
+                    if (!code_selection_lea(codegen, dst, &pat)) {
+                        return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
+                    }
                 }
             }
         } else
-        if (first_operand->type == MICRO_EXPR_TOK_PLUS && (start + 6)->type == MICRO_EXPR_TOK_LIT_INT) {
-            micro_codegen386_ident_t *i1 = 0, *i2 = 0;
-            i32 n_add = 0, n_mul = 0;
-            i32 disp = strtol((start + 6)->val, NULL, 10);
-            if (lea_match_add_scaled(codegen, first_operand, &i1, &n_add, &i2, &n_mul) &&
-                lea_disp_add_ok(n_add, disp) &&
-                !code_selection_lea(codegen, dst, i1, i2, n_add + disp, n_mul)) {
-                return (expr_info_t){ 7, (i1 ? i1 : i2)->vreg.type };
+        if (first_operand->type == MICRO_EXPR_TOK_PLUS) {
+            if (lea_match_add_scaled(codegen, first_operand, &pat)) {
+                micro_expr_tok_t *disp_tok = start + pat.size + 1;
+                if (disp_tok->type == MICRO_EXPR_TOK_LIT_INT) {
+                    i32 lit = strtol(disp_tok->val, NULL, 10);
+                    if (lea_disp_add_ok(pat.disp, lit)) {
+                        pat.disp += lit;
+                        pat.size++;
+                        if (!code_selection_lea(codegen, dst, &pat)) {
+                            return (expr_info_t){ pat.size, (pat.base ? pat.base : pat.index)->vreg.type };
+                        }
+                    }
+                }
             }
         }
 

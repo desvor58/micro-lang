@@ -1,7 +1,7 @@
 /*************************************************
  *               micro-lang compiler
  *                   by Desvor
- *               Version: dev-0.0.2
+ *               Version: dev-1.0.0
  * 
  * Compiler crated as util for
  * compiling ir-language of micro
@@ -37,7 +37,7 @@ typedef struct {
 void print_usage()
 {
     printf(
-        "micro-lang dev-0.0.1\n"
+        "micro-lang dev-1.0.0\n"
         "dev: Desvor\n"
         "usage:\n"
         "    microc [flags] <input file>\n"

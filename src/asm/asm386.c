@@ -184,6 +184,13 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_NEG_R16, 3, { 0x66, 0xF7, 0b11011000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_NEG_R8,  2, {       0xF6, 0b11011000 | instr->operand1.reg });
 
+        instr_handle(MICRO_ASM386_INSTR_INC_R32, 1, {       0x40 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_INC_R16, 2, { 0x66, 0x40 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_INC_R8,  2, {       0xFE, 0b11000000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R32, 1, {       0x48 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R16, 2, { 0x66, 0x48 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_DEC_R8,  2, {       0xFE, 0b11001000 | instr->operand1.reg });
+
         instr_handle(MICRO_ASM386_INSTR_LEA_R32S32,    7, {       0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_LEA_R16S32,    8, { 0x66, 0x8D, 0b10000100 | (instr->operand1.reg << 3), 0b00100100, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_LEA_R32SIB,    3, {       0x8D, 0b00000100 | (instr->operand1.reg << 3), (u8)(instr->sib.scale << 6) | (instr->sib.index << 3) | instr->sib.base });
@@ -441,6 +448,29 @@ static inline size_t optimize_single_instr(sct_vector_t *instrs, size_t i, micro
      || instr->opcode == MICRO_ASM386_INSTR_ADD_R8I8) {
         if (instr->operand2.imm.val == 0) {
             sct_vector_erase(instrs, i);
+            return 1;
+        }
+        // nothing reads the flags of an expression result, every consumer
+        // re-checks it with its own cmp/test
+        if (instr->operand2.imm.val == 1) {
+            static const micro_asm386_instruction_type_t inc_tbl[] = {
+                [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_INC_R8,
+                [MICRO_SIZE_16] = MICRO_ASM386_INSTR_INC_R16,
+                [MICRO_SIZE_32] = MICRO_ASM386_INSTR_INC_R32,
+            };
+            static const micro_asm386_instruction_type_t dec_tbl[] = {
+                [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_DEC_R8,
+                [MICRO_SIZE_16] = MICRO_ASM386_INSTR_DEC_R16,
+                [MICRO_SIZE_32] = MICRO_ASM386_INSTR_DEC_R32,
+            };
+            int is_add = instr->opcode == MICRO_ASM386_INSTR_ADD_R32I32
+                      || instr->opcode == MICRO_ASM386_INSTR_ADD_R16I16
+                      || instr->opcode == MICRO_ASM386_INSTR_ADD_R8I8;
+            micro_size_t size = instr->operand1.size;
+            if (size >= MICRO_SIZE_8 && size <= MICRO_SIZE_32) {
+                instr->opcode = is_add ? inc_tbl[size] : dec_tbl[size];
+                instr->operand2 = (micro_asm386_instruction_operand_t){ .type = MICRO_ASM386_INSTR_OPERAND_NONE };
+            }
             return 1;
         }
     }

@@ -1476,6 +1476,99 @@ MunitResult test_codegen_lea_lit_plus_scaled(const MunitParameter params[], void
     return MUNIT_OK;
 }
 
+MunitResult test_codegen_lea_index_offset(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, CG_LEA_PROLOG
+                 "    set u32 c + a * + b 1 4;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    cg_assert_asm_opcode(&ctx, 9, MICRO_ASM386_INSTR_LEA_R32SIBI8);
+    cg_assert_asm_reg(&ctx, 9, 1, MICRO_ASM386_REG32_EDX);
+    cg_assert_asm_sib(&ctx, 9, 4, MICRO_ASM386_REG32_ECX, MICRO_ASM386_REG32_EAX);
+    cg_assert_asm_imm(&ctx, 9, 2, 4);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lea_index_offset_mul(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, CG_LEA_PROLOG
+                 "    set u32 c * + a 1 4;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    cg_assert_asm_opcode(&ctx, 9, MICRO_ASM386_INSTR_LEA_R32SIBABS);
+    cg_assert_asm_sib(&ctx, 9, 4, MICRO_ASM386_REG32_EAX, MICRO_ASM386_REG32_NO_BASE);
+    cg_assert_asm_imm(&ctx, 9, 2, 4);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lea_index_offset_lit_first(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, CG_LEA_PROLOG
+                 "    set u32 c * + 8 a 4;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    cg_assert_asm_opcode(&ctx, 9, MICRO_ASM386_INSTR_LEA_R32SIBABS);
+    cg_assert_asm_sib(&ctx, 9, 4, MICRO_ASM386_REG32_EAX, MICRO_ASM386_REG32_NO_BASE);
+    cg_assert_asm_imm(&ctx, 9, 2, 32);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lea_index_offset_addend(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, CG_LEA_PROLOG
+                 "    set u32 c + * + a 1 4 b;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    cg_assert_asm_opcode(&ctx, 9, MICRO_ASM386_INSTR_LEA_R32SIBI8);
+    cg_assert_asm_sib(&ctx, 9, 4, MICRO_ASM386_REG32_EAX, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_imm(&ctx, 9, 2, 4);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_no_lea_for_non_scale(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1546,6 +1639,137 @@ MunitResult test_codegen_no_lea_for_stack_vreg(const MunitParameter params[], vo
 }
 
 #undef CG_LEA_PROLOG
+
+
+static int cg_find_asm_opcode(cg_ctx_t *ctx, micro_asm386_instruction_type_t opcode)
+{
+    for (size_t i = 0; i < cg_asm_size(ctx); i++) {
+        if (cg_asm(ctx, i)->opcode == opcode) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+MunitResult test_codegen_add_one_to_inc(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    set i32 b 5;\n"
+                 "    set i32 c + a 1;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_ADD_R32I32) >= 0);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_INC_R32) < 0);
+
+    micro_asm386_optimize(&ctx.asm_instrs);
+
+    int inc = cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_INC_R32);
+    munit_assert_true(inc >= 0);
+    cg_assert_asm_reg(&ctx, (size_t)inc, 1, MICRO_ASM386_REG32_EDX);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_ADD_R32I32) < 0);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_DEC_R32) < 0);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_sub_one_to_dec(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    set i32 b 5;\n"
+                 "    set i32 c - b 1;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_SUB_R32I32) >= 0);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_DEC_R32) < 0);
+
+    micro_asm386_optimize(&ctx.asm_instrs);
+
+    int dec = cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_DEC_R32);
+    munit_assert_true(dec >= 0);
+    cg_assert_asm_reg(&ctx, (size_t)dec, 1, MICRO_ASM386_REG32_EDX);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_SUB_R32I32) < 0);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_INC_R32) < 0);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_add_zero_stays_gone(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    set i32 c + a 0;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_asm386_optimize(&ctx.asm_instrs);
+
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_ADD_R32I32) < 0);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_INC_R32) < 0);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_add_two_stays_add(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "start\n"
+                 "    set i32 a 4;\n"
+                 "    set i32 c + a 2;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_asm386_optimize(&ctx.asm_instrs);
+
+    int add = cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_ADD_R32I32);
+    munit_assert_true(add >= 0);
+    cg_assert_asm_imm(&ctx, (size_t)add, 2, 2);
+    munit_assert_true(cg_find_asm_opcode(&ctx, MICRO_ASM386_INSTR_INC_R32) < 0);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
 
 MunitResult test_codegen_err_vreg_type_mismatch(const MunitParameter params[], void *data)
 {
@@ -1645,7 +1869,15 @@ static MunitTest codegen386_tests[] = {
     { "/lea_scaled_addend", test_codegen_lea_scaled_addend, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lea_scaled_plus_base", test_codegen_lea_scaled_plus_base, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lea_lit_plus_scaled", test_codegen_lea_lit_plus_scaled, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lea_index_offset", test_codegen_lea_index_offset, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lea_index_offset_mul", test_codegen_lea_index_offset_mul, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lea_index_offset_lit_first", test_codegen_lea_index_offset_lit_first, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lea_index_offset_addend", test_codegen_lea_index_offset_addend, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/no_lea_for_non_scale", test_codegen_no_lea_for_non_scale, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/add_one_to_inc", test_codegen_add_one_to_inc, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/sub_one_to_dec", test_codegen_sub_one_to_dec, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/add_zero_stays_gone", test_codegen_add_zero_stays_gone, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/add_two_stays_add", test_codegen_add_two_stays_add, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/no_lea_for_non_scale_mul", test_codegen_no_lea_for_non_scale_mul, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/no_lea_for_stack_vreg", test_codegen_no_lea_for_stack_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/stack_overflow", test_codegen_stack_overflow, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

@@ -421,6 +421,13 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
     [MICRO_ASM386_INSTR_NEG_R16]     = A1("negR16",     'R', 16),
     [MICRO_ASM386_INSTR_NEG_R8]      = A1("negR8",      'R', 8),
 
+    [MICRO_ASM386_INSTR_INC_R32]     = A1("incR32",     'R', 32),
+    [MICRO_ASM386_INSTR_INC_R16]     = A1("incR16",     'R', 16),
+    [MICRO_ASM386_INSTR_INC_R8]      = A1("incR8",      'R', 8),
+    [MICRO_ASM386_INSTR_DEC_R32]     = A1("decR32",     'R', 32),
+    [MICRO_ASM386_INSTR_DEC_R16]     = A1("decR16",     'R', 16),
+    [MICRO_ASM386_INSTR_DEC_R8]      = A1("decR8",      'R', 8),
+
     [MICRO_ASM386_INSTR_LEA_R32S32]  = A("leaR32S32",   'R', 32, 'V', 0),
     [MICRO_ASM386_INSTR_LEA_R16S32]  = A("leaR16S32",   'R', 16, 'V', 0),
     [MICRO_ASM386_INSTR_LEA_R32SIB]    = A1("leaR32SIB",    'R', 32),

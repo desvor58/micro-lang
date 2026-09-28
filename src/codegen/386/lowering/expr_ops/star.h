@@ -40,11 +40,9 @@ expr_info_t op_star_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
     micro_expr_tok_t *first_operand = start + 1;
     micro_expr_tok_t *second_operand = start + 2;
 
-    micro_codegen386_ident_t *lea_ident;
-    i32 lea_scale;
-    if (lea_match_scale_mul(codegen, first_operand, second_operand, &lea_ident, &lea_scale) &&
-        !code_selection_lea(codegen, dst, 0, lea_ident, 0, lea_scale)) {
-        return (expr_info_t){ 3, lea_ident->vreg.type };
+    lea_pattern_t lea_pat;
+    if (lea_match_scaled(codegen, start, &lea_pat) && !code_selection_lea(codegen, dst, &lea_pat)) {
+        return (expr_info_t){ lea_pat.size, lea_pat.index->vreg.type };
     }
 
     expr_info_t res;

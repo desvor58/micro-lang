@@ -50,11 +50,15 @@ else
 endif
 
 ifeq ($(CC),clang)
-    TARGET_FLAGS := --target=x86_64-w64-windows-gnu
-    CFLAGS += $(TARGET_FLAGS)
-    LDFLAGS += $(TARGET_FLAGS) -fuse-ld=lld
+    ifeq ($(OS),Windows_NT)
+        TARGET_FLAGS := --target=i686-w64-windows-gnu
+        CFLAGS += $(TARGET_FLAGS)
+        LDFLAGS += $(TARGET_FLAGS)
+         LDFLAGS += -fuse-ld=lld
+    endif
     AR := llvm-ar
 endif
+
 
 MICRO_SRC := src/common.c \
              src/instr.c \

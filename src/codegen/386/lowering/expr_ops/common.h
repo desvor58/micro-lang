@@ -164,38 +164,17 @@ static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, m
     };
 }
 
+typedef struct {
+    micro_codegen386_ident_t *base;   // may be null
+    micro_codegen386_ident_t *index;  // may be null
+    i32                        scale;
+    i32                        disp;
+    size_t                     size;   // consumed tokens
+} lea_pattern_t;
+
 static i32 lea_scale_of_lit(i32 lit)
 {
     return lit == 2 || lit == 4 || lit == 8 ? lit : 0;
-}
-
-static int lea_match_scale_mul(micro_codegen_t *codegen, micro_expr_tok_t *lhs, micro_expr_tok_t *rhs,
-                               micro_codegen386_ident_t **out_ident, i32 *out_scale)
-{
-    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
-
-    micro_expr_tok_t *ident_tok;
-    micro_expr_tok_t *lit_tok;
-    if (lhs->type == MICRO_EXPR_TOK_IDENT && rhs->type == MICRO_EXPR_TOK_LIT_INT) {
-        ident_tok = lhs;
-        lit_tok = rhs;
-    } else
-    if (rhs->type == MICRO_EXPR_TOK_IDENT && lhs->type == MICRO_EXPR_TOK_LIT_INT) {
-        ident_tok = rhs;
-        lit_tok = lhs;
-    } else {
-        return 0;
-    }
-
-    i32 scale = lea_scale_of_lit(strtol(lit_tok->val, NULL, 10));
-    if (unlikely(!scale)) return 0;
-
-    micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, ident_tok->val);
-    if (!ident || ident->type != MICRO_IDENT_VREG) return 0;
-
-    *out_ident = ident;
-    *out_scale = scale;
-    return 1;
 }
 
 static int lea_disp_add_ok(i32 a, i32 b)
@@ -203,57 +182,122 @@ static int lea_disp_add_ok(i32 a, i32 b)
     return !((b > 0 && a > INT32_MAX - b) || (b < 0 && a < INT32_MIN - b));
 }
 
-static int lea_match_add_scaled(micro_codegen_t *codegen, micro_expr_tok_t *plus_tok,
-                                micro_codegen386_ident_t **out_base, i32 *out_lead_lit,
-                                micro_codegen386_ident_t **out_index, i32 *out_scale)
+static int lea_disp_mul_ok(i32 lit, i32 scale)
+{
+    return lit <= INT32_MAX / scale && lit >= INT32_MIN / scale;
+}
+
+static int lea_match_index(micro_codegen_t *codegen, micro_expr_tok_t *tok, lea_pattern_t *out)
+{
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (tok->type == MICRO_EXPR_TOK_IDENT) {
+        micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, tok->val);
+        if (!ident || ident->type != MICRO_IDENT_VREG) return 0;
+        *out = (lea_pattern_t){ .index = ident, .size = 1 };
+        return 1;
+    }
+
+    if (unlikely(tok->type != MICRO_EXPR_TOK_PLUS)) return 0;
+
+    micro_expr_tok_t *lhs = tok + 1;
+    micro_expr_tok_t *rhs = tok + 2;
+    micro_expr_tok_t *ident_tok;
+
+    if (lhs->type == MICRO_EXPR_TOK_IDENT && rhs->type == MICRO_EXPR_TOK_LIT_INT) {
+        ident_tok = lhs;
+        *out = (lea_pattern_t){ .disp = strtol(rhs->val, NULL, 10), .size = 3 };
+    } else
+    if (lhs->type == MICRO_EXPR_TOK_LIT_INT && rhs->type == MICRO_EXPR_TOK_IDENT) {
+        ident_tok = rhs;
+        *out = (lea_pattern_t){ .disp = strtol(lhs->val, NULL, 10), .size = 3 };
+    } else {
+        return 0;
+    }
+
+    micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, ident_tok->val);
+    if (!ident || ident->type != MICRO_IDENT_VREG) return 0;
+
+    out->index = ident;
+    return 1;
+}
+
+static int lea_match_scaled(micro_codegen_t *codegen, micro_expr_tok_t *star_tok, lea_pattern_t *out)
+{
+    if (unlikely(star_tok->type != MICRO_EXPR_TOK_STAR)) return 0;
+
+    lea_pattern_t pat;
+    micro_expr_tok_t *lit_tok;
+
+    if (lea_match_index(codegen, star_tok + 1, &pat)) {
+        lit_tok = star_tok + 1 + pat.size;
+    } else
+    if (star_tok[1].type == MICRO_EXPR_TOK_LIT_INT) {
+        lit_tok = star_tok + 1;
+        if (!lea_match_index(codegen, star_tok + 2, &pat)) return 0;
+    } else {
+        return 0;
+    }
+
+    if (lit_tok->type != MICRO_EXPR_TOK_LIT_INT) return 0;
+    i32 scale = lea_scale_of_lit(strtol(lit_tok->val, NULL, 10));
+    if (unlikely(!scale)) return 0;
+    if (unlikely(!lea_disp_mul_ok(pat.disp, scale))) return 0;
+
+    pat.scale = scale;
+    pat.disp *= scale;
+    pat.size += 2;
+    *out = pat;
+    return 1;
+}
+
+static int lea_match_add_scaled(micro_codegen_t *codegen, micro_expr_tok_t *plus_tok, lea_pattern_t *out)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     if (unlikely(plus_tok->type != MICRO_EXPR_TOK_PLUS)) return 0;
     if (unlikely(plus_tok[2].type != MICRO_EXPR_TOK_STAR)) return 0;
 
-    micro_codegen386_ident_t *i2;
-    i32 scale;
-    if (!lea_match_scale_mul(codegen, plus_tok + 3, plus_tok + 4, &i2, &scale)) return 0;
+    lea_pattern_t pat;
+    if (!lea_match_scaled(codegen, plus_tok + 2, &pat)) return 0;
 
-    *out_base = 0;
-    *out_lead_lit = 0;
+    micro_codegen386_ident_t *base = 0;
     if (plus_tok[1].type == MICRO_EXPR_TOK_LIT_INT) {
-        *out_lead_lit = strtol(plus_tok[1].val, NULL, 10);
+        i32 lit = strtol(plus_tok[1].val, NULL, 10);
+        if (unlikely(!lea_disp_add_ok(pat.disp, lit))) return 0;
+        pat.disp += lit;
     } else
     if (plus_tok[1].type == MICRO_EXPR_TOK_IDENT) {
-        micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, plus_tok[1].val);
-        if (!ident || ident->type != MICRO_IDENT_VREG) return 0;
-        *out_base = ident;
+        base = sct_hashmap_get(&ext->idents, plus_tok[1].val);
+        if (!base || base->type != MICRO_IDENT_VREG) return 0;
     } else {
         return 0;
     }
 
-    *out_index = i2;
-    *out_scale = scale;
+    pat.base = base;
+    pat.size += 2;
+    *out = pat;
     return 1;
 }
 
-// lea dst, [i1 + i2 * n_mul + n_add], i1 and i2 may be null
-// 0 - emitted, 1 - the caller has to use the generic path
-static int code_selection_lea(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_codegen386_ident_t *i1, micro_codegen386_ident_t *i2, i32 n_add, i32 n_mul)
+static int code_selection_lea(micro_codegen_t *codegen, micro_codegen386_storage_t dst, const lea_pattern_t *pat)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    if (unlikely(!sib_scale_valid(n_mul))) return 1;
+    if (unlikely(!sib_scale_valid(pat->scale))) return 1;
 
     micro_asm386_reg_t i1_rep = MICRO_ASM386_REG32_NO_BASE;
-    if (i1) {
-        if (unlikely(i1->type != MICRO_IDENT_VREG)) return 1;
-        if (unlikely(i1->vreg.storage.type != MICRO_STORAGE_REG)) return 1;
-        i1_rep = i1->vreg.storage.reg.reg;
+    if (pat->base) {
+        if (unlikely(pat->base->type != MICRO_IDENT_VREG)) return 1;
+        if (unlikely(pat->base->vreg.storage.type != MICRO_STORAGE_REG)) return 1;
+        i1_rep = pat->base->vreg.storage.reg.reg;
     }
 
     micro_asm386_reg_t i2_rep = MICRO_ASM386_REG32_NO_INDEX;
-    if (i2) {
-        if (unlikely(i2->type != MICRO_IDENT_VREG)) return 1;
-        if (unlikely(i2->vreg.storage.type != MICRO_STORAGE_REG)) return 1;
-        i2_rep = i2->vreg.storage.reg.reg;
+    if (pat->index) {
+        if (unlikely(pat->index->type != MICRO_IDENT_VREG)) return 1;
+        if (unlikely(pat->index->vreg.storage.type != MICRO_STORAGE_REG)) return 1;
+        i2_rep = pat->index->vreg.storage.reg.reg;
         if (unlikely(i2_rep == MICRO_ASM386_REG32_ESP)) return 1;
     }
 
@@ -270,9 +314,9 @@ static int code_selection_lea(micro_codegen_t *codegen, micro_codegen386_storage
     micro_asm386_instruction_type_t instr;
     if (i1_rep == MICRO_ASM386_REG32_NO_BASE) {
         instr = MICRO_ASM386_INSTR_LEA_R32SIBABS;
-    } else if (n_add == 0 && i1_rep != MICRO_ASM386_REG32_EBP) {
+    } else if (pat->disp == 0 && i1_rep != MICRO_ASM386_REG32_EBP) {
         instr = MICRO_ASM386_INSTR_LEA_R32SIB;
-    } else if (n_add >= -128 && n_add <= 127) {
+    } else if (pat->disp >= -128 && pat->disp <= 127) {
         instr = MICRO_ASM386_INSTR_LEA_R32SIBI8;
     } else {
         instr = MICRO_ASM386_INSTR_LEA_R32SIBI32;
@@ -281,8 +325,8 @@ static int code_selection_lea(micro_codegen_t *codegen, micro_codegen386_storage
     micro_asm386_reg_t out_reg = need_temp ? (micro_asm386_reg_t)temp_reg : dst.reg.reg;
     push_asm_instr_with_sib(instr,
                             operand_reg(MICRO_SIZE_32, out_reg),
-                            operand_imm(MICRO_SIZE_32, micro_imm_le_gen(n_add)),
-                            n_mul,
+                            operand_imm(MICRO_SIZE_32, micro_imm_le_gen(pat->disp)),
+                            pat->scale,
                             i2_rep,
                             i1_rep);
 
