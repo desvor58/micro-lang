@@ -253,7 +253,6 @@ typedef enum {
     MICRO_ASM386_INSTR_NEG_R16,
     MICRO_ASM386_INSTR_NEG_R8,
 
-    // inc/dec do not touch the flags, they replace add/sub by 1
     MICRO_ASM386_INSTR_INC_R32,
     MICRO_ASM386_INSTR_INC_R16,
     MICRO_ASM386_INSTR_INC_R8,

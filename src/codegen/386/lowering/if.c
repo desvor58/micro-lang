@@ -78,6 +78,7 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_if_t instr_if = instr->if_goto;
 
+    size_t err_num = micro_err_stk_size;
     expr_info_t cond_expr_info = { 0, MICRO_TYPE_NULL };
     if (instr_if.cond_expr->type == MICRO_EXPR_TOK_EXCLAMATION) {
         micro_expr_tok_t *tok = instr_if.cond_expr + 1;
@@ -89,10 +90,12 @@ int lowering_if(micro_codegen_t *codegen, micro_instruction_t *instr)
         cond_expr_info = cond_expr_parse(codegen, instr_if.cond_expr);
     }
     if (!cond_expr_info.size) {
-        micro_push_err((micro_error_t){
-            .err = MICRO_ERROR_EXPECTED_EXPRESSION,
-            .instr = MICRO_INSTR_IF
-        });
+        if (micro_err_stk_size == err_num) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_EXPECTED_EXPRESSION,
+                .instr = MICRO_INSTR_IF
+            });
+        }
         return 1;
     }
 

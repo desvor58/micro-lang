@@ -90,6 +90,10 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(stack_cleanup_offset)));
 
+    if (!strcmp(instr_call.ret_reg_name, "_")) {
+        return 0;
+    }
+
     micro_codegen386_ident_t *res_ident = sct_hashmap_get(&ext->idents, instr_call.ret_reg_name);
     if (!res_ident) {
         micro_push_err((micro_error_t){

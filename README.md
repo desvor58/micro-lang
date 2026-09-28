@@ -3,16 +3,31 @@
 
 **micro** it's an experiment in the shape of IR code. Linear code, spiritually referencing C.
 
+Current version: **dev-1.0.0**. It is an unstable MVP: the whole pipeline
+works and is tested, but the language and the code generator are still
+moving. See [status](#status) for what to expect.
+
 ### ✨ Core philosophy
 - **Flat**: Code is a linear list of instructions, which grouped to functions.
 - **No AST**: The parser convert your text to list of instruction info. Or You can generate it, if you using micro as a library.
 - **Blazing fast compilation**: No time wasted no node allocations, recursive traversals, or tree transformations.
 
-### 🎯 Project Goals
-- **Compilation speed** > Execution speed
-- **Compiler simplicity** (< 4000 lines of code now, < 5000 line of code at 1.0.0 version)
+### 🎯 Project goals
+- **Compilation speed** > execution speed
+- **Compiler simplicity**: about 6700 lines of C in `src` and `include`
 
------------------
+### 📌 Status
+
+| part                | state                                                        |
+|---------------------|--------------------------------------------------------------|
+| lexer               | done                                                        |
+| instruction builder | done                                                        |
+| i386 code generator | done, one `lea` based code selection pass and a peephole     |
+| tests               | 144 unit tests over the lexer, instructions and the backend  |
+| library API         | done, the compiler itself is built on it                     |
+| object file output  | not implemented, the output is a raw binary                  |
+| other backends      | not implemented                                             |
+| f32, bitwise ops    | reserved in the grammar, not implemented                     |
 
 ### 💡 example code
 **C** code:
@@ -47,71 +62,94 @@ end_rec:
 end
 ```
 
------------------
+### ⚙️ What the code generator does with it
 
-### 🏛️ Compiler architecture in the future
+Both lines of the sum below become a single instruction, the second one
+because the code generator recognizes the shape of the expression:
+
+```
+set i32 addr base * index 4;   \ lea addr, [base + index * 4] \
+set i32 next index + index 1;  \ inc next \
+```
+
+### 🏛️ Compiler architecture
 If you use **microc** as a compiler
 ```
 Source text
   ↓
-Lexer  (realized by microc as util, not a library)
+Lexer
   ↓
 Tokens
   ↓
-Instruction-generator  (realized by microc)
+Instruction generator
   ↓
 Instruction infos
   ↓
-Optimizer
+Code generator
   ↓
-Code-generator
+Asm instructions
+  ↓
+Asm optimizer
   ↓
 Assembler
-  ↓
-Assembler optimizer
   ↓
 Binary
 ```
 
 If you use **micro** as a library
 ```
-Special functions 'instruction-generators'
-  ↓
 Instruction infos
   ↓
-Optimizer
+Code generator
   ↓
-Code-generator
+Asm instructions
+  ↓
+Asm optimizer
   ↓
 Assembler
   ↓
-Assembler optimizer
-  ↓
-Binary (Or object file)
+Binary
 ```
-
------------------
 
 ### 🏗️ Building
 With make:
 ```
-make CC=<comp>
+make
 ```
 Debug make compile:
 ```
-make CC=<comp> MODE=debug
+make MODE=debug
 ```
-Now work with gcc and clang, maybe tcc.
+Now work with gcc and clang, maybe tcc. `MODE` is one of `debug`,
+`release-fast` (default) and `release-size`.
 
------------------
+Run the tests:
+```
+make test
+```
+It builds and runs the suite twice, in `debug` and in `release-fast`.
+
+Build the examples:
+```
+make examples
+```
+
+`examples/simple1` compiles a single instruction and prints the bytes it
+produced. `examples/simple2` builds a function, maps the bytes into
+executable memory and calls it. `examples/simple3` goes the whole way: it
+takes micro source text, runs the lexer and the instruction generator, and
+calls the compiled `fib`.
 
 > [!BUILDING WITHOUT GCC OR LLVM] \
-> makefile using ```gcc-ar``` by default for LTO in ```release``` mode for ```CC=gcc``` and ```llvm-ar``` for ```CC=clang```. \
-> If you do not have GCC or llvm on your machine change ```AR := gcc-ar``` to ```AR := ar``` and delete ```-flto``` flag from 13 and 14 lines.
+> The makefile uses ```gcc-ar``` by default for LTO in ```release``` mode for ```CC=gcc``` and ```llvm-ar``` for ```CC=clang```. \
+> If you do not have GCC or llvm on your machine change ```AR := gcc-ar``` to ```AR := ar``` and delete the ```-flto``` flags from the ```release-fast``` and ```release-size``` blocks.
+
+> [!32 BIT TOOLCHAIN] \
+> micro generates 32 bit code and the build is ```-m32```. You need a multilib gcc, ```libc6-dev-i386``` on debian, ```lib32-glibc``` and ```lib32-gcc-libs``` on arch.
 
 > [!NO STRICT ALIASING]  \
 > micro using compile flag ```-fno-strict-aliasing```.  \
-> If the compiler used to build micro does not support this flag then ```MODE=release``` version will not work
+> If the compiler used to build micro does not support this flag then ```release``` mode will not work
 
 ## 📜 Docs
 - You can read about syntax of *micro* at [**language reference**](docs/micro-language-ref.md)
