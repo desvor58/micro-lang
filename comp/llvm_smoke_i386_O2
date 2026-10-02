@@ -1,0 +1,30 @@
+	.intel_syntax noprefix
+	.file	"smoke.ll"
+	.text
+	.globl	checksum
+	.p2align	4
+	.type	checksum,@function
+checksum:
+	push	edi
+	push	esi
+	xor	eax, eax
+	mov	ecx, dword ptr [esp + 16]
+	mov	edx, dword ptr [esp + 12]
+	xor	esi, esi
+	cmp	esi, ecx
+	jge	.LBB0_3
+	.p2align	4
+.LBB0_2:
+	mov	edi, dword ptr [edx + 4*esi]
+	imul	edi, esi
+	add	eax, edi
+	inc	esi
+	cmp	esi, ecx
+	jl	.LBB0_2
+.LBB0_3:
+	pop	esi
+	pop	edi
+	ret
+.Lfunc_end0:
+	.size	checksum, .Lfunc_end0-checksum
+	.section	".note.GNU-stack","",@progbits

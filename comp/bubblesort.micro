@@ -1,0 +1,38 @@
+fun bubblesort
+    ptr arr
+    i32 n
+start
+    set i32 i 0;
+
+outer_loop:
+    set i32 nn - n 1 { lifetime: 4 };
+    if >= i nn : done;
+
+    set i32 j 0;
+    set i32 limit2v - nn i;
+
+inner_loop:
+    if >= j limit2v : inner_done;
+
+    set i32 addr_j + arr * j 4;
+    set i32 addr_j1 + arr * + j 1 4;
+
+    set i32 val_j $ addr_j;
+    set i32 val_j1 $ addr_j1;
+
+    if <= val_j val_j1 : no_swap;
+
+    set i32 $ addr_j val_j1;
+    set i32 $ addr_j1 val_j;
+
+no_swap:
+    set i32 j + j 1;
+    goto inner_loop;
+
+inner_done:
+    set i32 i + i 1;
+    goto outer_loop;
+
+done:
+    ret;
+end

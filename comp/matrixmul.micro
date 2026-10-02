@@ -1,0 +1,64 @@
+fun matrixmul
+    ptr A
+    ptr B
+    ptr C
+    i32 N
+start
+    set i32 i 0;
+
+row_loop:
+    set i32 done_cmp >= i N;
+    if done_cmp : done;
+
+    set i32 j 0;
+
+col_loop:
+    set i32 col_cmp >= j N;
+    if col_cmp : next_row;
+
+    set i32 sum 0;
+    set i32 k 0;
+
+    set i32 row_idx * i N;
+    set i32 row_off * row_idx 4;
+
+dot_loop:
+    set i32 dot_cmp >= k N;
+    if dot_cmp : store;
+
+    set i32 col_off * k 4;
+
+    set i32 tmp1 + A row_off;
+    set i32 addr_a + tmp1 col_off;
+
+    set i32 k_row * k N;
+    set i32 k_row_off * k_row 4;
+    set i32 tmp2 + B k_row_off;
+    set i32 j_off * j 4;
+    set i32 addr_b + tmp2 j_off;
+
+    set i32 va $ addr_a;
+    set i32 vb $ addr_b;
+    set i32 prod * va vb;
+    set i32 sum + sum prod;
+
+    set i32 k + k 1;
+    goto dot_loop;
+
+store:
+    set i32 j_off * j 4;
+    set i32 tmp3 + C row_off;
+    set i32 addr_c + tmp3 j_off;
+
+    set i32 $ addr_c sum;
+
+    set i32 j + j 1;
+    goto col_loop;
+
+next_row:
+    set i32 i + i 1;
+    goto row_loop;
+
+done:
+    ret;
+end

@@ -14,6 +14,7 @@ LDFLAGS :=
 AR := gcc-ar
 
 MODE ?= release-fast
+LTO  ?= NO
 
 ifeq ($(filter $(MODE),debug release-fast release-size),)
     $(error unknown MODE '$(MODE)': expected debug, release-fast or release-size)
@@ -23,11 +24,14 @@ ifeq ($(MODE), debug)
 	CFLAGS += -O0 -g
 endif
 ifeq ($(MODE), release-fast)
-	CFLAGS += -O3 -ffast-math -flto
-    LDFLAGS += -flto
+	CFLAGS += -O3 -ffast-math
 endif
 ifeq ($(MODE), release-size)
-	CFLAGS += -Os -flto
+	CFLAGS += -Os
+endif
+
+ifeq ($(LTO), YES)
+    CFLAGS += -flto
     LDFLAGS += -flto
 endif
 

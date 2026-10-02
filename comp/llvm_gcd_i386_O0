@@ -1,0 +1,31 @@
+	.intel_syntax noprefix
+	.file	"gcd.ll"
+	.text
+	.globl	gcd
+	.p2align	4
+	.type	gcd,@function
+gcd:
+	sub	esp, 28
+	mov	eax, dword ptr [esp + 36]
+	mov	dword ptr [esp + 20], eax
+	mov	ecx, dword ptr [esp + 32]
+	mov	dword ptr [esp + 24], ecx
+	cmp	eax, 0
+	je	.LBB0_2
+	mov	ecx, dword ptr [esp + 20]
+	mov	eax, dword ptr [esp + 24]
+	cdq
+	idiv	ecx
+	mov	eax, dword ptr [esp + 20]
+	mov	dword ptr [esp], eax
+	mov	dword ptr [esp + 4], edx
+	call	gcd@PLT
+	add	esp, 28
+	ret
+.LBB0_2:
+	mov	eax, dword ptr [esp + 24]
+	add	esp, 28
+	ret
+.Lfunc_end0:
+	.size	gcd, .Lfunc_end0-gcd
+	.section	".note.GNU-stack","",@progbits

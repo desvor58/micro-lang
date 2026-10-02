@@ -1,0 +1,31 @@
+0000000000000000 <code>:
+   0:	48 83 ec 18          	sub    rsp,0x18
+   4:	48 89 1c 24          	mov    QWORD PTR [rsp],rbx
+   8:	48 8b de             	mov    rbx,rsi
+   b:	48 8b d7             	mov    rdx,rdi
+   e:	45 33 c9             	xor    r9d,r9d
+  11:	48 8b c3             	mov    rax,rbx
+  14:	48 83 e8 01          	sub    rax,0x1
+  18:	4c 3b c8             	cmp    r9,rax
+  1b:	7d 42                	jge    5f <code+0x5f>
+  1d:	33 c0                	xor    eax,eax
+  1f:	4c 8b c3             	mov    r8,rbx
+  22:	4d 2b c1             	sub    r8,r9
+  25:	49 83 e8 01          	sub    r8,0x1
+  29:	0f 1f 80 00 00 00 00 	nop    DWORD PTR [rax+0x0]
+  30:	49 3b c0             	cmp    rax,r8
+  33:	7d 21                	jge    56 <code+0x56>
+  35:	48 8d 70 01          	lea    rsi,[rax+0x1]
+  39:	48 63 0c 82          	movsxd rcx,DWORD PTR [rdx+rax*4]
+  3d:	48 63 7c 82 04       	movsxd rdi,DWORD PTR [rdx+rax*4+0x4]
+  42:	48 3b cf             	cmp    rcx,rdi
+  45:	7e 07                	jle    4e <code+0x4e>
+  47:	89 3c 82             	mov    DWORD PTR [rdx+rax*4],edi
+  4a:	89 4c 82 04          	mov    DWORD PTR [rdx+rax*4+0x4],ecx
+  4e:	48 8b c6             	mov    rax,rsi
+  51:	e9 da ff ff ff       	jmp    30 <code+0x30>
+  56:	49 83 c1 01          	add    r9,0x1
+  5a:	e9 b2 ff ff ff       	jmp    11 <code+0x11>
+  5f:	48 8b 1c 24          	mov    rbx,QWORD PTR [rsp]
+  63:	48 83 c4 18          	add    rsp,0x18
+  67:	c3                   	ret

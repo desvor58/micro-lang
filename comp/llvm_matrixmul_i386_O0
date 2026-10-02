@@ -1,0 +1,102 @@
+	.intel_syntax noprefix
+	.file	"matrixmul.ll"
+	.text
+	.globl	matrixmul
+	.p2align	4
+	.type	matrixmul,@function
+matrixmul:
+	push	ebp
+	push	ebx
+	push	edi
+	push	esi
+	sub	esp, 56
+	mov	eax, dword ptr [esp + 88]
+	mov	dword ptr [esp + 36], eax
+	mov	eax, dword ptr [esp + 84]
+	mov	dword ptr [esp + 40], eax
+	mov	eax, dword ptr [esp + 80]
+	mov	dword ptr [esp + 44], eax
+	mov	eax, dword ptr [esp + 76]
+	mov	dword ptr [esp + 48], eax
+	xor	eax, eax
+	mov	dword ptr [esp + 52], eax
+	jmp	.LBB0_1
+.LBB0_1:
+	mov	ecx, dword ptr [esp + 36]
+	mov	eax, dword ptr [esp + 52]
+	mov	dword ptr [esp + 32], eax
+	cmp	eax, ecx
+	jge	.LBB0_10
+	xor	eax, eax
+	mov	dword ptr [esp + 28], eax
+	jmp	.LBB0_3
+.LBB0_3:
+	mov	ecx, dword ptr [esp + 36]
+	mov	eax, dword ptr [esp + 28]
+	mov	dword ptr [esp + 24], eax
+	cmp	eax, ecx
+	jge	.LBB0_9
+	xor	eax, eax
+	add	eax, 0
+	xor	ecx, ecx
+	add	ecx, 0
+	mov	dword ptr [esp + 16], ecx
+	mov	dword ptr [esp + 20], eax
+.LBB0_5:
+	mov	ecx, dword ptr [esp + 36]
+	mov	eax, dword ptr [esp + 16]
+	mov	edx, dword ptr [esp + 20]
+	mov	dword ptr [esp + 8], edx
+	mov	dword ptr [esp + 12], eax
+	cmp	eax, ecx
+	jge	.LBB0_8
+	mov	eax, dword ptr [esp + 12]
+	mov	ecx, dword ptr [esp + 8]
+	mov	esi, dword ptr [esp + 44]
+	mov	ebx, dword ptr [esp + 24]
+	mov	ebp, dword ptr [esp + 36]
+	mov	edx, dword ptr [esp + 48]
+	mov	edi, dword ptr [esp + 32]
+	imul	edi, ebp
+	add	edi, eax
+	mov	edx, dword ptr [edx + 4*edi]
+	mov	edi, eax
+	imul	edi, ebp
+	add	edi, ebx
+	imul	edx, dword ptr [esi + 4*edi]
+	add	ecx, edx
+	mov	dword ptr [esp], ecx
+	add	eax, 1
+	mov	dword ptr [esp + 4], eax
+	mov	eax, dword ptr [esp]
+	mov	ecx, dword ptr [esp + 4]
+	mov	dword ptr [esp + 16], ecx
+	mov	dword ptr [esp + 20], eax
+	jmp	.LBB0_5
+.LBB0_8:
+	mov	eax, dword ptr [esp + 24]
+	mov	ecx, dword ptr [esp + 40]
+	mov	esi, dword ptr [esp + 8]
+	mov	edi, dword ptr [esp + 36]
+	mov	edx, dword ptr [esp + 32]
+	imul	edx, edi
+	add	edx, eax
+	mov	dword ptr [ecx + 4*edx], esi
+	add	eax, 1
+	mov	dword ptr [esp + 28], eax
+	jmp	.LBB0_3
+.LBB0_9:
+	mov	eax, dword ptr [esp + 32]
+	add	eax, 1
+	mov	dword ptr [esp + 52], eax
+	jmp	.LBB0_1
+.LBB0_10:
+	add	esp, 56
+	pop	esi
+	pop	edi
+	pop	ebx
+	pop	ebp
+	ret
+.Lfunc_end0:
+	.size	matrixmul, .Lfunc_end0-matrixmul
+	.section	".note.GNU-stack","",@progbits

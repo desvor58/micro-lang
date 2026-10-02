@@ -1,0 +1,19 @@
+fun gcd
+    i32 a
+    i32 b
+    ret i32
+start
+    set i32 bz = b 0;
+    if bz : done;
+
+    set i32 q / a b;
+    set i32 remv * q b;
+    set i32 rem - a remv;
+
+    set i32 result;
+    call result gcd b rem;
+    ret result;
+
+done:
+    ret a;
+end

@@ -81,9 +81,15 @@ Write expressions in prefix form, in the shape the code generator can fold
 into a single instruction when it can:
 
 ```
-set i32 addr base * index 4;       \ one lea \
-set i32 next index + index 1;      \ one inc \
+set i32 addr + base * index 4;     \ one lea \
+set i32 next + index 1;            \ one inc \
+set i32 tail + addr 4;             \ one lea \
 ```
+
+Both folds need their operands in machine registers, which is what a
+virtual register gets as soon as it holds a value. A fold also needs the
+operator written out: `base * index 4` is `(base * index)` followed by a
+stray literal, so `base + index * 4` has to be written `+ base * index 4`.
 
 Put a space around every operator, keep the operand order that reads best
 for you, and use a [lifetime hint](micro-language-ref.md#lifetime-hints) when

@@ -14,7 +14,7 @@ moving. See [status](#status) for what to expect.
 
 ### 🎯 Project goals
 - **Compilation speed** > execution speed
-- **Compiler simplicity**: about 6700 lines of C in `src` and `include`
+- **Compiler simplicity**: about 5700 lines at all and about 4200 lines at libmicro only
 
 ### 📌 Status
 
@@ -64,13 +64,18 @@ end
 
 ### ⚙️ What the code generator does with it
 
-Both lines of the sum below become a single instruction, the second one
-because the code generator recognizes the shape of the expression:
+Each line below becomes a single instruction, without asking for it:
 
 ```
-set i32 addr base * index 4;   \ lea addr, [base + index * 4] \
-set i32 next index + index 1;  \ inc next \
+set i32 base 16;
+set i32 index 3;
+set i32 addr + base * index 4;  \ lea addr, [base + index * 4] \
+set i32 next + index 1;         \ inc next \
+set i32 tail + addr 4;          \ lea tail, [addr + 4] \
 ```
+
+Each fold needs its operands to sit in machine registers, so it fires
+inside a function body and not on untouched arguments.
 
 ### 🏛️ Compiler architecture
 If you use **microc** as a compiler

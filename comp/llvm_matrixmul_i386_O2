@@ -1,0 +1,72 @@
+	.intel_syntax noprefix
+	.file	"matrixmul.ll"
+	.text
+	.globl	matrixmul
+	.p2align	4
+	.type	matrixmul,@function
+matrixmul:
+	push	ebp
+	push	ebx
+	push	edi
+	push	esi
+	sub	esp, 16
+	mov	eax, dword ptr [esp + 48]
+	mov	esi, dword ptr [esp + 36]
+	lea	edi, [4*eax]
+	xor	ecx, ecx
+	jmp	.LBB0_1
+	.p2align	4
+.LBB0_8:
+	mov	ecx, dword ptr [esp]
+	inc	ecx
+	add	esi, edi
+.LBB0_1:
+	cmp	ecx, eax
+	jge	.LBB0_9
+	xor	edx, edx
+	mov	dword ptr [esp], ecx
+	imul	ecx, eax
+	mov	dword ptr [esp + 4], ecx
+	mov	ebx, dword ptr [esp + 40]
+	jmp	.LBB0_3
+	.p2align	4
+.LBB0_7:
+	mov	ebp, dword ptr [esp + 12]
+	mov	ecx, dword ptr [esp + 4]
+	add	ecx, ebp
+	mov	edx, dword ptr [esp + 44]
+	mov	dword ptr [edx + 4*ecx], ebx
+	mov	edx, ebp
+	inc	edx
+	mov	ebx, dword ptr [esp + 8]
+	add	ebx, 4
+.LBB0_3:
+	cmp	edx, eax
+	jge	.LBB0_8
+	mov	dword ptr [esp + 12], edx
+	xor	ecx, ecx
+	mov	dword ptr [esp + 8], ebx
+	mov	edx, ebx
+	xor	ebx, ebx
+	cmp	ecx, eax
+	jge	.LBB0_7
+	.p2align	4
+.LBB0_6:
+	mov	ebp, dword ptr [esi + 4*ecx]
+	imul	ebp, dword ptr [edx]
+	add	ebx, ebp
+	add	edx, edi
+	inc	ecx
+	cmp	ecx, eax
+	jl	.LBB0_6
+	jmp	.LBB0_7
+.LBB0_9:
+	add	esp, 16
+	pop	esi
+	pop	edi
+	pop	ebx
+	pop	ebp
+	ret
+.Lfunc_end0:
+	.size	matrixmul, .Lfunc_end0-matrixmul
+	.section	".note.GNU-stack","",@progbits

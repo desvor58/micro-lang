@@ -1,0 +1,21 @@
+fun fibonacci
+    i32 n
+    ret i32
+start
+    set i32 cmp <= n 1;
+    if cmp : base;
+
+    set i32 n1 - n 1;
+    set i32 a;
+    call a fibonacci n1;
+
+    set i32 n2 - n 2;
+    set i32 b;
+    call b fibonacci n2;
+
+    set i32 result + a b;
+    ret result;
+
+base:
+    ret n;
+end

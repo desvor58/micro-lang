@@ -1,0 +1,49 @@
+	.intel_syntax noprefix
+	.file	"bubblesort.ll"
+	.text
+	.globl	bubblesort
+	.p2align	4
+	.type	bubblesort,@function
+bubblesort:
+	push	ebp
+	push	ebx
+	push	edi
+	push	esi
+	xor	eax, eax
+	mov	ecx, dword ptr [esp + 24]
+	mov	edx, dword ptr [esp + 20]
+	lea	esi, [ecx - 1]
+	jmp	.LBB0_1
+	.p2align	4
+.LBB0_7:
+	inc	eax
+.LBB0_1:
+	cmp	eax, esi
+	jge	.LBB0_8
+	xor	edi, edi
+	mov	ebx, eax
+	not	ebx
+	add	ebx, dword ptr [esp + 24]
+	jmp	.LBB0_3
+	.p2align	4
+.LBB0_6:
+	inc	edi
+.LBB0_3:
+	cmp	edi, ebx
+	jge	.LBB0_7
+	mov	ebp, dword ptr [edx + 4*edi]
+	mov	ecx, dword ptr [edx + 4*edi + 4]
+	cmp	ebp, ecx
+	jle	.LBB0_6
+	mov	dword ptr [edx + 4*edi], ecx
+	mov	dword ptr [edx + 4*edi + 4], ebp
+	jmp	.LBB0_6
+.LBB0_8:
+	pop	esi
+	pop	edi
+	pop	ebx
+	pop	ebp
+	ret
+.Lfunc_end0:
+	.size	bubblesort, .Lfunc_end0-bubblesort
+	.section	".note.GNU-stack","",@progbits

@@ -1,0 +1,50 @@
+0000000000000000 <code>:
+   0:	48 83 ec 18          	sub    rsp,0x18
+   4:	48 89 1c 24          	mov    QWORD PTR [rsp],rbx
+   8:	4c 89 64 24 08       	mov    QWORD PTR [rsp+0x8],r12
+   d:	4c 8b c6             	mov    r8,rsi
+  10:	4c 8b cf             	mov    r9,rdi
+  13:	33 d2                	xor    edx,edx
+  15:	48 c7 c0 01 00 00 00 	mov    rax,0x1
+  1c:	49 8b c8             	mov    rcx,r8
+  1f:	48 2b c8             	sub    rcx,rax
+  22:	48 8b c1             	mov    rax,rcx
+  25:	48 3b d0             	cmp    rdx,rax
+  28:	0f 8d 7d 00 00 00    	jge    ab <code+0xab>
+  2e:	33 c9                	xor    ecx,ecx
+  30:	49 8b c0             	mov    rax,r8
+  33:	48 2b c2             	sub    rax,rdx
+  36:	48 8b f0             	mov    rsi,rax
+  39:	48 c7 c0 01 00 00 00 	mov    rax,0x1
+  40:	48 2b f0             	sub    rsi,rax
+  43:	48 3b ce             	cmp    rcx,rsi
+  46:	7d 54                	jge    9c <code+0x9c>
+  48:	48 c7 c0 04 00 00 00 	mov    rax,0x4
+  4f:	48 8b f9             	mov    rdi,rcx
+  52:	48 0f af f8          	imul   rdi,rax
+  56:	49 8b c1             	mov    rax,r9
+  59:	48 03 c7             	add    rax,rdi
+  5c:	48 8b d8             	mov    rbx,rax
+  5f:	48 c7 c0 01 00 00 00 	mov    rax,0x1
+  66:	48 8b f9             	mov    rdi,rcx
+  69:	48 03 f8             	add    rdi,rax
+  6c:	48 c7 c0 04 00 00 00 	mov    rax,0x4
+  73:	48 0f af f8          	imul   rdi,rax
+  77:	49 8b c1             	mov    rax,r9
+  7a:	48 03 c7             	add    rax,rdi
+  7d:	48 63 3b             	movsxd rdi,DWORD PTR [rbx]
+  80:	4c 63 20             	movsxd r12,DWORD PTR [rax]
+  83:	49 3b fc             	cmp    rdi,r12
+  86:	7e 05                	jle    8d <code+0x8d>
+  88:	44 89 23             	mov    DWORD PTR [rbx],r12d
+  8b:	89 38                	mov    DWORD PTR [rax],edi
+  8d:	48 c7 c0 01 00 00 00 	mov    rax,0x1
+  94:	48 03 c8             	add    rcx,rax
+  97:	e9 a7 ff ff ff       	jmp    43 <code+0x43>
+  9c:	48 c7 c0 01 00 00 00 	mov    rax,0x1
+  a3:	48 03 d0             	add    rdx,rax
+  a6:	e9 6a ff ff ff       	jmp    15 <code+0x15>
+  ab:	48 8b 1c 24          	mov    rbx,QWORD PTR [rsp]
+  af:	4c 8b 64 24 08       	mov    r12,QWORD PTR [rsp+0x8]
+  b4:	48 83 c4 18          	add    rsp,0x18
+  b8:	c3                   	ret

@@ -1,0 +1,40 @@
+\
+smoke.micro — architecture neutral smoke workload
+
+Sums k * w[k] over a small array, so the result is a known number for
+every host and every backend. Intentionally kept inside the limits of
+the i386 backend: at most 5 live virtual registers, the i386 target has
+6 allocatable ones, i32 arithmetic only, no floats, no division.
+
+The runner fills an '@N' argument with N / 4 descending i32 words, so
+w[k] = n - k and the result is
+
+    sum(k * (n - k)) = n * (n - 1) * (n + 1) / 6
+
+The body is shaped to hit the interesting code selection: the pointer
+walk and the counter each become a single instruction.
+\
+
+fun checksum
+    ptr data
+    i32 n
+    ret i32
+start
+    set i32 acc 0;
+    set i32 i 0;
+    set i32 addr data;
+
+loop:
+    set i32 past >= i n;
+    if past : done;
+
+    set i32 word $ addr;
+    set i32 acc + acc * i word;
+
+    set i32 addr + addr 4;
+    set i32 i + i 1;
+    goto loop;
+
+done:
+    ret acc;
+end

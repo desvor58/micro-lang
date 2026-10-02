@@ -151,9 +151,11 @@ only used when every operand already lives in a machine register and a
 register is free for the result:
 
 - `lea r, [base + index * scale + disp]`, where the scale is 2, 4 or 8. The
-  displacement is folded into the instruction whenever the expression adds
-  a literal to the scaled term, and the shortest of the no displacement,
-  the 8 bit displacement and the 32 bit displacement form is chosen.
+  index and the base are both optional, so a plain `base + disp` folds into
+  the same instruction. The displacement is folded into the instruction
+  whenever the expression adds a literal to the scaled term, and the
+  shortest of the no displacement, the 8 bit displacement and the 32 bit
+  displacement form is chosen.
 - `inc r` and `dec r` for a value plus or minus one.
 
 ## Assembler optimizer

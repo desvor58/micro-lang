@@ -1,0 +1,35 @@
+# gcd.mir — Greatest Common Divisor (Euclidean algorithm)
+# Equivalent test for micro-lang, LLVM IR, and GCC MIR backends
+#
+# i64 gcd(i64 a, i64 b)
+# Returns the greatest common divisor of a and b.
+
+gcd_m:    module
+          export gcd
+          export main
+
+gcd_p:   proto i64, i64:a, i64:b
+gcd:     func i64, i64:a, i64:b
+         local i64:rem, i64:result
+
+         beq done, b, 0
+
+         # rem = a - (a / b) * b  (i.e. a % b)
+         div rem, a, b
+         mul rem, rem, b
+         sub rem, a, rem
+
+         call gcd_p, gcd, result, b, rem
+         ret result
+
+done:    ret a
+         endfunc
+
+# --- Entry point: compute gcd(48, 18) ---
+main_p:  proto i64
+main:    func i64
+         local i64:r
+         call gcd_p, gcd, r, 48, 18
+         ret r
+         endfunc
+         endmodule

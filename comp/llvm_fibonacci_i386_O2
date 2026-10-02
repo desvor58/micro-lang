@@ -1,0 +1,32 @@
+	.intel_syntax noprefix
+	.file	"fibonacci.ll"
+	.text
+	.globl	fibonacci
+	.p2align	4
+	.type	fibonacci,@function
+fibonacci:
+	push	edi
+	push	esi
+	push	eax
+	mov	esi, dword ptr [esp + 16]
+	cmp	esi, 1
+	jg	.LBB0_3
+	mov	eax, esi
+	jmp	.LBB0_2
+.LBB0_3:
+	lea	eax, [esi - 1]
+	mov	dword ptr [esp], eax
+	call	fibonacci@PLT
+	mov	edi, eax
+	add	esi, -2
+	mov	dword ptr [esp], esi
+	call	fibonacci@PLT
+	add	eax, edi
+.LBB0_2:
+	add	esp, 4
+	pop	esi
+	pop	edi
+	ret
+.Lfunc_end0:
+	.size	fibonacci, .Lfunc_end0-fibonacci
+	.section	".note.GNU-stack","",@progbits

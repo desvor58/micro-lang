@@ -1,0 +1,81 @@
+micro_bubblesort:
+   0:	55                   	push   ebp
+   1:	89 e5                	mov    ebp,esp
+   3:	81 ec 0c 00 00 00    	sub    esp,0xc
+   9:	57                   	push   edi
+   a:	56                   	push   esi
+   b:	53                   	push   ebx
+   c:	b8 00 00 00 00       	mov    eax,0x0
+  11:	8b 8d 0c 00 00 00    	mov    ecx,DWORD PTR [ebp+0xc]
+  17:	81 e9 01 00 00 00    	sub    ecx,0x1
+  1d:	3b c1                	cmp    eax,ecx
+  1f:	0f 8d b7 00 00 00    	jge    0xdc
+  25:	b9 00 00 00 00       	mov    ecx,0x0
+  2a:	8b 95 0c 00 00 00    	mov    edx,DWORD PTR [ebp+0xc]
+  30:	29 c2                	sub    edx,eax
+  32:	81 ea 01 00 00 00    	sub    edx,0x1
+  38:	3b ca                	cmp    ecx,edx
+  3a:	0f 8d 91 00 00 00    	jge    0xd1
+  40:	8b 9d 08 00 00 00    	mov    ebx,DWORD PTR [ebp+0x8]
+  46:	50                   	push   eax
+  47:	52                   	push   edx
+  48:	8b c1                	mov    eax,ecx
+  4a:	69 c0 04 00 00 00    	imul   eax,eax,0x4
+  50:	5a                   	pop    edx
+  51:	8b f0                	mov    esi,eax
+  53:	58                   	pop    eax
+  54:	01 f3                	add    ebx,esi
+  56:	8b bd 08 00 00 00    	mov    edi,DWORD PTR [ebp+0x8]
+  5c:	50                   	push   eax
+  5d:	52                   	push   edx
+  5e:	8b c1                	mov    eax,ecx
+  60:	81 c0 01 00 00 00    	add    eax,0x1
+  66:	69 c0 04 00 00 00    	imul   eax,eax,0x4
+  6c:	5a                   	pop    edx
+  6d:	89 85 fc ff ff ff    	mov    DWORD PTR [ebp-0x4],eax
+  73:	58                   	pop    eax
+  74:	03 bd fc ff ff ff    	add    edi,DWORD PTR [ebp-0x4]
+  7a:	50                   	push   eax
+  7b:	52                   	push   edx
+  7c:	8b c3                	mov    eax,ebx
+  7e:	8b 00                	mov    eax,DWORD PTR [eax]
+  80:	5a                   	pop    edx
+  81:	89 85 fc ff ff ff    	mov    DWORD PTR [ebp-0x4],eax
+  87:	58                   	pop    eax
+  88:	50                   	push   eax
+  89:	52                   	push   edx
+  8a:	8b c7                	mov    eax,edi
+  8c:	8b 00                	mov    eax,DWORD PTR [eax]
+  8e:	5a                   	pop    edx
+  8f:	89 85 f8 ff ff ff    	mov    DWORD PTR [ebp-0x8],eax
+  95:	58                   	pop    eax
+  96:	50                   	push   eax
+  97:	8b 85 f8 ff ff ff    	mov    eax,DWORD PTR [ebp-0x8]
+  9d:	39 85 fc ff ff ff    	cmp    DWORD PTR [ebp-0x4],eax
+  a3:	58                   	pop    eax
+  a4:	0f 8e 1c 00 00 00    	jle    0xc6
+  aa:	50                   	push   eax
+  ab:	8b c3                	mov    eax,ebx
+  ad:	52                   	push   edx
+  ae:	8b 95 f8 ff ff ff    	mov    edx,DWORD PTR [ebp-0x8]
+  b4:	89 10                	mov    DWORD PTR [eax],edx
+  b6:	5a                   	pop    edx
+  b7:	58                   	pop    eax
+  b8:	50                   	push   eax
+  b9:	8b c7                	mov    eax,edi
+  bb:	52                   	push   edx
+  bc:	8b 95 fc ff ff ff    	mov    edx,DWORD PTR [ebp-0x4]
+  c2:	89 10                	mov    DWORD PTR [eax],edx
+  c4:	5a                   	pop    edx
+  c5:	58                   	pop    eax
+  c6:	81 c1 01 00 00 00    	add    ecx,0x1
+  cc:	e9 59 ff ff ff       	jmp    0x2a
+  d1:	81 c0 01 00 00 00    	add    eax,0x1
+  d7:	e9 35 ff ff ff       	jmp    0x11
+  dc:	8b d8                	mov    ebx,eax
+  de:	5b                   	pop    ebx
+  df:	5e                   	pop    esi
+  e0:	5f                   	pop    edi
+  e1:	81 c4 0c 00 00 00    	add    esp,0xc
+  e7:	c9                   	leave
+  e8:	c3                   	ret

@@ -1,0 +1,81 @@
+	.intel_syntax noprefix
+	.file	"bubblesort.ll"
+	.text
+	.globl	bubblesort
+	.p2align	4
+	.type	bubblesort,@function
+bubblesort:
+	push	edi
+	push	esi
+	sub	esp, 44
+	mov	eax, dword ptr [esp + 60]
+	mov	dword ptr [esp + 32], eax
+	mov	eax, dword ptr [esp + 56]
+	mov	dword ptr [esp + 36], eax
+	xor	eax, eax
+	mov	dword ptr [esp + 40], eax
+	jmp	.LBB0_1
+.LBB0_1:
+	mov	ecx, dword ptr [esp + 32]
+	mov	eax, dword ptr [esp + 40]
+	mov	dword ptr [esp + 28], eax
+	sub	ecx, 1
+	cmp	eax, ecx
+	jge	.LBB0_8
+	mov	edx, dword ptr [esp + 28]
+	mov	ecx, dword ptr [esp + 32]
+	xor	eax, eax
+	add	eax, 0
+	sub	ecx, edx
+	sub	ecx, 1
+	mov	dword ptr [esp + 20], ecx
+	mov	dword ptr [esp + 24], eax
+.LBB0_3:
+	mov	ecx, dword ptr [esp + 20]
+	mov	eax, dword ptr [esp + 24]
+	mov	dword ptr [esp + 16], eax
+	cmp	eax, ecx
+	jge	.LBB0_7
+	mov	ecx, dword ptr [esp + 36]
+	mov	edx, dword ptr [esp + 16]
+	mov	esi, edx
+	shl	esi, 2
+	mov	eax, ecx
+	add	eax, esi
+	mov	dword ptr [esp], eax
+	mov	eax, dword ptr [ecx + 4*edx]
+	mov	dword ptr [esp + 4], eax
+	mov	edi, edx
+	add	edi, 1
+	shl	edi, 2
+	mov	esi, ecx
+	add	esi, edi
+	mov	dword ptr [esp + 8], esi
+	mov	ecx, dword ptr [ecx + 4*edx + 4]
+	mov	dword ptr [esp + 12], ecx
+	cmp	eax, ecx
+	jle	.LBB0_6
+	mov	eax, dword ptr [esp + 8]
+	mov	ecx, dword ptr [esp + 4]
+	mov	edx, dword ptr [esp]
+	mov	esi, dword ptr [esp + 12]
+	mov	dword ptr [edx], esi
+	mov	dword ptr [eax], ecx
+.LBB0_6:
+	mov	eax, dword ptr [esp + 16]
+	add	eax, 1
+	mov	dword ptr [esp + 24], eax
+	jmp	.LBB0_3
+.LBB0_7:
+	mov	eax, dword ptr [esp + 28]
+	add	eax, 1
+	mov	dword ptr [esp + 40], eax
+	jmp	.LBB0_1
+.LBB0_8:
+	add	esp, 44
+	pop	esi
+	pop	edi
+	ret
+.Lfunc_end0:
+	.size	bubblesort, .Lfunc_end0-bubblesort
+	.section	".note.GNU-stack","",@progbits

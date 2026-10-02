@@ -1,0 +1,86 @@
+bubblesort:
+    prelude
+    subR32I32 esp, 12
+    pushR32 edi
+    pushR32 esi
+    pushR32 ebx
+bubblesort.start:
+    movR32I32 eax, 0
+bubblesort.outer_loop:
+    movR32S32 ecx, 12
+    subR32I32 ecx, 1
+    cmpR32R32 eax, ecx
+    jge bubblesort.done
+    movR32I32 ecx, 0
+bubblesort.inner_loop:
+    movR32S32 edx, 12
+    subR32R32 edx, eax
+    subR32I32 edx, 1
+    cmpR32R32 ecx, edx
+    jge bubblesort.inner_done
+    movR32S32 ebx, 8
+    pushR32 eax
+    pushR32 edx
+    movR32R32 eax, ecx
+    imulR32I32 eax, 4
+    popR32 edx
+    movR32R32 esi, eax
+    popR32 eax
+    addR32R32 ebx, esi
+    movR32S32 edi, 8
+    pushR32 eax
+    pushR32 edx
+    movR32R32 eax, ecx
+    addR32I32 eax, 1
+    imulR32I32 eax, 4
+    popR32 edx
+    movS32R32 -4, eax
+    popR32 eax
+    addR32S32 edi, -4
+    pushR32 eax
+    pushR32 edx
+    movR32R32 eax, ebx
+    movR32MR32 eax, eax
+    popR32 edx
+    movS32R32 -4, eax
+    popR32 eax
+    pushR32 eax
+    pushR32 edx
+    movR32R32 eax, edi
+    movR32MR32 eax, eax
+    popR32 edx
+    movS32R32 -8, eax
+    popR32 eax
+    pushR32 eax
+    movR32S32 eax, -8
+    cmpS32R32 -4, eax
+    popR32 eax
+    jle bubblesort.no_swap
+    pushR32 eax
+    movR32R32 eax, ebx
+    pushR32 edx
+    movR32S32 edx, -8
+    movMR32R32 eax, edx
+    popR32 edx
+    popR32 eax
+    pushR32 eax
+    movR32R32 eax, edi
+    pushR32 edx
+    movR32S32 edx, -4
+    movMR32R32 eax, edx
+    popR32 edx
+    popR32 eax
+bubblesort.no_swap:
+    addR32I32 ecx, 1
+    jmpL32 bubblesort.inner_loop
+bubblesort.inner_done:
+    addR32I32 eax, 1
+    jmpL32 bubblesort.outer_loop
+bubblesort.done:
+    movR32R32 ebx, eax
+bubblesort.end:
+    popR32 ebx
+    popR32 esi
+    popR32 edi
+    addR32I32 esp, 12
+    epilogue

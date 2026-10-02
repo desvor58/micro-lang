@@ -15,7 +15,6 @@ tests/log/
 *.hide.*
 
 mir/
-comp/
 .cache/
 build/
 micro_runner

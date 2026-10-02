@@ -61,6 +61,18 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
             errno = 0;
             i32 lit = strtol(second_operand->val, &end, 10);
 
+            if (ident->type == MICRO_IDENT_VREG && lit != 0 && lit != 1) {
+                lea_pattern_t pat = {
+                    .base = ident,
+                    .scale = 1,
+                    .disp = lit,
+                    .size = 3,
+                };
+                if (!code_selection_lea(codegen, dst, &pat)) {
+                    return (expr_info_t){ 3, ident->vreg.type };
+                }
+            }
+
             if (ident->type == MICRO_IDENT_VREG) {
                 expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
                 if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
@@ -133,6 +145,17 @@ expr_info_t op_plus_handler(micro_codegen_t *codegen, micro_codegen386_storage_t
 
             expr_info_t expr_info = (expr_info_t){ 0, MICRO_TYPE_NULL };
             if (ident->type == MICRO_IDENT_VREG) {
+                if (first_lit != 0 && first_lit != 1) {
+                    lea_pattern_t pat = {
+                        .base = ident,
+                        .scale = 1,
+                        .disp = first_lit,
+                        .size = 3,
+                    };
+                    if (!code_selection_lea(codegen, dst, &pat)) {
+                        return (expr_info_t){ 3, ident->vreg.type };
+                    }
+                }
                 expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
                 if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
             }

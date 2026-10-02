@@ -425,11 +425,15 @@ expression in the shape below lets the compiler find it.
 
 | expression             | generated                        |
 |------------------------|----------------------------------|
-| `* i 4`                | `lea r, [i * 4]`                 |
 | `+ b * i 4`            | `lea r, [b + i * 4]`             |
+| `+ b * i 2`            | `lea r, [b + i * 2]`             |
+| `+ b * i 8`            | `lea r, [b + i * 8]`             |
+| `+ b * + i 1 4`        | `lea r, [b + i * 4 + 4]`         |
 | `+ + b * i 4 8`        | `lea r, [b + i * 4 + 8]`         |
 | `+ * i 4 8`            | `lea r, [i * 4 + 8]`             |
-| `+ b * + i 1 4`        | `lea r, [b + i * 4 + 4]`         |
+| `+ b 4`                | `lea r, [b + 4]`                 |
+| `+ 4 b`                | `lea r, [b + 4]`                 |
+| `* i 4`                | `lea r, [i * 4]`                 |
 | `+ i 1`                | `inc r`                          |
 | `- i 1`                | `dec r`                          |
 
