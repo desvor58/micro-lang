@@ -78,6 +78,7 @@ static const micro_asm386_instruction_type_t testRR_tbl[3] = {
 
 int lowering(micro_codegen_t *codegen);
 int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr);
+int lowering_tramp(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr);
 int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr);

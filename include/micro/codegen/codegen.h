@@ -20,6 +20,7 @@ struct _micro_codegen_t {
     micro_codegen_emit_fun_t  emit;
     void                     *ext;
     micro_codegen_flags_t     flags;
+    sct_hashmap_t            *tramps;
 };
 
 #endif

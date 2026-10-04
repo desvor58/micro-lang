@@ -215,6 +215,27 @@ int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *ar
     return 0;
 }
 
+int micro_instr_gen_tramp(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, micro_instruction_hints_t hints)
+{
+    if (!instrs || !name || strlen(name) > MICRO_MAX_SYMBOL_SIZE - 1 || !args) {
+        return 1;
+    }
+
+    micro_instruction_tramp_t instr_tramp;
+    strcpy(instr_tramp.name, name);
+    instr_tramp.ret_type = ret_type;
+    instr_tramp.args = *args;
+    
+
+    sct_vector_push(instrs, &(micro_instruction_t){
+        .type = MICRO_INSTR_TRAMP,
+        .hints = hints,
+        .tramp = instr_tramp,
+    });
+
+    return 0;
+}
+
 int micro_instr_gen_ret(sct_vector_t *instrs, sct_vector_t *expr, micro_instruction_hints_t hints)
 {
     if (!instrs) {

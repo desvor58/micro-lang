@@ -224,7 +224,7 @@ int main(int argc, char **argv)
             sct_arena_init(&arena);
 
             micro_codegen_t codegen;
-            micro_codegen386_init(&codegen, args.codegen_flags, &asm_instrs, &arena);
+            micro_codegen386_init(&codegen, args.codegen_flags, &asm_instrs, &arena, NULL);
                 codegen.emit(&codegen, &instrgen.instructions);
                 for (size_t i = 0; i < micro_err_stk_size; i++) {
                     micro_debug_put_err(args.inputfile, micro_err_stk[i]);

@@ -30,6 +30,7 @@ int mc_instrgen_parse_hints(mc_instrgen_t *instrgen, micro_instruction_hints_t *
 
 void mc_instrgen_parse_set(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_fun(mc_instrgen_t *instrgen);
+void mc_instrgen_parse_tramp(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_ret(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_call(mc_instrgen_t *instrgen);
 void mc_instrgen_parse_lbl(mc_instrgen_t *instrgen);

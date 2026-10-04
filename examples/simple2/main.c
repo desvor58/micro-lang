@@ -46,7 +46,7 @@ int main()
     };
 
     micro_codegen_t codegen;
-    micro_codegen386_init(&codegen, codegen_flags, &asm_instrs, &arena);
+    micro_codegen386_init(&codegen, codegen_flags, &asm_instrs, &arena, NULL);
     codegen.emit(&codegen, &instrs);
     micro_codegen386_deinit(&codegen);
 

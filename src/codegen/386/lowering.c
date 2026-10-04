@@ -1,45 +1,34 @@
 #include "internal.h"
 
+typedef int (*lowering_handler_t)(micro_codegen_t*, micro_instruction_t*);
+
 int lowering(micro_codegen_t *codegen)
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
     int res = 0;
 
+    static const lowering_handler_t handlers[] = {
+        [MICRO_INSTR_SET]   = lowering_set,
+        [MICRO_INSTR_DRSET] = lowering_drset,
+        [MICRO_INSTR_FUN]   = lowering_fun,
+        [MICRO_INSTR_TRAMP] = lowering_tramp,
+        [MICRO_INSTR_RET]   = lowering_ret,
+        [MICRO_INSTR_CALL]  = lowering_call,
+        [MICRO_INSTR_LBL]   = lowering_lbl,
+        [MICRO_INSTR_GOTO]  = lowering_goto,
+        [MICRO_INSTR_IF]    = lowering_if,
+    };
+
     while (codegen->pos < codegen->instrs->size) {
         micro_instruction_t *instr = sct_vector_get(codegen->instrs, codegen->pos);
 
-        switch (instr->type) {
-            case MICRO_INSTR_FUN:
-                res |= lowering_fun(codegen, instr);
-                break;
-
-            case MICRO_INSTR_RET:
-                res |= lowering_ret(codegen, instr);
-                break;
-
-            case MICRO_INSTR_SET:
-                res |= lowering_set(codegen, instr);
-                break;
-
-            case MICRO_INSTR_CALL:
-                res |= lowering_call(codegen, instr);
-                break;
-
-            case MICRO_INSTR_LBL:
-                res |= lowering_lbl(codegen, instr);
-                break;
-
-            case MICRO_INSTR_GOTO:
-                res |= lowering_goto(codegen, instr);
-                break;
-
-            case MICRO_INSTR_IF:
-                res |= lowering_if(codegen, instr);
-                break;
-
-            case MICRO_INSTR_DRSET:
-                res |= lowering_drset(codegen, instr);
-                break;
+        if (unlikely(instr->type >= sizeof(handlers) / sizeof(handlers[0]) || !handlers[instr->type])) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_UNEXPECTED_TOKEN,
+                .instr = instr->type,
+            });
+        } else {
+            res |= handlers[instr->type](codegen, instr);
         }
 
         sct_hashmap_iter_t ident_it;

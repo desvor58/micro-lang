@@ -11,11 +11,12 @@ Version: **dev-1.0.0** (unstable MVP)
 6. [Lifetime hints](#lifetime-hints)
 7. [Functions](#functions)
 8. [Calling functions](#calling-functions)
-9. [Returning values](#returning-values)
-10. [Labels and jumps](#labels-and-jumps)
-11. [Conditional jumps](#conditional-jumps)
-12. [Code selection](#code-selection)
-13. [Full example](#full-example)
+9. [Declaring trampolines](#declaring-trampolines)
+10. [Returning values](#returning-values)
+11. [Labels and jumps](#labels-and-jumps)
+12. [Conditional jumps](#conditional-jumps)
+13. [Code selection](#code-selection)
+14. [Full example](#full-example)
 
 ---
 
@@ -273,11 +274,15 @@ You call a function with the `call` keyword:
 call <result_register> <function_name> <arg1> <arg2> ... ;
 ```
 
-- The first name is the register that receives the return value.
+- The first name is the register that receives the return value. Declare it
+  with an empty `set` before the call.
 - If the function has no return value, or you do not want to keep it, use
   `_` as the result register.
 - Arguments are expressions, separated by spaces.
 - The called function must be defined before the call.
+
+The callee does not have to be written in micro. A call can reach a function the
+host program implements, see [declaring trampolines](#declaring-trampolines).
 
 Call without arguments:
 
@@ -309,6 +314,53 @@ start
     call _ add 3 4;
 end
 ```
+
+---
+
+## Declaring trampolines
+
+A trampoline is a function implemented by the host program instead of by micro
+code. Declare it where functions are declared, with `tramp` instead of `fun` and
+without a body:
+
+```
+tramp vm_add
+    i32 a
+    i32 b
+    ret i32
+end
+```
+
+- A trampoline can only be declared outside a function body.
+- Arguments and the return type are written exactly like in a function and are
+  checked at every call.
+- The name must be free, and the declaration must come before any call to it,
+  the same rule functions follow.
+- Lifetime hints are accepted after the name, but a trampoline has no body they
+  could apply to.
+- The declaration itself produces no code, it only names a handler that the host
+  program has to provide. Compiling a `tramp` the host did not register fails
+  with `No trampoline in the map for this name`.
+
+Calling it looks like calling a function:
+
+```
+fun call_add
+    i32 a
+    i32 b
+    ret i32
+start
+    set i32 res;
+    call res vm_add a b;
+    ret res;
+end
+```
+
+The handler receives its arguments in a frame that describes the call, so one
+handler can serve signatures of different arity. `microc` has no handlers to
+give, so the command line compiler rejects every `tramp`; use the library and
+pass the map to the code generator. See
+[trampolines](compiler-description.md#trampolines).
 
 ---
 

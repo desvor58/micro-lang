@@ -38,6 +38,7 @@ typedef enum {
     MC_TOK_TYPE_NAME,
 
     MC_TOK_KW_FUN,
+    MC_TOK_KW_TRAMP,
     MC_TOK_KW_SET,
     MC_TOK_KW_IF,
     MC_TOK_KW_ELSE,

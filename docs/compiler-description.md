@@ -173,6 +173,81 @@ The assembler encodes each instruction and resolves the labels. The output
 is raw machine code without any header, so it can be copied into
 executable memory and called, which is what the `examples` do.
 
+## Trampolines
+
+A trampoline is a host function that compiled micro code can call in place of
+a compiled function. Use it when the callee lives outside the generated code:
+an interpreted function, a VM entry point, or anything else the compiler
+cannot see.
+
+In source, a trampoline is declared where functions are declared, with `tramp`
+instead of `fun` and no body:
+
+```
+tramp vm_add
+    i32 a
+    i32 b
+    ret i32
+end
+```
+
+Declare the same signature with `micro_instr_gen_tramp` when the code is built
+through the API, and hand the code generator a map from that name to the
+handler:
+
+```C
+static i32 vm_add(const micro_tramp_frame_t *frame)
+{
+    return frame->args[0] + frame->args[1] * 10;
+}
+
+sct_hashmap_t tramps;
+sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+micro_tramp_t handler = vm_add;
+sct_hashmap_add(&tramps, "vm_add", &handler);
+
+micro_codegen386_init(&codegen, flags, &asm_instrs, &arena, &tramps);
+```
+
+The call itself is an ordinary `call` instruction in micro code, and the
+argument count and result type are checked against the declaration exactly as
+they are for a compiled function. Passing `NULL` instead of the map disables
+the feature, and every `tramp` then reports `No trampoline in the map for this
+name`. `microc` always passes `NULL`, so the command line compiler rejects every
+`tramp` declaration.
+
+### Calling convention
+
+Arguments are pushed like any other micro call, one 32 bit word per declared
+argument in declaration order, and the result comes back in `eax`. On top of
+that the handler receives one extra first argument, a pointer to a frame that
+describes the call:
+
+```C
+typedef struct {
+    i32         *args;      /* one word per argument, in declaration order */
+    size_t       args_num;
+    micro_type_t ret_type;
+} micro_tramp_frame_t;
+
+typedef i32 (*micro_tramp_t)(const micro_tramp_frame_t *frame);
+```
+
+The frame is how a single handler serves many signatures: read `args_num` and
+index `args` instead of relying on a matching C prototype, which is what lets
+one VM trampoline dispatch functions of different arity. `args` stays valid
+for the duration of the call. The map value is a `micro_tramp_t *`, so a host
+can replace the handler of an already declared trampoline.
+
+Arguments narrower than 32 bits arrive in the low bytes of their word, the same
+way they reach a compiled function; `ret_type` tells the handler how micro
+intends to use the value it returns.
+
+A trampoline call costs a few instructions more than a direct call: the frame
+is built on the stack and the handler address is loaded into a register
+instead of being encoded as a label displacement. That keeps the call correct
+no matter how far the handler is from the generated code.
+
 # Library
 
 `micro.h` is the only header a host program needs to compile micro code at
@@ -181,7 +256,7 @@ runtime:
 ```C
 micro_init();
     micro_codegen_t codegen;
-    micro_codegen386_init(&codegen, flags, &asm_instrs, &arena);
+    micro_codegen386_init(&codegen, flags, &asm_instrs, &arena, tramps);
     codegen.emit(&codegen, &instructions);
     micro_asm386_optimize(&asm_instrs);
     micro_asm386_emit(&asm_instrs, &outbuf);

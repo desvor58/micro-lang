@@ -70,6 +70,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
         codegen->emit(codegen, &instr_fun.body);
     codegen->instrs = instrs_save;
     codegen->pos = pos_save;
+    ext->in_function = 0;
 
     sct_vector_t remove_idents;
     sct_vector_init(&remove_idents, sizeof(char*));

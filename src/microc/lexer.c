@@ -31,6 +31,7 @@ char *mc_token_type2str[] = {
     [MC_TOK_LIT_STR]     = "lit str",
 
     [MC_TOK_KW_FUN]      = "fun",
+    [MC_TOK_KW_TRAMP]    = "tramp",
     [MC_TOK_KW_SET]      = "set",
     [MC_TOK_KW_IF]       = "if",
     [MC_TOK_KW_ELSE]     = "else",
@@ -83,6 +84,14 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             if (!strcmp(buf, "fun")) {
                 sct_vector_push(toks, &(mc_token_t){
                     .type = MC_TOK_KW_FUN,
+                    .val = 0,
+                    .line_ref = line,
+                    .chpos_ref = tok_start_chpos
+                });
+            } else
+            if (!strcmp(buf, "tramp")) {
+                sct_vector_push(toks, &(mc_token_t){
+                    .type = MC_TOK_KW_TRAMP,
                     .val = 0,
                     .line_ref = line,
                     .chpos_ref = tok_start_chpos

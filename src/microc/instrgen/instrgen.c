@@ -235,6 +235,10 @@ void mc_instrgen_gen(mc_instrgen_t *instrgen)
                 mc_instrgen_parse_fun(instrgen);
                 break;
 
+            case MC_TOK_KW_TRAMP:
+                mc_instrgen_parse_tramp(instrgen);
+                break;
+
             case MC_TOK_KW_RET:
                 mc_instrgen_parse_ret(instrgen);
                 break;

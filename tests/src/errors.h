@@ -29,6 +29,8 @@ static const char *test_err_str[] = {
     [MICRO_ERROR_EXPECTED_ELSE_KW]          = "Expected 'else' keyword",
 
     [MICRO_ERROR_EXPECTED_FUN_NAME]         = "Expected function name",
+    [MICRO_ERROR_EXPECTED_TRAMP_KW]         = "Expected 'tramp' keyword",
+    [MICRO_ERROR_EXPECTED_TRAMP_NAME]       = "Expected trampoline name",
     [MICRO_ERROR_EXPECTED_ARG_TYPE]         = "Expected argument type",
     [MICRO_ERROR_EXPECTED_ARG_NAME]         = "Expected argument name",
     [MICRO_ERROR_EXPECTED_RET_TYPE]         = "Expected return type",
@@ -39,6 +41,7 @@ static const char *test_err_str[] = {
 
     [MICRO_ERROR_SET_OUTSIDE_FUNCTION]      = "'set' can be only in function body",
     [MICRO_ERROR_FUN_INSIDE_FUNCTION]       = "'fun' can be only outside function",
+    [MICRO_ERROR_TRAMP_INSIDE_FUNCTION]     = "'tramp' can be only outside function",
     [MICRO_ERROR_RET_OUTSIDE_FUNCTION]      = "'ret' can be only in function body",
     [MICRO_ERROR_CALL_OUTSIDE_FUNCTION]     = "'call' can be only in function body",
     [MICRO_ERROR_GOTO_OUTSIDE_FUNCTION]     = "'goto' can be only in function body",
@@ -47,6 +50,8 @@ static const char *test_err_str[] = {
 
     [MICRO_ERROR_UNDEFINED_IDENT]           = "Undefined identifier",
     [MICRO_ERROR_UNDEFINED_FUN]             = "Undefined function",
+    [MICRO_ERROR_UNDEFINED_TRAMP]           = "No trampoline in the map for this name",
+    [MICRO_ERROR_TRAMP_REDEFINED]           = "Name is already declared",
     [MICRO_ERROR_EXPECTED_VREG_RESULT]      = "Expected vreg as call result",
     [MICRO_ERROR_RESULT_TYPE_MISMATCH]      = "Call result type mismatch",
     [MICRO_ERROR_TOO_FEW_ARGS]              = "Too few arguments in call",
@@ -66,6 +71,7 @@ static const char *test_instr_str[] = {
     [MICRO_INSTR_SET]    = "set",
     [MICRO_INSTR_DRSET]  = "drset",
     [MICRO_INSTR_FUN]    = "fun",
+    [MICRO_INSTR_TRAMP]  = "tramp",
     [MICRO_INSTR_RET]    = "ret",
     [MICRO_INSTR_CALL]   = "call",
     [MICRO_INSTR_LBL]    = "label",

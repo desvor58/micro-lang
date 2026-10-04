@@ -38,6 +38,7 @@ typedef struct {
 
 typedef enum {
     MICRO_IDENT_FUN,
+    MICRO_IDENT_TRAMP,
     MICRO_IDENT_VREG,
     MICRO_IDENT_LBL,
 } micro_codegen386_ident_type_t;
@@ -45,6 +46,11 @@ typedef enum {
 typedef struct {
     micro_instruction_fun_t instr_info;
 } micro_codegen386_ident_fun_t;
+
+typedef struct {
+    micro_instruction_tramp_t instr_info;
+    micro_tramp_t             handler;
+} micro_codegen386_ident_tramp_t;
 
 typedef struct {
     char                       name[MICRO_MAX_SYMBOL_SIZE];
@@ -60,9 +66,10 @@ typedef struct {
     micro_codegen386_ident_type_t type;
     ptrdiff_t                     lifetime;
     union {
-        micro_codegen386_ident_fun_t  fun;
-        micro_codegen386_ident_vreg_t vreg;
-        micro_codegen386_ident_lbl_t  lbl;
+        micro_codegen386_ident_fun_t   fun;
+        micro_codegen386_ident_tramp_t tramp;
+        micro_codegen386_ident_vreg_t  vreg;
+        micro_codegen386_ident_lbl_t   lbl;
     };
 } micro_codegen386_ident_t;
 
@@ -84,7 +91,7 @@ typedef struct {
     sct_vector_t  goto_unfound_labels;
 } micro_codegen386_ext_t;
 
-void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena);
+void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena, sct_hashmap_t *tramps);
 
 void micro_codegen386_deinit(micro_codegen_t *codegen);
 

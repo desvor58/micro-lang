@@ -51,6 +51,11 @@ const char *micro_debug_err_str[] = {
 
     [MICRO_ERROR_UNDEFINED_IDENT]           = "Undefined identifier",
     [MICRO_ERROR_UNDEFINED_FUN]             = "Undefined function",
+    [MICRO_ERROR_UNDEFINED_TRAMP]           = "No trampoline in the map for this name",
+    [MICRO_ERROR_TRAMP_INSIDE_FUNCTION]     = "'tramp' can be only outside function",
+    [MICRO_ERROR_EXPECTED_TRAMP_KW]         = "Expected 'tramp' keyword",
+    [MICRO_ERROR_EXPECTED_TRAMP_NAME]       = "Expected trampoline name",
+    [MICRO_ERROR_TRAMP_REDEFINED]           = "Name is already declared",
     [MICRO_ERROR_EXPECTED_VREG_RESULT]      = "Expected vreg as call result",
     [MICRO_ERROR_RESULT_TYPE_MISMATCH]      = "Call result type mismatch",
     [MICRO_ERROR_TOO_FEW_ARGS]              = "Too few arguments in call",
@@ -69,6 +74,7 @@ const char *micro_debug_instr_str[] = {
     [MICRO_INSTR_SET]    = "set",
     [MICRO_INSTR_DRSET]  = "drset",
     [MICRO_INSTR_FUN]    = "fun",
+    [MICRO_INSTR_TRAMP]  = "tramp",
     [MICRO_INSTR_RET]    = "ret",
     [MICRO_INSTR_CALL]   = "call",
     [MICRO_INSTR_LBL]    = "label",
@@ -172,6 +178,16 @@ void micro_debug_print_instructions(sct_vector_t *instrs, size_t tab)
                 micro_debug_print_instructions(&instr->fun.body, tab + 7);
                 break;
 
+            case MICRO_INSTR_TRAMP:
+                printf("TRAMP: ret_type:%s, name:'%s'\n",
+                       micro_debug_str_type[instr->tramp.ret_type], instr->tramp.name);
+                printf("     args:\n");
+                for (size_t j = 0; j < instr->tramp.args.size; j++) {
+                    micro_instruction_fun_arg_t *arg = sct_vector_get(&instr->tramp.args, j);
+                    printf("       type:%s, name:'%s'\n", micro_debug_str_type[arg->type], arg->name);
+                }
+                break;
+
             case MICRO_INSTR_RET:
                 printf("RET\n");
                 micro_debug_print_expr(instr->ret.val_expr, tab + 5);
@@ -259,6 +275,8 @@ static const micro_debug_asm_fmt_t asm_tbl[] = {
 
     [MICRO_ASM386_INSTR_RET]         = A0("ret"),
     [MICRO_ASM386_INSTR_CALL_S32]    = A1("callS32",    'V', 0),
+    [MICRO_ASM386_INSTR_CALL_R32]    = A1("callR32",    'r', 0),
+    [MICRO_ASM386_INSTR_PUSH_I32]    = A1("pushI32",    'V', 0),
     [MICRO_ASM386_INSTR_PRELUDE]     = A0("prelude"),
     [MICRO_ASM386_INSTR_EPILOGUE]    = A0("epilogue"),
 

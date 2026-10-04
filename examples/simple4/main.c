@@ -3,26 +3,32 @@
 #include <microc/lexer.h>
 #include <microc/instrgen.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 static const char source[] =
-    "fun fib\n"
-    "    i32 n\n"
+    "tramp native_abs\n"
+    "    i32 value\n"
+    "    ret i32\n"
+    "end\n"
+    "\n"
+    "fun absolute\n"
+    "    i32 value\n"
     "    ret i32\n"
     "start\n"
-    "    if <= n 1 : base;\n"
-    "    set i32 n1 - n 1;\n"
-    "    set i32 f1;\n"
-    "    call f1 fib n1;\n"
-    "    set i32 n2 - n 2;\n"
-    "    set i32 f2;\n"
-    "    call f2 fib n2;\n"
-    "    ret + f1 f2;\n"
-    "base:\n"
-    "    ret n;\n"
+    "    set i32 result;\n"
+    "    call result native_abs - 0 value;\n"
+    "    ret result;\n"
     "end\n";
+
+static i32 native_abs(const micro_tramp_frame_t *frame)
+{
+    printf("native_abs: args_num=%lu, ret_type=%d, value=%d\n",
+           (unsigned long)frame->args_num, (int)frame->ret_type, frame->args[0]);
+    return abs(frame->args[0]);
+}
 
 int main()
 {
@@ -45,13 +51,19 @@ int main()
     sct_arena_t arena;
     sct_arena_init(&arena);
 
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = native_abs;
+    sct_hashmap_add(&tramps, "native_abs", &handler);
+
     micro_codegen_t codegen;
-    micro_codegen386_init(&codegen, (micro_codegen_flags_t){0}, &asm_instrs, &arena, NULL);
+    micro_codegen386_init(&codegen, (micro_codegen_flags_t){0}, &asm_instrs, &arena, &tramps);
     codegen.emit(&codegen, &instrgen.instructions);
     micro_codegen386_deinit(&codegen);
 
     mc_instrgen_deinit(&instrgen);
     sct_vector_deinit(&toks);
+    sct_hashmap_deinit(&tramps);
     sct_arena_deinit(&arena);
     micro_deinit();
 
@@ -76,10 +88,10 @@ int main()
 
     memcpy(exec_mem, outbuf.data, outbuf.size);
 
-    i32 (*fib)(i32 n) = (i32 (*)(i32))exec_mem;
+    i32 (*absolute)(i32) = (i32 (*)(i32))exec_mem;
 
-    for (i32 n = 0; n < 10; n++) {
-        printf("fib(%d) = %d\n", n, fib(n));
+    for (i32 value = -9; value <= 9; value += 9) {
+        printf("absolute(%d) = %d\n", value, absolute(value));
     }
 
     munmap(exec_mem, page_size);

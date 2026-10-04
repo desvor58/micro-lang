@@ -502,7 +502,7 @@ static int compile_prog(prog_t *p, sct_vector_t *outbuf, stage_times_t *st)
     micro_codegen_flags_t flags = {0};
 
     t = now_sec();
-    micro_codegen386_init(&cg, flags, &asm_instrs, &arena);
+    micro_codegen386_init(&cg, flags, &asm_instrs, &arena, NULL);
     cg.emit(&cg, &p->instrs);
     st->codegen += (long)((now_sec() - t) * 1e9);
 

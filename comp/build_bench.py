@@ -46,6 +46,7 @@ def main() -> int:
         "src/codegen/386/lowering/lbl.c",
         "src/codegen/386/lowering/ret.c",
         "src/codegen/386/lowering/set.c",
+        "src/codegen/386/lowering/tramp.c",
         "lib/sct/src/arena.c", "lib/sct/src/arena_hashmap.c",
         "lib/sct/src/arena_list.c", "lib/sct/src/arena_vector.c",
         "lib/sct/src/common.c", "lib/sct/src/hashmap.c",

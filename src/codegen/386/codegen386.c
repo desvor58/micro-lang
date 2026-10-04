@@ -9,10 +9,11 @@ void micro_codegen386_emit(micro_codegen_t *codegen, sct_vector_t *instrs)
     lowering(codegen);
 }
 
-void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena)
+void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena, sct_hashmap_t *tramps)
 {
     codegen->emit = micro_codegen386_emit;
     codegen->asm_instrs = asm_instrs;
+    codegen->tramps = tramps;
     micro_codegen386_ext_t *ext = amalloc(sizeof(micro_codegen386_ext_t));
     *ext = (micro_codegen386_ext_t){};
     codegen->ext = ext;

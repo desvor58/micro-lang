@@ -31,6 +31,12 @@ typedef struct {
 } micro_instruction_fun_t;
 
 typedef struct {
+    char         name[MICRO_MAX_SYMBOL_SIZE];
+    sct_vector_t args;
+    micro_type_t ret_type;
+} micro_instruction_tramp_t;
+
+typedef struct {
     micro_expr_tok_t *val_expr;
 } micro_instruction_ret_t;
 
@@ -66,6 +72,7 @@ typedef struct {
         micro_instruction_set_t   set;
         micro_instruction_drset_t drset;
         micro_instruction_fun_t   fun;
+        micro_instruction_tramp_t tramp;
         micro_instruction_ret_t   ret;
         micro_instruction_call_t  call;
         micro_instruction_lbl_t   lbl;
@@ -94,6 +101,12 @@ int micro_instr_gen_drset(sct_vector_t *instrs, micro_type_t type, const char *n
 /// @param ret_type type which function will return
 /// @param body vector of micro_instruction_t - body of function
 int micro_instr_gen_fun(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, sct_vector_t *body, micro_instruction_hints_t hints);
+
+/// @param instrs vector of micro_instruction_t - main instruction list
+/// @param name name of trampoline like in trampolines map
+/// @param args vector of micro_instruction_fun_arg_t - arguments of trampoline
+/// @param ret_type type which trampoline will return
+int micro_instr_gen_tramp(sct_vector_t *instrs, const char *name, sct_vector_t *args, micro_type_t ret_type, micro_instruction_hints_t hints);
 
 /// @param instrs vector of micro_instruction_t - main instruction list
 /// @param expr vector of micro_expr_tok_t - return expr. if = 0 then ret have not expression (in code ret;)

@@ -15,14 +15,17 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     micro_instruction_call_t instr_call = instr->call;
 
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_call.fun_name);
-    if (!ident || ident->type != MICRO_IDENT_FUN) {
+    if (!ident || (ident->type != MICRO_IDENT_FUN && ident->type != MICRO_IDENT_TRAMP)) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_UNDEFINED_FUN,
             .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
-    micro_codegen386_ident_fun_t *fun = &ident->fun;
+
+    int is_tramp = ident->type == MICRO_IDENT_TRAMP;
+    sct_vector_t *callee_args = is_tramp ? &ident->tramp.instr_info.args : &ident->fun.instr_info.args;
+    micro_type_t callee_ret = is_tramp ? ident->tramp.instr_info.ret_type : ident->fun.instr_info.ret_type;
 
     for (size_t k = 0; k < ext->idents.keys.size; k++) {
         char *name = *(char**)sct_vector_get(&ext->idents.keys, k);
@@ -60,14 +63,14 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         arg_dst.reg.reg = free_space;
     }
 
-    if (instr_call.arg_exprs.size < fun->instr_info.args.size) {
+    if (instr_call.arg_exprs.size < callee_args->size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_TOO_FEW_ARGS,
             .instr = MICRO_INSTR_CALL
         });
         return 1;
     }
-    if (instr_call.arg_exprs.size > fun->instr_info.args.size) {
+    if (instr_call.arg_exprs.size > callee_args->size) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_TOO_MANY_ARGS,
             .instr = MICRO_INSTR_CALL
@@ -76,7 +79,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
 
     for (int i = instr_call.arg_exprs.size - 1; i >= 0; i--) {
-        micro_instruction_fun_arg_t *arg = sct_vector_get(&fun->instr_info.args, i);
+        micro_instruction_fun_arg_t *arg = sct_vector_get(callee_args, i);
         arg_dst.reg.size = micro_type_to_size[arg->type];
 
         micro_expr_tok_t **arg_start_tok = sct_vector_get(&instr_call.arg_exprs, i);
@@ -86,7 +89,19 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         stack_cleanup_offset += 4;
     }
 
-    push_asm_instr(MICRO_ASM386_INSTR_CALL_L32, operand_lbl(MICRO_SIZE_32, fun->instr_info.name), operand_none());
+    if (is_tramp) {
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP));
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_I32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(callee_ret)), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_I32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(instr_call.arg_exprs.size)), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_R32R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ECX), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP));
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ECX), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ECX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen((i32)(intptr_t)ident->tramp.handler)));
+        push_asm_instr(MICRO_ASM386_INSTR_CALL_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ECX), operand_none());
+        stack_cleanup_offset += sizeof(micro_tramp_frame_t) + sizeof(i32);
+    } else {
+        push_asm_instr(MICRO_ASM386_INSTR_CALL_L32, operand_lbl(MICRO_SIZE_32, ident->fun.instr_info.name), operand_none());
+    }
 
     push_asm_instr(MICRO_ASM386_INSTR_ADD_R32I32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_ESP), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(stack_cleanup_offset)));
 
@@ -109,7 +124,7 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
         });
         return 1;
     }
-    if (res_ident->vreg.type != fun->instr_info.ret_type) {
+    if (res_ident->vreg.type != callee_ret) {
         micro_push_err((micro_error_t){
             .err = MICRO_ERROR_RESULT_TYPE_MISMATCH,
             .instr = MICRO_INSTR_CALL

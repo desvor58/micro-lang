@@ -200,6 +200,7 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
         instr_handle(MICRO_ASM386_INSTR_RET,        1, { 0xC3 });
         instr_handle(MICRO_ASM386_INSTR_CALL_S32,   5, { 0xE8, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_CALL_R32,   2, { 0xFF, 0b11010000 | instr->operand1.reg });
 
         instr_handle(MICRO_ASM386_INSTR_PRELUDE,    3, { 0x55, 0x89, 0xE5 });
         instr_handle(MICRO_ASM386_INSTR_EPILOGUE,   2, { 0xC9, 0xC3 });
@@ -331,6 +332,7 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
 
         instr_handle(MICRO_ASM386_INSTR_PUSH_R32, 1, {       0x50 + instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_PUSH_R16, 2, { 0x66, 0x50 + instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_PUSH_I32, 5, { 0x68, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_POP_R32,  1, {       0x58 + instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_POP_R16,  2, { 0x66, 0x58 + instr->operand1.reg });
 

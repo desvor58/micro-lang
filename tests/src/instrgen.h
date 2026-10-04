@@ -118,6 +118,176 @@ MunitResult test_instrgen_fun_args_ret(const MunitParameter params[], void *data
     return MUNIT_OK;
 }
 
+MunitResult test_instrgen_tramp_args_ret(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("tramp vm_add\n"
+           "    i32 a\n"
+           "    i32 b\n"
+           "    ret i32\n"
+           "end\n"
+           "\n"
+           "fun test\n"
+           "    ret i32\n"
+           "start\n"
+           "    set i32 res;\n"
+           "    call res vm_add 1 2;\n"
+           "    ret res;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(ig.instructions.size, ==, 2);
+
+    micro_instruction_t *tramp = ig_instr(&ig, 0);
+    munit_assert_int((int)tramp->type, ==, (int)MICRO_INSTR_TRAMP);
+    munit_assert_string_equal(tramp->tramp.name, "vm_add");
+    munit_assert_int((int)tramp->tramp.ret_type, ==, (int)MICRO_TYPE_I32);
+    munit_assert_size(tramp->tramp.args.size, ==, 2);
+
+    micro_instruction_fun_arg_t *arg0 = sct_vector_get(&tramp->tramp.args, 0);
+    munit_assert_int((int)arg0->type, ==, (int)MICRO_TYPE_I32);
+    munit_assert_string_equal(arg0->name, "a");
+
+    micro_instruction_t *fun = ig_instr(&ig, 1);
+    munit_assert_int((int)fun->type, ==, (int)MICRO_INSTR_FUN);
+    munit_assert_string_equal(fun->fun.name, "test");
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_tramp_no_ret(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("tramp vm_void\n"
+           "    i32 a\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(ig.instructions.size, ==, 1);
+
+    micro_instruction_t *tramp = ig_instr(&ig, 0);
+    munit_assert_int((int)tramp->type, ==, (int)MICRO_INSTR_TRAMP);
+    munit_assert_int((int)tramp->tramp.ret_type, ==, (int)MICRO_TYPE_NULL);
+    munit_assert_size(tramp->tramp.args.size, ==, 1);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_tramp_no_end(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("tramp vm_add\n"
+           "    i32 a\n"
+           "    ret i32\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_END_KW);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+    munit_assert_size(ig.instructions.size, ==, 0);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_tramp_inside_function(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun test\n"
+           "    ret i32\n"
+           "start\n"
+           "    tramp vm_add\n"
+           "        i32 a\n"
+           "        ret i32\n"
+           "    end\n"
+           "    ret 0;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, >=, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_TRAMP_INSIDE_FUNCTION);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_tramp_hints(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("tramp vm_add {lifetime: 5}\n"
+           "    i32 a\n"
+           "    ret i32\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(ig.instructions.size, ==, 1);
+
+    micro_instruction_t *tramp = ig_instr(&ig, 0);
+    munit_assert_int((int)tramp->type, ==, (int)MICRO_INSTR_TRAMP);
+    munit_assert_int((int)tramp->tramp.args.size, ==, 1);
+    munit_assert_int((int)tramp->hints.lifetime, ==, 5);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_tramp_bad_arg_name(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("tramp vm_add\n"
+           "    i32\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_ARG_NAME);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_instrgen_set_no_val(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1581,6 +1751,12 @@ static MunitTest instrgen_tests[] = {
     { "/type_str_parse", test_instrgen_type_str_parse, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_empty", test_instrgen_fun_empty, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_args_ret", test_instrgen_fun_args_ret, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_args_ret", test_instrgen_tramp_args_ret, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_no_ret", test_instrgen_tramp_no_ret, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_no_end", test_instrgen_tramp_no_end, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_inside_function", test_instrgen_tramp_inside_function, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_bad_arg_name", test_instrgen_tramp_bad_arg_name, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_hints", test_instrgen_tramp_hints, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_ret_no_args", test_instrgen_fun_ret_no_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_arg_types", test_instrgen_fun_arg_types, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_no_val", test_instrgen_set_no_val, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

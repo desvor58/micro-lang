@@ -9,6 +9,8 @@
 #include <microc/instrgen.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 typedef struct {
     sct_vector_t    toks;
@@ -31,7 +33,40 @@ static void cg_gen(cg_ctx_t *ctx, const char *text)
     sct_vector_init(&ctx->outbuf, sizeof(u8));
     sct_arena_init(&ctx->arena);
 
-    micro_codegen386_init(&ctx->cg, (micro_codegen_flags_t){}, &ctx->asm_instrs, &ctx->arena);
+    micro_codegen386_init(&ctx->cg, (micro_codegen_flags_t){}, &ctx->asm_instrs, &ctx->arena, NULL);
+    ctx->cg.emit(&ctx->cg, &ctx->ig.instructions);
+
+    test_put_errors("codegen");
+}
+
+static void cg_gen_instrs(cg_ctx_t *ctx, sct_vector_t *instrs, sct_hashmap_t *tramps)
+{
+    sct_vector_init(&ctx->toks, sizeof(mc_token_t));
+    mc_instrgen_init(&ctx->ig, &ctx->toks);
+
+    sct_vector_init(&ctx->asm_instrs, sizeof(micro_asm386_instruction_t));
+    sct_vector_init(&ctx->outbuf, sizeof(u8));
+    sct_arena_init(&ctx->arena);
+
+    micro_codegen386_init(&ctx->cg, (micro_codegen_flags_t){}, &ctx->asm_instrs, &ctx->arena, tramps);
+    ctx->cg.emit(&ctx->cg, instrs);
+
+    test_put_errors("codegen");
+}
+
+static void cg_gen_tramps(cg_ctx_t *ctx, const char *text, sct_hashmap_t *tramps)
+{
+    sct_vector_init(&ctx->toks, sizeof(mc_token_t));
+    mc_tokenize(text, strlen(text), &ctx->toks);
+
+    mc_instrgen_init(&ctx->ig, &ctx->toks);
+    mc_instrgen_gen(&ctx->ig);
+
+    sct_vector_init(&ctx->asm_instrs, sizeof(micro_asm386_instruction_t));
+    sct_vector_init(&ctx->outbuf, sizeof(u8));
+    sct_arena_init(&ctx->arena);
+
+    micro_codegen386_init(&ctx->cg, (micro_codegen_flags_t){}, &ctx->asm_instrs, &ctx->arena, tramps);
     ctx->cg.emit(&ctx->cg, &ctx->ig.instructions);
 
     test_put_errors("codegen");
@@ -1863,6 +1898,687 @@ MunitResult test_codegen_add_lit_stack_base_stays_add(const MunitParameter param
     return MUNIT_OK;
 }
 
+static i32 cg_tramp_seen_args[8];
+static size_t cg_tramp_seen_args_num;
+static micro_type_t cg_tramp_seen_ret_type;
+static size_t cg_tramp_seen_calls;
+
+static i32 cg_tramp_add(const micro_tramp_frame_t *frame)
+{
+    for (size_t i = 0; i < frame->args_num && i < 8; i++) {
+        cg_tramp_seen_args[i] = frame->args[i];
+    }
+    cg_tramp_seen_args_num = frame->args_num;
+    cg_tramp_seen_ret_type = frame->ret_type;
+    cg_tramp_seen_calls++;
+    return frame->args[0] + frame->args[1] * 10;
+}
+
+static i32 cg_tramp_sum(const micro_tramp_frame_t *frame)
+{
+    i32 sum = 0;
+    for (size_t i = 0; i < frame->args_num; i++) {
+        sum += frame->args[i];
+    }
+    cg_tramp_seen_args_num = frame->args_num;
+    cg_tramp_seen_ret_type = frame->ret_type;
+    cg_tramp_seen_calls++;
+    return sum;
+}
+
+static void cg_tramp_push_arg(sct_vector_t *args, micro_type_t type, const char *name)
+{
+    micro_instruction_fun_arg_t arg = { .type = type };
+    strncpy(arg.name, name, MICRO_MAX_SYMBOL_SIZE - 1);
+    sct_vector_push(args, &arg);
+}
+
+static void cg_tramp_make_expr(sct_vector_t *out, const char *expr)
+{
+    sct_vector_init(out, sizeof(micro_expr_tok_t));
+    micro_make_expr(out, expr);
+}
+
+static micro_expr_tok_t *cg_tramp_expr_ptr[8];
+
+static void cg_tramp_push_expr(sct_vector_t *args, sct_vector_t *expr)
+{
+    for (size_t i = 0; i < sizeof(cg_tramp_expr_ptr) / sizeof(cg_tramp_expr_ptr[0]); i++) {
+        if (cg_tramp_expr_ptr[i] == NULL) {
+            cg_tramp_expr_ptr[i] = (micro_expr_tok_t *)expr->data;
+            sct_vector_push(args, &cg_tramp_expr_ptr[i]);
+            return;
+        }
+    }
+}
+
+static i32 cg_tramp_run(cg_ctx_t *ctx, i32 a, i32 b)
+{
+    micro_asm386_optimize(&ctx->asm_instrs);
+    micro_asm386_emit(&ctx->asm_instrs, &ctx->outbuf);
+
+    long page_size = sysconf(_SC_PAGESIZE);
+    void *mem = mmap(NULL, page_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                     MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    munit_assert_ptr_not_null(mem);
+    munit_assert_true(mem != MAP_FAILED);
+    memcpy(mem, ctx->outbuf.data, ctx->outbuf.size);
+
+    i32 (*fn)(i32, i32) = (i32 (*)(i32, i32))mem;
+    return fn(a, b);
+}
+
+static i32 cg_tramp_run_ptr(cg_ctx_t *ctx, i32 *slot, i32 n)
+{
+    micro_asm386_optimize(&ctx->asm_instrs);
+    micro_asm386_emit(&ctx->asm_instrs, &ctx->outbuf);
+
+    long page_size = sysconf(_SC_PAGESIZE);
+    void *mem = mmap(NULL, page_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                     MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    munit_assert_ptr_not_null(mem);
+    munit_assert_true(mem != MAP_FAILED);
+    memcpy(mem, ctx->outbuf.data, ctx->outbuf.size);
+
+    i32 (*fn)(i32, i32) = (i32 (*)(i32, i32))mem;
+    return fn((i32)(intptr_t)slot, n);
+}
+
+static void cg_tramp_build(sct_vector_t *instrs, sct_vector_t *tramp_args,
+                           const char *tramp_name, micro_type_t ret_type,
+                           size_t args_num, size_t call_args_num,
+                           micro_type_t fun_ret_type, micro_type_t res_type)
+{
+    sct_vector_t fun_args;
+    sct_vector_init(&fun_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&fun_args, MICRO_TYPE_I32, "x");
+    cg_tramp_push_arg(&fun_args, MICRO_TYPE_I32, "y");
+
+    sct_vector_t exprs[2];
+    cg_tramp_make_expr(&exprs[0], "x");
+    cg_tramp_make_expr(&exprs[1], "y");
+
+    sct_vector_t call_args;
+    sct_vector_init(&call_args, sizeof(micro_expr_tok_t *));
+    for (size_t i = 0; i < call_args_num; i++) {
+        cg_tramp_push_expr(&call_args, &exprs[i % 2]);
+    }
+
+    sct_vector_t body;
+    sct_vector_init(&body, sizeof(micro_instruction_t));
+
+    micro_instruction_hints_t hints = { .lifetime = -1 };
+    micro_instr_gen_tramp(instrs, tramp_name, tramp_args, ret_type, hints);
+    micro_instr_gen_set(&body, res_type, "r", NULL, hints);
+    micro_instr_gen_call(&body, "r", tramp_name, &call_args, hints);
+
+    sct_vector_t ret_expr;
+    cg_tramp_make_expr(&ret_expr, "r");
+    micro_instr_gen_ret(&body, &ret_expr, hints);
+    micro_instr_gen_fun(instrs, "f", &fun_args, fun_ret_type, &body, hints);
+}
+
+MunitResult test_codegen_tramp_source_call(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_tramp_seen_calls = 0;
+    cg_tramp_seen_args_num = 99;
+    cg_tramp_seen_ret_type = MICRO_TYPE_NULL;
+    memset(cg_tramp_seen_args, 0, sizeof(cg_tramp_seen_args));
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_tramps(&ctx,
+        "tramp vm_add\n"
+        "    i32 a\n"
+        "    i32 b\n"
+        "    ret i32\n"
+        "end\n"
+        "\n"
+        "fun call_add\n"
+        "    i32 a\n"
+        "    i32 b\n"
+        "    ret i32\n"
+        "start\n"
+        "    set i32 res;\n"
+        "    call res vm_add a b;\n"
+        "    ret res;\n"
+        "end\n", &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_tramp_run(&ctx, 3, 4), ==, 43);
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 1);
+    munit_assert_size(cg_tramp_seen_args_num, ==, 2);
+    munit_assert_int((int)cg_tramp_seen_ret_type, ==, (int)MICRO_TYPE_I32);
+    munit_assert_int(cg_tramp_seen_args[0], ==, 3);
+    munit_assert_int(cg_tramp_seen_args[1], ==, 4);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_source_no_map(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen_tramps(&ctx,
+        "tramp out_fun\n"
+        "    ret i32\n"
+        "end\n"
+        "\n"
+        "fun test\n"
+        "    ret i32\n"
+        "start\n"
+        "    set i32 res;\n"
+        "    call res out_fun;\n"
+        "    ret res;\n"
+        "end\n", NULL);
+
+    munit_assert_size(micro_err_stk_size, >=, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_TRAMP);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_fun_name_collision(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "shared", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_tramps(&ctx,
+        "fun shared\n"
+        "    ret i32\n"
+        "start\n"
+        "    ret 0;\n"
+        "end\n"
+        "\n"
+        "tramp shared\n"
+        "    ret i32\n"
+        "end\n", &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_TRAMP_REDEFINED);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_after_fun(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_tramps(&ctx,
+        "fun first\n"
+        "    i32 a\n"
+        "    ret i32\n"
+        "start\n"
+        "    ret a;\n"
+        "end\n"
+        "\n"
+        "tramp vm_add\n"
+        "    i32 a\n"
+        "    i32 b\n"
+        "    ret i32\n"
+        "end\n", &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_tramp_run(&ctx, 7, 0), ==, 7);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_inside_fun(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+
+    micro_instruction_hints_t hints = { .lifetime = -1 };
+
+    sct_vector_t body;
+    sct_vector_init(&body, sizeof(micro_instruction_t));
+    micro_instr_gen_tramp(&body, "vm_add", &tramp_args, MICRO_TYPE_I32, hints);
+
+    sct_vector_t fun_args;
+    sct_vector_init(&fun_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&fun_args, MICRO_TYPE_I32, "x");
+
+    sct_vector_t ret_expr;
+    cg_tramp_make_expr(&ret_expr, "x");
+
+    sct_vector_t body_ret;
+    sct_vector_init(&body_ret, sizeof(micro_instruction_t));
+    micro_instr_gen_ret(&body_ret, &ret_expr, hints);
+
+    sct_vector_push(&body, sct_vector_get(&body_ret, 0));
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    micro_instr_gen_fun(&instrs, "f", &fun_args, MICRO_TYPE_I32, &body, hints);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_TRAMP_INSIDE_FUNCTION);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_call(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_tramp_seen_calls = 0;
+    cg_tramp_seen_args_num = 99;
+    cg_tramp_seen_ret_type = MICRO_TYPE_NULL;
+    memset(cg_tramp_seen_args, 0, sizeof(cg_tramp_seen_args));
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "b");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_add", MICRO_TYPE_I32, 2, 2, MICRO_TYPE_I32, MICRO_TYPE_I32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_tramp_run(&ctx, 3, 4), ==, 43);
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 1);
+    munit_assert_size(cg_tramp_seen_args_num, ==, 2);
+    munit_assert_int((int)cg_tramp_seen_ret_type, ==, (int)MICRO_TYPE_I32);
+    munit_assert_int(cg_tramp_seen_args[0], ==, 3);
+    munit_assert_int(cg_tramp_seen_args[1], ==, 4);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_call_many_args(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_tramp_seen_calls = 0;
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    for (int i = 0; i < 6; i++) {
+        cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+    }
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_sum", MICRO_TYPE_I32, 6, 6, MICRO_TYPE_I32, MICRO_TYPE_I32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_sum;
+    sct_hashmap_add(&tramps, "vm_sum", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_tramp_run(&ctx, 10, 20), ==, 90);
+    munit_assert_size(cg_tramp_seen_args_num, ==, 6);
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 1);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+static i32 cg_tramp_seen_ptr_value;
+
+static i32 cg_tramp_none(const micro_tramp_frame_t *frame)
+{
+    cg_tramp_seen_args_num = frame->args_num;
+    cg_tramp_seen_ret_type = frame->ret_type;
+    cg_tramp_seen_calls++;
+    return 77;
+}
+
+static i32 cg_tramp_ptr(const micro_tramp_frame_t *frame)
+{
+    i32 *slot = (i32 *)(intptr_t)frame->args[0];
+    cg_tramp_seen_ptr_value = *slot;
+    cg_tramp_seen_args_num = frame->args_num;
+    cg_tramp_seen_calls++;
+    return frame->args[1];
+}
+
+static void cg_tramp_build_ptr_caller(sct_vector_t *instrs, sct_vector_t *tramp_args)
+{
+    sct_vector_t fun_args;
+    sct_vector_init(&fun_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&fun_args, MICRO_TYPE_PTR, "p");
+    cg_tramp_push_arg(&fun_args, MICRO_TYPE_I32, "n");
+
+    sct_vector_t exprs[2];
+    cg_tramp_make_expr(&exprs[0], "p");
+    cg_tramp_make_expr(&exprs[1], "n");
+
+    sct_vector_t call_args;
+    sct_vector_init(&call_args, sizeof(micro_expr_tok_t *));
+    cg_tramp_push_expr(&call_args, &exprs[0]);
+    cg_tramp_push_expr(&call_args, &exprs[1]);
+
+    sct_vector_t body;
+    sct_vector_init(&body, sizeof(micro_instruction_t));
+
+    micro_instruction_hints_t hints = { .lifetime = -1 };
+    micro_instr_gen_tramp(instrs, "vm_ptr", tramp_args, MICRO_TYPE_I32, hints);
+    micro_instr_gen_set(&body, MICRO_TYPE_I32, "r", NULL, hints);
+    micro_instr_gen_call(&body, "r", "vm_ptr", &call_args, hints);
+
+    sct_vector_t ret_expr;
+    cg_tramp_make_expr(&ret_expr, "r");
+    micro_instr_gen_ret(&body, &ret_expr, hints);
+    micro_instr_gen_fun(instrs, "f", &fun_args, MICRO_TYPE_I32, &body, hints);
+}
+
+MunitResult test_codegen_tramp_call_no_args(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_tramp_seen_calls = 0;
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_none", MICRO_TYPE_I32, 0, 0,
+                   MICRO_TYPE_I32, MICRO_TYPE_I32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_none;
+    sct_hashmap_add(&tramps, "vm_none", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_tramp_run(&ctx, 0, 0), ==, 77);
+    munit_assert_size(cg_tramp_seen_args_num, ==, 0);
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 1);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_call_ptr_arg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_tramp_seen_calls = 0;
+    cg_tramp_seen_ptr_value = -1;
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_PTR, "p");
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "n");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_ptr", MICRO_TYPE_I32, 2, 2,
+                   MICRO_TYPE_I32, MICRO_TYPE_I32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_ptr;
+    sct_hashmap_add(&tramps, "vm_ptr", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    i32 slot = 0;
+    (void)slot;
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 0);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_undefined(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    micro_instr_gen_tramp(&instrs, "vm_missing", &tramp_args, MICRO_TYPE_I32,
+                          (micro_instruction_hints_t){ .lifetime = -1 });
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_TRAMP);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_TRAMP);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_no_map(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    micro_instr_gen_tramp(&instrs, "vm_add", &tramp_args, MICRO_TYPE_I32,
+                          (micro_instruction_hints_t){ .lifetime = -1 });
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, NULL);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_TRAMP);
+
+    cg_cleanup(&ctx);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_redefined(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    micro_instruction_hints_t hints = { .lifetime = -1 };
+    micro_instr_gen_tramp(&instrs, "vm_add", &tramp_args, MICRO_TYPE_I32, hints);
+    micro_instr_gen_tramp(&instrs, "vm_add", &tramp_args, MICRO_TYPE_I32, hints);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_TRAMP_REDEFINED);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_call_arg_mismatch(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "b");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_add", MICRO_TYPE_I32, 2, 1, MICRO_TYPE_I32, MICRO_TYPE_I32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_TOO_FEW_ARGS);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_CALL);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_tramp_call_result_type(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t tramp_args;
+    sct_vector_init(&tramp_args, sizeof(micro_instruction_fun_arg_t));
+    cg_tramp_push_arg(&tramp_args, MICRO_TYPE_I32, "a");
+
+    sct_vector_t instrs;
+    sct_vector_init(&instrs, sizeof(micro_instruction_t));
+    cg_tramp_build(&instrs, &tramp_args, "vm_add", MICRO_TYPE_I32, 1, 1, MICRO_TYPE_U32, MICRO_TYPE_U32);
+
+    sct_hashmap_t tramps;
+    sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
+    micro_tramp_t handler = cg_tramp_add;
+    sct_hashmap_add(&tramps, "vm_add", &handler);
+
+    cg_ctx_t ctx;
+    cg_gen_instrs(&ctx, &instrs, &tramps);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_RESULT_TYPE_MISMATCH);
+
+    cg_cleanup(&ctx);
+    sct_hashmap_deinit(&tramps);
+    sct_vector_deinit(&instrs);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_err_unimplemented_op(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -2115,6 +2831,20 @@ static MunitTest codegen386_tests[] = {
     { "/err_vreg_type_mismatch", test_codegen_err_vreg_type_mismatch, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/drset_keeps_operand_reg", test_codegen_drset_keeps_operand_reg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/call_discard_result", test_codegen_call_discard_result, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_source_call", test_codegen_tramp_source_call, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_source_no_map", test_codegen_tramp_source_no_map, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_fun_name_collision", test_codegen_tramp_fun_name_collision, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_after_fun", test_codegen_tramp_after_fun, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_inside_fun", test_codegen_tramp_inside_fun, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call", test_codegen_tramp_call, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call_many_args", test_codegen_tramp_call_many_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call_no_args", test_codegen_tramp_call_no_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call_ptr_arg", test_codegen_tramp_call_ptr_arg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_undefined", test_codegen_tramp_undefined, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_no_map", test_codegen_tramp_no_map, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_redefined", test_codegen_tramp_redefined, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call_arg_mismatch", test_codegen_tramp_call_arg_mismatch, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/tramp_call_result_type", test_codegen_tramp_call_result_type, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_unimplemented_op", test_codegen_err_unimplemented_op, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_unimplemented_op_in_if", test_codegen_err_unimplemented_op_in_if, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_call_result_undef", test_codegen_err_call_result_undef, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
