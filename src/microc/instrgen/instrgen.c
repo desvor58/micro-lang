@@ -149,7 +149,7 @@ int mc_instrgen_parse_hints(mc_instrgen_t *instrgen, micro_instruction_hints_t *
             return mc_hints_error(instr_type);
         }
 
-        if (!strcmp(name_tok->val, "livetime") || !strcmp(name_tok->val, "lifetime")) {
+        if (!strcmp(name_tok->val, "lifetime")) {
             char *end;
             long long value;
             if (value_tok->type != MC_TOK_LIT_INT) {
@@ -160,7 +160,7 @@ int mc_instrgen_parse_hints(mc_instrgen_t *instrgen, micro_instruction_hints_t *
             if (errno == ERANGE || end == value_tok->val || *end || value < PTRDIFF_MIN || value > PTRDIFF_MAX) {
                 return mc_hints_error(instr_type);
             }
-            hints->lifetime = (ptrdiff_t)value;
+            hints->lifetime = instrgen->instructions.size + (ptrdiff_t)value;
         } else {
             size_t bool_value;
             if (!strcmp(name_tok->val, "forced_stack")) {

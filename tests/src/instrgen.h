@@ -288,6 +288,46 @@ MunitResult test_instrgen_tramp_bad_arg_name(const MunitParameter params[], void
     return MUNIT_OK;
 }
 
+MunitResult test_instrgen_lifetime_is_instruction_index(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "    ret i32\n"
+           "start\n"
+           "    set i32 a 1;\n"
+           "    set i32 b 2;\n"
+           "    set i32 c 3 {lifetime:2};\n"
+           "    set i32 d 4 {lifetime:0};\n"
+           "    ret d;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    micro_instruction_t *fun = ig_instr(&ig, 0);
+    munit_assert_int((int)fun->type, ==, (int)MICRO_INSTR_FUN);
+
+    micro_instruction_t *set_a = ig_body_instr(fun, 0);
+    munit_assert_int((int)set_a->hints.lifetime, ==, -1);
+
+    /* third instruction of the body plus the two the hint asks for */
+    micro_instruction_t *set_c = ig_body_instr(fun, 2);
+    munit_assert_int((int)set_c->type, ==, (int)MICRO_INSTR_SET);
+    munit_assert_int((int)set_c->hints.lifetime, ==, 4);
+
+    micro_instruction_t *set_d = ig_body_instr(fun, 3);
+    munit_assert_int((int)set_d->hints.lifetime, ==, 3);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_instrgen_set_no_val(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1759,6 +1799,7 @@ static MunitTest instrgen_tests[] = {
     { "/tramp_hints", test_instrgen_tramp_hints, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_ret_no_args", test_instrgen_fun_ret_no_args, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/fun_arg_types", test_instrgen_fun_arg_types, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_is_instruction_index", test_instrgen_lifetime_is_instruction_index, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_no_val", test_instrgen_set_no_val, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_lit", test_instrgen_set_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_expr", test_instrgen_set_expr, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

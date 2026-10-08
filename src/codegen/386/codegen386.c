@@ -24,6 +24,7 @@ void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags
     ext->max_stack_offset = 0;
     ext->curent_function_name = "";
     sct_vector_init(&ext->goto_unfound_labels, sizeof(micro_codegen386_goto_unfound_lbl_t));
+    sct_vector_init(&ext->dead_idents, sizeof(char*));
     sct_hashmap_init(&ext->idents, sizeof(micro_codegen386_ident_t));
     memset(ext->used_regs, 0, sizeof(ext->used_regs));
     codegen->flags = flags;
@@ -33,5 +34,6 @@ void micro_codegen386_deinit(micro_codegen_t *codegen)
 {
     sct_hashmap_deinit(&_micro_codegen386_ext(codegen)->idents);
     sct_vector_deinit(&_micro_codegen386_ext(codegen)->goto_unfound_labels);
+    sct_vector_deinit(&_micro_codegen386_ext(codegen)->dead_idents);
     free(codegen->ext);
 }

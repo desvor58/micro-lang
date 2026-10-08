@@ -131,6 +131,265 @@ static void cg_assert_asm_lbl(cg_ctx_t *ctx, size_t i, int operand, const char *
     }
 }
 
+static i32 cg_run0(cg_ctx_t *ctx)
+{
+    micro_asm386_optimize(&ctx->asm_instrs);
+    micro_asm386_emit(&ctx->asm_instrs, &ctx->outbuf);
+
+    long page_size = sysconf(_SC_PAGESIZE);
+    void *mem = mmap(NULL, page_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                     MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    munit_assert_ptr_not_null(mem);
+    munit_assert_true(mem != MAP_FAILED);
+    memcpy(mem, ctx->outbuf.data, ctx->outbuf.size);
+
+    i32 (*fn)(void) = (i32 (*)(void))mem;
+    return fn();
+}
+
+static size_t cg_count_callee_save_pushes(cg_ctx_t *ctx)
+{
+    size_t count = 0;
+    for (size_t i = 0; i < cg_asm_size(ctx); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(ctx, i);
+        if (instr->opcode != MICRO_ASM386_INSTR_PUSH_R32) {
+            continue;
+        }
+        if (instr->operand1.reg == MICRO_ASM386_REG32_EBX
+         || instr->operand1.reg == MICRO_ASM386_REG32_ESI
+         || instr->operand1.reg == MICRO_ASM386_REG32_EDI) {
+            count++;
+        }
+    }
+    return count;
+}
+
+MunitResult test_codegen_lifetime_keeps_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 5 {lifetime:1};\n"
+                 "    set i32 b a;\n"
+                 "    ret b;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_int(cg_run0(&ctx), ==, 5);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_counts_from_declaration(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 p 1;\n"
+                 "    set i32 q 2;\n"
+                 "    set i32 a 5 {lifetime:2};\n"
+                 "    set i32 b a;\n"
+                 "    set i32 c a;\n"
+                 "    ret b;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_int(cg_run0(&ctx), ==, 5);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_counts_from_declaration_expired(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 p 1;\n"
+                 "    set i32 q 2;\n"
+                 "    set i32 a 5 {lifetime:1};\n"
+                 "    set i32 b a;\n"
+                 "    set i32 c 3;\n"
+                 "    set i32 d a;\n"
+                 "    ret b;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_IDENT);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_SET);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_expires(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 5 {lifetime:1};\n"
+                 "    set i32 b 1;\n"
+                 "    set i32 c a;\n"
+                 "    ret c;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_IDENT);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_SET);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_zero_expires_immediately(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 5 {lifetime:0};\n"
+                 "    set i32 b a;\n"
+                 "    ret b;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_IDENT);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_frees_name(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 5 {lifetime:1};\n"
+                 "    set i32 b 1;\n"
+                 "    set i32 a 9;\n"
+                 "    ret a;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_int(cg_run0(&ctx), ==, 9);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_no_lifetime_lives_to_end(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun entry\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 5;\n"
+                 "    set i32 b 1;\n"
+                 "    set i32 c 2;\n"
+                 "    set i32 d 3;\n"
+                 "    ret a;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_int(cg_run0(&ctx), ==, 5);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_lifetime_frees_registers(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t plain;
+    cg_gen(&plain, "fun entry\n"
+                   "    ret i32\n"
+                   "start\n"
+                   "    set i32 a 1;\n"
+                   "    set i32 b 2;\n"
+                   "    set i32 c 3;\n"
+                   "    set i32 d 4;\n"
+                   "    set i32 e 5;\n"
+                   "    set i32 f 6;\n"
+                   "    set i32 g 7;\n"
+                   "    set i32 h 8;\n"
+                   "    set i32 i 9;\n"
+                   "    ret + a b;\n"
+                   "end\n");
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    cg_ctx_t hinted;
+    cg_gen(&hinted, "fun entry\n"
+                   "    ret i32\n"
+                   "start\n"
+                   "    set i32 a 1 {lifetime:0};\n"
+                   "    set i32 b 2 {lifetime:0};\n"
+                   "    set i32 c 3 {lifetime:0};\n"
+                   "    set i32 d 4 {lifetime:0};\n"
+                   "    set i32 e 5 {lifetime:0};\n"
+                   "    set i32 f 6 {lifetime:0};\n"
+                   "    set i32 g 7 {lifetime:0};\n"
+                   "    set i32 h 8 {lifetime:0};\n"
+                   "    set i32 i 9 {lifetime:0};\n"
+                   "    ret 42;\n"
+                   "end\n");
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    /* nine live virtual registers do not fit into the machine registers, */
+    /* with the hint every one of them reuses the same one */
+    munit_assert_size(cg_count_callee_save_pushes(&plain), ==, 3);
+    munit_assert_size(cg_count_callee_save_pushes(&hinted), ==, 0);
+    munit_assert_size(cg_asm_size(&hinted), <, cg_asm_size(&plain));
+
+    cg_cleanup(&plain);
+    cg_cleanup(&hinted);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_ret_no_val(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -2395,8 +2654,7 @@ MunitResult test_codegen_tramp_call_ptr_arg(const MunitParameter params[], void 
 
     sct_vector_t instrs;
     sct_vector_init(&instrs, sizeof(micro_instruction_t));
-    cg_tramp_build(&instrs, &tramp_args, "vm_ptr", MICRO_TYPE_I32, 2, 2,
-                   MICRO_TYPE_I32, MICRO_TYPE_I32);
+    cg_tramp_build_ptr_caller(&instrs, &tramp_args);
 
     sct_hashmap_t tramps;
     sct_hashmap_init(&tramps, sizeof(micro_tramp_t));
@@ -2407,9 +2665,11 @@ MunitResult test_codegen_tramp_call_ptr_arg(const MunitParameter params[], void 
     cg_gen_instrs(&ctx, &instrs, &tramps);
     munit_assert_size(micro_err_stk_size, ==, 0);
 
-    i32 slot = 0;
-    (void)slot;
-    munit_assert_int((int)cg_tramp_seen_calls, ==, 0);
+    i32 slot = 21;
+    munit_assert_int(cg_tramp_run_ptr(&ctx, &slot, 7), ==, 7);
+    munit_assert_int((int)cg_tramp_seen_calls, ==, 1);
+    munit_assert_size(cg_tramp_seen_args_num, ==, 2);
+    munit_assert_int(cg_tramp_seen_ptr_value, ==, 21);
 
     cg_cleanup(&ctx);
     sct_hashmap_deinit(&tramps);
@@ -2765,6 +3025,14 @@ MunitResult test_codegen_err_call_result_type(const MunitParameter params[], voi
 
 static MunitTest codegen386_tests[] = {
     { "/ret_no_val", test_codegen_ret_no_val, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_keeps_vreg", test_codegen_lifetime_keeps_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_counts_from_declaration", test_codegen_lifetime_counts_from_declaration, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_counts_from_declaration_expired", test_codegen_lifetime_counts_from_declaration_expired, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_expires", test_codegen_lifetime_expires, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_zero_expires_immediately", test_codegen_lifetime_zero_expires_immediately, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_frees_name", test_codegen_lifetime_frees_name, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/no_lifetime_lives_to_end", test_codegen_no_lifetime_lives_to_end, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/lifetime_frees_registers", test_codegen_lifetime_frees_registers, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_i32_lit", test_codegen_set_i32_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_i8_lit", test_codegen_set_i8_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_i16_lit", test_codegen_set_i16_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

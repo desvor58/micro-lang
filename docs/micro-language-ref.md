@@ -190,21 +190,49 @@ that later registers can reuse that machine register:
 set <type> <name> [<expression>] { <hint>: <value>, ... };
 ```
 
-| hint           | value | description                                  |
-|----------------|-------|----------------------------------------------|
-| `lifetime`     | int   | release the register after this many further instructions |
-| `forced_stack` | bool  | reserved, parsed and ignored                 |
-| `lazy_init`    | bool  | reserved, parsed and ignored                 |
+| hint           | value | description                                     |
+|----------------|-------|-------------------------------------------------|
+| `lifetime`     | int   | free the name after this many further instructions |
+| `forced_stack` | bool  | reserved, parsed and ignored                    |
+| `lazy_init`    | bool  | reserved, parsed and ignored                    |
 
-`lifetime: 0` releases the register right away, so the next instruction
-must not use it. `lifetime: 4` keeps it for four more instructions.
+`lifetime` counts instructions, not source lines. The name stays usable for
+exactly that many instructions after the `set`, and then it is gone: the
+value is not kept anywhere, so using the name later fails with `Undefined
+identifier`. `{ lifetime: 0 }` frees it before the next instruction, and
+`{ lifetime: 4 }` keeps it for the next four instructions.
 
 ```
-set i32 nn - n 1 { lifetime: 4 };  \ only needed by the next 4 instructions \
+fun entry
+    ret i32
+start
+    set i32 a 5 {lifetime:1};  \ alive for one instruction \
+    set i32 b a;               \ alive here \
+    set i32 c 3;               \ dead, 'a' cannot be used from here on \
+    ret b;
+end
 ```
 
-Using a name that is not a defined function, or as a jump target, gives
-`Identifier is not a virtual register`.
+A name that is gone can be declared again, and the machine register it held
+goes back to the allocator. This is what lets a long chain of short lived
+registers fit into the six allocatable machine registers:
+
+```
+fun entry
+    ret i32
+start
+    set i32 a 5 {lifetime:1};
+    set i32 b a;
+    set i32 a 9;               \ the name is free again \
+    ret a;
+end
+```
+
+Without a hint a name lives until the end of its function, which is the
+right choice unless the register pressure is high.
+
+Using a name that is not a defined virtual register, or as a jump target,
+gives `Identifier is not a virtual register`.
 
 ---
 

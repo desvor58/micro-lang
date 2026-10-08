@@ -23,7 +23,7 @@ moving. See [status](#status) for what to expect.
 | lexer               | done                                                        |
 | instruction builder | done                                                        |
 | i386 code generator | done, one `lea` based code selection pass and a peephole     |
-| tests               | 167 unit tests over the lexer, instructions and the backend  |
+| tests               | 176 unit tests over the lexer, instructions and the backend  |
 | library API         | done, the compiler itself is built on it                     |
 | trampolines         | done, `tramp` in source and host handlers through an API map  |
 | object file output  | not implemented, the output is a raw binary                  |

@@ -60,7 +60,7 @@ typedef struct {
 } micro_instruction_if_t;
 
 typedef struct {
-    ptrdiff_t lifetime;
+    ptrdiff_t lifetime;  // last instruction that may use the name, -1 to the end of the function
     size_t forced_stack: 1;
     size_t lazy_init : 1;
 } micro_instruction_hints_t;

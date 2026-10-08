@@ -137,12 +137,13 @@ static micro_instruction_hints_t vm_default_hints(void)
 #define micro_instr_gen_if(instrs, cond_expr, lbl_name) \
     micro_instr_gen_if((instrs), (cond_expr), (lbl_name), vm_default_hints())
 
+/* same meaning as a source hint: alive for this many further instructions */
 static int prog_set_lifetime(sct_vector_t *instrs, micro_type_t type,
                              const char *name, sct_vector_t *expr,
                              ptrdiff_t lifetime)
 {
     micro_instruction_hints_t hints = {
-        .lifetime = lifetime,
+        .lifetime = (ptrdiff_t)instrs->size + lifetime,
         .forced_stack = 0,
         .lazy_init = 0,
     };
@@ -249,7 +250,7 @@ static void vm_hint_body(sct_vector_t *body)
             micro_instruction_t *use_instr = sct_vector_get(body, j);
             vm_instruction_uses(use_instr, name, j, &last_use);
         }
-        instr->hints.lifetime = (ptrdiff_t)(last_use - i);
+        instr->hints.lifetime = (ptrdiff_t)last_use;
     }
 }
 

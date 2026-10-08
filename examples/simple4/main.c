@@ -61,20 +61,24 @@ int main()
     codegen.emit(&codegen, &instrgen.instructions);
     micro_codegen386_deinit(&codegen);
 
+    int failed = micro_err_stk_size != 0;
+
     mc_instrgen_deinit(&instrgen);
     sct_vector_deinit(&toks);
     sct_hashmap_deinit(&tramps);
-    sct_arena_deinit(&arena);
     micro_deinit();
 
-    if (micro_err_stk_size) {
+    if (failed) {
         puts("compilation failed");
+        sct_arena_deinit(&arena);
         return 1;
     }
 
+    /* the label names live in the arena, so it has to outlive the assembler */
     micro_asm386_optimize(&asm_instrs);
     micro_asm386_emit(&asm_instrs, &outbuf);
 
+    sct_arena_deinit(&arena);
     sct_vector_deinit(&asm_instrs);
 
     long page_size = sysconf(_SC_PAGESIZE);

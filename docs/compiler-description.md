@@ -127,6 +127,13 @@ Every generated instruction is a plain struct, so a host program can build
 the same list by hand. `micro_make_expr` turns a string into the
 `micro_expr_tok_t` list an instruction expects.
 
+A `lifetime` hint is an instruction index, not a count: it is the index of
+the last instruction that may still use the name, and `-1` means the name
+lives until the end of the function. The generator turns a source hint of
+`{lifetime: 2}` on the third instruction of a body into `2 + 2`, so a host
+that builds the same list by hand adds the index of the instruction it is
+writing to the number it wants.
+
 # Code generator
 
 The code generator lowers every instruction into 32 bit x86 instructions.
@@ -262,6 +269,11 @@ micro_init();
     micro_asm386_emit(&asm_instrs, &outbuf);
 micro_deinit();
 ```
+
+The arena has to outlive the assembler: label names are allocated there and
+the instruction list keeps pointing at them while labels are resolved, so
+`micro_codegen386_deinit` and `sct_arena_deinit` come after
+`micro_asm386_emit`.
 
 `microc` itself is built on top of these calls, together with the lexer,
 the instruction generator and the debug printers of `microdebug`.

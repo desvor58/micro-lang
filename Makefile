@@ -48,6 +48,8 @@ ifeq ($(OS),Windows_NT)
 
     SCT_SM_CHECK := @if not exist "$@" (git submodule update --init --recursive --remote --merge)
     SCT_CLEAN    := @if exist "$(SCT_DIR)\Makefile" $(MAKE) -C $(SCT_DIR) clean
+
+    INSTALL_CMD := setx PATH "%PATH%;$(dir $(abspath $(lastword $(MAKEFILE_LIST))))\bin"
 else
     RM_DIR = rm -rf "$(1)"
     RM_FILE = rm -f "$(1)"
@@ -58,6 +60,8 @@ else
 
     SCT_SM_CHECK := @if [ ! -f "$@" ]; then git submodule update --init --recursive --remote --merge || (exit 1;); fi
     SCT_CLEAN    := @if [ -f "$(SCT_DIR)/Makefile" ]; then $(MAKE) -C $(SCT_DIR) clean; fi
+
+    INSTALL_CMD := sudo cp ./bin/* /usr/bin/
 endif
 
 ifeq ($(CC),clang)
@@ -106,6 +110,9 @@ EXAMPLES_CFLAGS := $(CFLAGS)
 .PHONY: all libmicro libmicro-debug microc test test-debug test-release _run_tests examples clean SCT
 
 all: microc libmicro libmicro-debug
+
+install: microc
+	$(INSTALL_CMD)
 
 libmicro: SCT $(MICRO_OBJS)
 	@$(call MKDIR,lib)

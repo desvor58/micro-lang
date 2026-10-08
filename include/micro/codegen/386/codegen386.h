@@ -64,7 +64,7 @@ typedef struct {
 
 typedef struct {
     micro_codegen386_ident_type_t type;
-    ptrdiff_t                     lifetime;
+    ptrdiff_t                     lifetime;  // last instruction that may use the name
     union {
         micro_codegen386_ident_fun_t   fun;
         micro_codegen386_ident_tramp_t tramp;
@@ -89,6 +89,7 @@ typedef struct {
     int           used_regs[8];
     char         *curent_function_name;
     sct_vector_t  goto_unfound_labels;
+    sct_vector_t  dead_idents;
 } micro_codegen386_ext_t;
 
 void micro_codegen386_init(micro_codegen_t *codegen, micro_codegen_flags_t flags, sct_vector_t *asm_instrs, sct_arena_t *arena, sct_hashmap_t *tramps);
