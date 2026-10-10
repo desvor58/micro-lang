@@ -12,5 +12,6 @@
 
 #include <micro/common.h>
 #include <micro/codegen/386/codegen386.h>
+#include <micro/iropter.h>
 
 #endif

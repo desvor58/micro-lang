@@ -61,7 +61,7 @@ else
     SCT_SM_CHECK := @if [ ! -f "$@" ]; then git submodule update --init --recursive --remote --merge || (exit 1;); fi
     SCT_CLEAN    := @if [ -f "$(SCT_DIR)/Makefile" ]; then $(MAKE) -C $(SCT_DIR) clean; fi
 
-    INSTALL_CMD := sudo cp ./bin/* /usr/bin/
+    INSTALL_CMD := sudo cp ./bin/microc /usr/bin/
 endif
 
 ifeq ($(CC),clang)
@@ -73,8 +73,8 @@ ifeq ($(CC),clang)
     AR := llvm-ar
 endif
 
-MICRO_SRC := src/common.c \
-             src/instr.c \
+MICRO_SRC := src/*.c \
+             src/iropter/*.c \
              src/asm/*.c \
              src/codegen/*.c \
              src/codegen/386/*.c \

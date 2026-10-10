@@ -29,12 +29,15 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     sct_hashmap_add(&ext->idents, instr_lbl.name, &ident);
 
-    for (size_t i = 0; i < ext->goto_unfound_labels.size; i++) {
+    for (size_t i = 0; i < ext->goto_unfound_labels.size; ) {
         micro_codegen386_goto_unfound_lbl_t *lbl = sct_vector_get(&ext->goto_unfound_labels, i);
 
         if (!strcmp(lbl->name, instr_lbl.name)) {
+            /* erasing moves the next entry into this slot, so look at it again */
             sct_vector_erase(&ext->goto_unfound_labels, i);
+            continue;
         }
+        i++;
     }
 
     return 0;

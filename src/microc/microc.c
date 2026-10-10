@@ -7,9 +7,7 @@
  * compiling ir-language of micro
  ************************************************/
 
-#include <micro/common.h>
-#include <micro/asm/asm386.h>
-#include <micro/codegen/386/codegen386.h>
+#include <micro/micro.h>
 #include <microc/lexer.h>
 #include <microc/instrgen.h>
 #include <microdebug/microdebug.h>
@@ -20,10 +18,11 @@
 typedef struct {
     char inputfile[MICRO_MAX_SYMBOL_SIZE];
     char outfile[MICRO_MAX_SYMBOL_SIZE];
-    u8   toks_put       : 1;
-    u8   instrs_put     : 1;
-    u8   asm_put        : 1;
-    u8   skip_asmopting : 1;
+    u32   toks_put            : 1;
+    u32   instrs_put          : 1;
+    u32   asm_put             : 1;
+    u32   skip_asmopting      : 1;
+    u32   optimizing_inlining : 1;
     enum {
         STOPAFTER_NONE,
         STOPAFTER_FILE_READ,
@@ -55,6 +54,8 @@ static void print_usage(void)
         "      a                   - stop after asm optimization stage\n"
         "    -N                    - skip stage of compiling\n"
         "      a                   - skip asm optimizing\n"
+        "    -O                    - optimization flags\n"
+        "      i                   - inlining\n"
         "    -Fno-err-outside-fun  - allow instructions outside of a function\n"
     );
 }
@@ -118,6 +119,13 @@ static mc_args_t mc_args_parse(int argc, char **argv)
                 for (size_t j = 2; argv[i][j]; j++) {
                     if (argv[i][j] == 'a') {
                         args.skip_asmopting = 1;
+                    }
+                }
+            } else
+            if (argv[i][1] == 'O') {
+                for (size_t j = 2; argv[i][j]; j++) {
+                    if (argv[i][j] == 'i') {
+                        args.optimizing_inlining = 1;
                     }
                 }
             } else
@@ -208,6 +216,14 @@ int main(int argc, char **argv)
                 return 3;
             }
 
+            micro_iropter_t iropter;
+            int iropter_used = 0;
+            if (args.optimizing_inlining) {
+                micro_iropter_init(&iropter, &instrgen.instructions);
+                micro_iropter_inlining_pass(&iropter);
+                iropter_used = 1;
+            }
+
             if (args.instrs_put) {
                 micro_debug_print_instructions(&instrgen.instructions, 0);
             }
@@ -263,6 +279,11 @@ int main(int argc, char **argv)
                 fwrite(outbuf.data, sizeof(u8), outbuf.size, outfile);
                 fclose(outfile);
             micro_codegen386_deinit(&codegen);
+    /* the arena of the iropter holds the expressions the inlining created,
+       so it has to outlive the code generator */
+    if (iropter_used) {
+        micro_iropter_deinit(&iropter);
+    }
     micro_deinit();
     return 0;
 }
