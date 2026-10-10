@@ -292,6 +292,13 @@ the body. A copy of an argument placed into a new virtual register can live
 in a machine register, so read arguments through such a copy when the
 argument takes part in many computations.
 
+Nothing stops a compiler from putting the body of a function into the place
+of a call to it, and `microc` does that with `-Oi` for small functions with
+few arguments. A function that reaches itself through calls is left as a
+call. The source does not change, so a name of yours can come back renamed
+in the instruction list that `-Pi` prints: every name of an inlined body
+gets the prefix of the call site, like `i0.counter`.
+
 ---
 
 ## Calling functions

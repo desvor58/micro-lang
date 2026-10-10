@@ -20,6 +20,7 @@ of the output file is `a.out` unless `-o` is given.
 | put info                       | -P \<flags>  | print what a stage produced: `t` tokens, `i` instructions, `a` assembly |
 | stop compiling                 | -S \<stage>  | stop after a stage: `r` file read, `l` lexing, `i` instruction generation, `a` asm optimizing |
 | skip stage of compiling        | -N \<stage>  | skip a stage, currently only `a` asm optimizing          |
+| optimization flags             | -O \<flags>  | run an ir optimization pass: `i` inlining               |
 | no errors outside of a function| -Fno-err-outside-fun | allow instructions outside of a function        |
 
 The exit code is 0 on success, 1 for a bad command line or an unreadable
@@ -42,6 +43,8 @@ instruction generator        mc_instrgen_gen
   ↓
 instruction infos            micro_instruction_t
   ↓
+ir optimizer (optional)       micro_iropter_inlining_pass
+  ↓
 code generator               micro_codegen386_init + emit
   ↓
 asm instructions             micro_asm386_instruction_t
@@ -57,6 +60,10 @@ The stages after the instruction generator are the library itself. A host
 program can start at any of them: build the instruction infos with the
 `micro_instr_gen_*` functions, or even build them by hand, and pass them to
 the code generator.
+
+The ir optimizer is the only optional stage: without it the pipeline is a
+straight line, with it the instruction list is rewritten before anything is
+lowered to machine code.
 
 # Lexer
 
@@ -134,6 +141,73 @@ lives until the end of the function. The generator turns a source hint of
 that builds the same list by hand adds the index of the instruction it is
 writing to the number it wants.
 
+# IR optimizer
+
+The ir optimizer works on the instruction list, before the code generator
+sees it, so a pass here sees whole functions with their control flow instead
+of single machine instructions. One pass is implemented, inlining, and it is
+off by default: `microc` runs it with `-Oi`.
+
+## Inlining
+
+The pass prices every call site, puts it into one of 64 buckets and takes
+the cheapest one first. The price of a call grows with the number of its
+arguments and falls with the size of the callee body, so the small helpers
+with few arguments go first. A call is never inlined when
+
+- the callee is unknown, the code generator reports that as usual,
+- the callee can reach itself through calls, otherwise a recursive function
+  would be expanded into itself,
+- the callee body holds a nested function,
+- the number of arguments does not match the declaration,
+- the translation unit already grew by `MICRO_IROPTER_GROWTH_NUM` times,
+  which is what stops the pass on a unit full of calls.
+
+Inlining one call site replaces the call with a chunk:
+
+```
+set <i0.arg> <first argument>;     \ the arguments are evaluated once,
+set <i0.other> <second argument>;  \ before anything of the callee runs
+<the body of the callee, renamed>
+set <result> <the value of its ret>;
+goto i0;
+<the rest of the body>
+...
+i0:                                 \ the continuation label
+```
+
+- every name of the callee, virtual registers and labels alike, gets the
+  prefix `i<N>.` of the call site, so two copies of one callee never
+  collide; the register that receives the result keeps its own name,
+- the expressions of the callee are copied into the arena of the pass and
+  renamed there, the expressions of the caller are reused as they are,
+- each `ret` of the body assigns the result register of the call and jumps
+  past the chunk, so several returns, early returns, labels and loops all
+  keep working,
+- the lifetime hints of the copied instructions are reset: they were
+  instruction indexes of the callee and mean nothing in the caller.
+
+After a chunk is inserted the pass looks at the instructions it brought and
+puts the calls among them into the buckets, so a chain of callers collapses
+in one go. Positions stored in the buckets belong to a specific list and are
+moved along when the list grows.
+
+The callee itself stays in the unit, removing it is a job for a later pass.
+
+The pass allocates in its own arena, so `micro_iropter_deinit` has to be
+called after the code generator is done with the list, the same rule the
+arena of the code generator follows.
+
+```C
+micro_iropter_t iropter;
+micro_iropter_init(&iropter, &instructions);
+micro_iropter_inlining_pass(&iropter);
+    micro_codegen_t codegen;
+    micro_codegen386_init(&codegen, flags, &asm_instrs, &arena, NULL);
+    codegen.emit(&codegen, &instructions);
+micro_iropter_deinit(&iropter);
+```
+
 # Code generator
 
 The code generator lowers every instruction into 32 bit x86 instructions.
@@ -172,7 +246,13 @@ The peephole optimizer runs over the instruction list before it is encoded:
 - a move of a register into itself is dropped,
 - `jmp` to the label that follows it is dropped,
 - an addition or a subtraction of zero is dropped,
-- an addition or a subtraction of one to a register becomes `inc` or `dec`.
+- an addition or a subtraction of one to a register becomes `inc` or `dec`,
+- `mov a, s` followed by `mov d, a` becomes one `mov d, s`, and a swap
+  (`d` is `s`) loses the second move even when `a` stays alive. Both need
+  `a` to be dead after the pair, which is decided by counting the reads of
+  the register to the end of the function. The count stops at the next
+  definition of the register, and a jump that reaches code before the pair
+  disables the rule, because such a function cannot be read in order.
 
 # Assembler
 
@@ -269,6 +349,9 @@ micro_init();
     micro_asm386_emit(&asm_instrs, &outbuf);
 micro_deinit();
 ```
+
+`micro.h` pulls in the ir optimizer as well, so a host that wants inlining
+only adds the three `micro_iropter_*` calls.
 
 The arena has to outlive the assembler: label names are allocated there and
 the instruction list keeps pointing at them while labels are resolved, so

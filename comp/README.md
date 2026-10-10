@@ -148,9 +148,13 @@ All API workloads use the same runtime inputs:
 
 The source files' `main` wrappers are excluded from the algorithm-only API measurements. This prevents workload initialization from being generated and timed for one backend but not another.
 
+The micro workloads are single function programs whose only calls are recursive, so the ir optimizer has nothing to inline and the figures do not depend on `-Oi`. Measuring the inliner would need a workload with small leaf helpers, which would also change the algorithm the other two backends compile.
+
 ## Backend correctness boundary
 
-The benchmark run also exposed backend issues that would make an apparently fast result invalid: unhinted function arguments/labels were given zero lifetime, CLI argument state was uninitialized, and an assembly peephole pass removed live register writes. The benchmark build includes the minimal fixes for those cases; unsafe peephole variants stay disabled until register liveness is modeled correctly.
+The benchmark run also exposed backend issues that would make an apparently fast result invalid: unhinted function arguments/labels were given zero lifetime, CLI argument state was uninitialized, and an assembly peephole pass removed live register writes. The benchmark build includes the minimal fixes for those cases.
+
+The peephole is now allowed to look at a register beyond one instruction again, but only through a counted read of the instruction list: the count stops at the next definition of the register, reads inside the address of a `lea` count, and a jump that reaches code before the pair switches the rule off entirely, since such a function cannot be read in order. With that in place `mov a, s ; mov d, a` collapses into one instruction. Dropping a single `mov` whose destination is dead is still off: it needs the same liveness, and it is the case that broke the workloads before.
 
 ## Standalone helpers
 

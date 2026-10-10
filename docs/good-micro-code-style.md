@@ -53,6 +53,12 @@ end
 The argument list comes first, then the return type, then the body between
 `start` and `end`.
 
+A short function with few arguments is worth splitting out: the compiler
+inlines it into its callers with `-Oi`, which keeps the source readable and
+the call free. Long functions and functions that call themselves are left as
+calls, so a helper that is too big to inline is better written as a loop
+than as a nest of small calls.
+
 ## Statements
 
 End every instruction with a semicolon. Write one instruction per line and

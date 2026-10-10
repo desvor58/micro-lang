@@ -23,7 +23,8 @@ moving. See [status](#status) for what to expect.
 | lexer               | done                                                        |
 | instruction builder | done                                                        |
 | i386 code generator | done, one `lea` based code selection pass and a peephole     |
-| tests               | 176 unit tests over the lexer, instructions and the backend  |
+| ir optimizer        | one pass done: inlining of small calls, `-Oi` to enable it  |
+| tests               | 191 unit tests over the lexer, instructions and the backend  |
 | library API         | done, the compiler itself is built on it                     |
 | trampolines         | done, `tramp` in source and host handlers through an API map  |
 | object file output  | not implemented, the output is a raw binary                  |
@@ -91,6 +92,8 @@ Instruction generator
   ↓
 Instruction infos
   ↓
+IR optimizer (optional, `-Oi`)
+  ↓
 Code generator
   ↓
 Asm instructions
@@ -105,6 +108,8 @@ Binary
 If you use **micro** as a library
 ```
 Instruction infos
+  ↓
+IR optimizer (optional)
   ↓
 Code generator
   ↓
