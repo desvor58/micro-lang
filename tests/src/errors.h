@@ -8,6 +8,10 @@
 static const char *test_err_str[] = {
     [MICRO_ERROR_NONE]                      = "",
 
+    [MICRO_ERROR_IDENT_NAME_TOO_LONG]       = "Identifier name is too long",
+    [MICRO_ERROR_DIGIT_TOO_LONG]            = "Number is too long",
+    [MICRO_ERROR_STR_LIT_TOO_LONG]          = "String literal is too long",
+
     [MICRO_ERROR_EXPECTED_COMMENT_CLOSE]    = "Expected comment close",
     [MICRO_ERROR_EXPECTED_STRING_CLOSE]     = "Expected string close",
 

@@ -19,3 +19,8 @@ mir/
 build/
 micro_runner
 micro_runner.c
+
+site/
+
+# mcc is a compiler of its own, it builds into a folder of its own
+mcc/

@@ -90,11 +90,11 @@ typedef struct {
 | MC_TOK_MINUS        | `-`                                                |
 | MC_TOK_STAR         | `*`                                                |
 | MC_TOK_SLASH        | `/`                                                |
-| MC_TOK_AMPERSAND    | `&`, reserved                                      |
+| MC_TOK_AMPERSAND    | `&`                                                |
 | MC_TOK_DOLLAR       | `$`                                                |
-| MC_TOK_HASH         | `#`, reserved                                      |
-| MC_TOK_APOSTROPHE   | `` ` ``, reserved                                  |
-| MC_TOK_TILDE        | `~`, reserved                                      |
+| MC_TOK_HASH         | `#`                                                |
+| MC_TOK_APOSTROPHE   | `` ` ``                                            |
+| MC_TOK_TILDE        | `~`                                                |
 | MC_TOK_EQ           | `=`                                                |
 | MC_TOK_EXCLAMATION  | `!`                                                |
 | MC_TOK_GREAT        | `>`                                                |
@@ -113,8 +113,6 @@ typedef struct {
 | MC_TOK_KW_FUN       | `fun`                                              |
 | MC_TOK_KW_SET       | `set`                                              |
 | MC_TOK_KW_IF        | `if`                                               |
-| MC_TOK_KW_ELSE      | `else`, reserved                                   |
-| MC_TOK_KW_WHILE     | `while`, reserved                                  |
 | MC_TOK_KW_START     | `start`                                            |
 | MC_TOK_KW_END       | `end`                                              |
 | MC_TOK_KW_RET       | `ret`                                              |

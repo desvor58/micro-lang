@@ -721,6 +721,562 @@ MunitResult test_codegen_set_minus_vreg(const MunitParameter params[], void *dat
     return MUNIT_OK;
 }
 
+MunitResult test_codegen_set_bitand_lit(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 12;\n"
+                 "    set i32 y & x 10;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x -> eax, y -> ecx; y = x & 10
+    cg_assert_asm_opcode(&ctx, 4, MICRO_ASM386_INSTR_MOV_R32I32);
+    cg_assert_asm_imm(&ctx, 4, 2, 12);
+
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_R32R32);
+    cg_assert_asm_reg(&ctx, 5, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_reg(&ctx, 5, 2, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_AND_R32I32);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_imm(&ctx, 6, 2, 10);
+
+    munit_assert_int(cg_run0(&ctx), ==, 8);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitand_vregs(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 12;\n"
+                 "    set i32 y 10;\n"
+                 "    set i32 z & x y;\n"
+                 "    ret z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int found = 0;
+    for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(&ctx, i);
+        if (instr && instr->opcode == MICRO_ASM386_INSTR_AND_R32R32) {
+            found = 1;
+            break;
+        }
+    }
+    munit_assert_int(found, ==, 1);
+
+    munit_assert_int(cg_run0(&ctx), ==, 8);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitand_stack(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 1;\n"
+                 "    set i32 b 2;\n"
+                 "    set i32 c 3;\n"
+                 "    set i32 d 4;\n"
+                 "    set i32 e 4;\n"
+                 "    set i32 g 6;\n"
+                 "    set i32 h 12;\n"
+                 "    set i32 y & h e;\n"
+                 "    set i32 z & h 10;\n"
+                 "    ret + y z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int found_S32R32 = 0;
+    int found_S32I32 = 0;
+    for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(&ctx, i);
+        if (!instr) continue;
+        if (instr->opcode == MICRO_ASM386_INSTR_AND_S32R32) found_S32R32 = 1;
+        if (instr->opcode == MICRO_ASM386_INSTR_AND_S32I32) found_S32I32 = 1;
+    }
+    munit_assert_int(found_S32R32, ==, 1);
+    munit_assert_int(found_S32I32, ==, 1);
+
+    munit_assert_int(cg_run0(&ctx), ==, 12);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitand_nested(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 5;\n"
+                 "    set i32 y & ~ x 3;\n"
+                 "    set i32 z ~ & x 3;\n"
+                 "    ret + y z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 2);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_pipe_lit(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 12;\n"
+                 "    set i32 y | x 10;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x -> eax, y -> ecx; y = x | 10
+    cg_assert_asm_opcode(&ctx, 4, MICRO_ASM386_INSTR_MOV_R32I32);
+    cg_assert_asm_imm(&ctx, 4, 2, 12);
+
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_R32R32);
+    cg_assert_asm_reg(&ctx, 5, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_reg(&ctx, 5, 2, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_OR_R32I32);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_imm(&ctx, 6, 2, 10);
+
+    munit_assert_int(cg_run0(&ctx), ==, 14);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_caret_lit(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 12;\n"
+                 "    set i32 y ^ x 10;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x -> eax, y -> ecx; y = x ^ 10
+    cg_assert_asm_opcode(&ctx, 4, MICRO_ASM386_INSTR_MOV_R32I32);
+    cg_assert_asm_imm(&ctx, 4, 2, 12);
+
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_R32R32);
+    cg_assert_asm_reg(&ctx, 5, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_reg(&ctx, 5, 2, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_XOR_R32I32);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_imm(&ctx, 6, 2, 10);
+
+    munit_assert_int(cg_run0(&ctx), ==, 6);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitwise_vregs(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 12;\n"
+                 "    set i32 y 10;\n"
+                 "    set i32 o | x y;\n"
+                 "    set i32 z ^ x y;\n"
+                 "    ret + o z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int found_or = 0;
+    int found_xor = 0;
+    for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(&ctx, i);
+        if (!instr) continue;
+        if (instr->opcode == MICRO_ASM386_INSTR_OR_R32R32) found_or = 1;
+        if (instr->opcode == MICRO_ASM386_INSTR_XOR_R32R32) found_xor = 1;
+    }
+    munit_assert_int(found_or, ==, 1);
+    munit_assert_int(found_xor, ==, 1);
+
+    munit_assert_int(cg_run0(&ctx), ==, 20);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitwise_stack(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 1;\n"
+                 "    set i32 b 2;\n"
+                 "    set i32 c 3;\n"
+                 "    set i32 d 4;\n"
+                 "    set i32 e 4;\n"
+                 "    set i32 g 6;\n"
+                 "    set i32 h 12;\n"
+                 "    set i32 y | h e;\n"
+                 "    set i32 z ^ h 10;\n"
+                 "    ret + y z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int found_or_s32r32 = 0;
+    int found_xor_s32i32 = 0;
+    for (size_t i = 0; i < cg_asm_size(&ctx); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(&ctx, i);
+        if (!instr) continue;
+        if (instr->opcode == MICRO_ASM386_INSTR_OR_S32R32) found_or_s32r32 = 1;
+        if (instr->opcode == MICRO_ASM386_INSTR_XOR_S32I32) found_xor_s32i32 = 1;
+    }
+    munit_assert_int(found_or_s32r32, ==, 1);
+    munit_assert_int(found_xor_s32i32, ==, 1);
+
+    munit_assert_int(cg_run0(&ctx), ==, 18);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_logical_and(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 12;\n"
+                 "    set i32 b 10;\n"
+                 "    set i32 c 0;\n"
+                 "    set i32 d 1;\n"
+                 "    set i32 y && a b;\n"
+                 "    set i32 z && a c;\n"
+                 "    set i32 w && c b;\n"
+                 "    set i32 v && 0 7;\n"
+                 "    ret + y + z + w v;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 1);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_logical_or(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 12;\n"
+                 "    set i32 b 10;\n"
+                 "    set i32 c 0;\n"
+                 "    set i32 d 1;\n"
+                 "    set i32 y || a b;\n"
+                 "    set i32 z || c b;\n"
+                 "    set i32 w || c c;\n"
+                 "    set i32 v || 0 7;\n"
+                 "    ret + y + z + w v;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 3);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_logical_if(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 12;\n"
+                 "    set i32 b 0;\n"
+                 "    set i32 r 0;\n"
+                 "    if && a b : skip;\n"
+                 "    set i32 r + r 1;\n"
+                 "skip:\n"
+                 "    if || a b : done;\n"
+                 "    set i32 r + r 10;\n"
+                 "done:\n"
+                 "    ret r;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 1);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_logical_nested(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 5;\n"
+                 "    set i32 y && || = x 5 < x 0 > x 3;\n"
+                 "    set i32 z || && = x 5 > x 9 = x 5;\n"
+                 "    ret + y z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 2);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_logical_narrow(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i8 a 5;\n"
+                 "    set i8 b 0;\n"
+                 "    set i16 c 7;\n"
+                 "    set i32 y && a c;\n"
+                 "    set i32 z && a b;\n"
+                 "    set i32 w || b c;\n"
+                 "    ret + y + w z;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 2);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_negate_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 5;\n"
+                 "    set i32 y ~ x;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x -> eax, y -> ecx; y = -x
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_R32R32);
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_NEG_R32);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+
+    munit_assert_int(cg_run0(&ctx), ==, -5);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_bitnot_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 5;\n"
+                 "    set i32 y ` x;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x -> eax, y -> ecx; y = ~x
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_R32R32);
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_NOT_R32);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+
+    munit_assert_int(cg_run0(&ctx), ==, -6);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_addr_of_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 x 42;\n"
+                 "    set ptr p #x;\n"
+                 "    set i32 y $p;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    // x lives in eax, so it is spilled before its address is taken
+    cg_assert_asm_opcode(&ctx, 5, MICRO_ASM386_INSTR_MOV_S32R32);
+    cg_assert_asm_imm(&ctx, 5, 1, -4);
+    cg_assert_asm_reg(&ctx, 5, 2, MICRO_ASM386_REG32_EAX);
+
+    cg_assert_asm_opcode(&ctx, 6, MICRO_ASM386_INSTR_LEA_R32SIBI8);
+    cg_assert_asm_reg(&ctx, 6, 1, MICRO_ASM386_REG32_ECX);
+    cg_assert_asm_imm(&ctx, 6, 2, -4);
+
+    munit_assert_int(cg_run0(&ctx), ==, 42);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_addr_of_stack_vreg(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 a 1;\n"
+                 "    set i32 b 2;\n"
+                 "    set i32 c 3;\n"
+                 "    set i32 d 4;\n"
+                 "    set i32 e 5;\n"
+                 "    set i32 g 6;\n"
+                 "    set i32 h 42;\n"
+                 "    set ptr p #h;\n"
+                 "    set i32 y $p;\n"
+                 "    ret y;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 42);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_set_nested_plus(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -1335,6 +1891,38 @@ MunitResult test_codegen_err_if_undefined_label(const MunitParameter params[], v
 
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_UNDEFINED_LBL);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_codegen_err_lbl_name_too_long(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    char fun_name[61];
+    memset(fun_name, 'f', sizeof(fun_name) - 1);
+    fun_name[sizeof(fun_name) - 1] = '\0';
+
+    char text[512];
+    snprintf(text, sizeof(text),
+             "fun %s\n"
+             "    ret i32\n"
+             "start\n"
+             "    lbl1:\n"
+             "    ret 1;\n"
+             "end\n", fun_name);
+
+    cg_ctx_t ctx;
+    cg_gen(&ctx, text);
+
+    /* the qualified "fun.name.lbl1" does not fit into the ident name */
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_IDENT_NAME_TOO_LONG);
+    munit_assert_int((int)micro_err_stk[0].instr, ==, (int)MICRO_INSTR_LBL);
 
     cg_cleanup(&ctx);
 
@@ -2847,7 +3435,7 @@ MunitResult test_codegen_err_unimplemented_op(const MunitParameter params[], voi
     cg_gen(&ctx, "fun f\n"
                  "start\n"
                  "    set i32 a 4;\n"
-                 "    set i32 b ~ a;\n"
+                 "    set i32 b ! a;\n"
                  "end\n");
 
     munit_assert_size(micro_err_stk_size, ==, 1);
@@ -2869,7 +3457,7 @@ MunitResult test_codegen_err_unimplemented_op_in_if(const MunitParameter params[
     cg_gen(&ctx, "fun f\n"
                  "start\n"
                  "    set i32 a 4;\n"
-                 "    if ~ = a 1 : end_if;\n"
+                 "    if = ! a 1 : end_if;\n"
                  "end_if:\n"
                  "end\n");
 
@@ -3044,6 +3632,23 @@ static MunitTest codegen386_tests[] = {
     { "/set_minus_lit", test_codegen_set_minus_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_vreg_ref", test_codegen_set_vreg_ref, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_minus_vreg", test_codegen_set_minus_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitand_lit", test_codegen_set_bitand_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitand_vregs", test_codegen_bitand_vregs, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitand_stack", test_codegen_bitand_stack, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitand_nested", test_codegen_bitand_nested, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/pipe_lit", test_codegen_pipe_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/caret_lit", test_codegen_caret_lit, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitwise_vregs", test_codegen_bitwise_vregs, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitwise_stack", test_codegen_bitwise_stack, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/logical_and", test_codegen_logical_and, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/logical_or", test_codegen_logical_or, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/logical_if", test_codegen_logical_if, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/logical_nested", test_codegen_logical_nested, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/logical_narrow", test_codegen_logical_narrow, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/negate_vreg", test_codegen_negate_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/bitnot_vreg", test_codegen_bitnot_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/addr_of_vreg", test_codegen_addr_of_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/addr_of_stack_vreg", test_codegen_addr_of_stack_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/set_nested_plus", test_codegen_set_nested_plus, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lea_mul_scale", test_codegen_lea_mul_scale, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/lea_mul_scale_lit_first", test_codegen_lea_mul_scale_lit_first, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
@@ -3087,6 +3692,7 @@ static MunitTest codegen386_tests[] = {
     { "/err_if_outside_function", test_codegen_err_if_outside_function, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_undefined_ident", test_codegen_err_if_undefined_ident, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_undefined_label", test_codegen_err_if_undefined_label, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_lbl_name_too_long", test_codegen_err_lbl_name_too_long, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_not_lbl", test_codegen_err_if_not_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_undefined", test_codegen_err_goto_undefined, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_goto_not_lbl", test_codegen_err_goto_not_lbl, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

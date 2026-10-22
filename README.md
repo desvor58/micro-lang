@@ -1,6 +1,9 @@
 # µ micro-lang
 > **Minimalistic. Lightweight. No SSA. No AST. Just compile.**
 
+Project page: **[desvor58.github.io](https://desvor58.github.io/)**
+&nbsp;·&nbsp; source in [`desvor58/desvor58.github.io`](https://github.com/desvor58/desvor58.github.io)
+
 **micro** it's an experiment in the shape of IR code. Linear code, spiritually referencing C.
 
 Current version: **dev-1.0.0**. It is an unstable MVP: the whole pipeline
@@ -24,12 +27,12 @@ moving. See [status](#status) for what to expect.
 | instruction builder | done                                                        |
 | i386 code generator | done, one `lea` based code selection pass and a peephole     |
 | ir optimizer        | one pass done: inlining of small calls, `-Oi` to enable it  |
-| tests               | 191 unit tests over the lexer, instructions and the backend  |
+| tests               | 221 unit tests over the lexer, instructions and the backend  |
 | library API         | done, the compiler itself is built on it                     |
 | trampolines         | done, `tramp` in source and host handlers through an API map  |
 | object file output  | not implemented, the output is a raw binary                  |
 | other backends      | not implemented                                             |
-| f32, bitwise ops    | reserved in the grammar, not implemented                     |
+| f32                 | reserved in the grammar, not implemented                     |
 
 ### 💡 example code
 **C** code:

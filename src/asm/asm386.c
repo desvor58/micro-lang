@@ -154,6 +154,94 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_SUB_R16S32, 7, { 0x66, 0x2B, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
         instr_handle(MICRO_ASM386_INSTR_SUB_R8S32,  6, {       0x2A, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
 
+        instr_handle(MICRO_ASM386_INSTR_AND_R32R32, 2, {       0x21, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_AND_R16R16, 3, { 0x66, 0x21, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_AND_R8R8,   2, {       0x20, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_R32I32, 6, {       0x81, 0b11100000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_R16I16, 5, { 0x66, 0x81, 0b11100000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_AND_R8I8,   3, {       0x80, 0b11100000 | instr->operand1.reg, instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_M32R32, 6, {       0x21, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_M16R16, 7, { 0x66, 0x21, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_M8R8,   6, {       0x20, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_M32I32, 10, {       0x81, 0b00100101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_M16I16, 9,  { 0x66, 0x81, 0b00100101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_AND_M8I8,   7,  {       0x80, 0b00100101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_S32I32, 10, {       0x81, 0b10100101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_S32I16, 9,  { 0x66, 0x81, 0b10100101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_AND_S32I8,  7,  {       0x80, 0b10100101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_S32R32, 6, {       0x21, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_S32R16, 7, { 0x66, 0x21, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_S32R8,  6, {       0x20, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_AND_R32S32, 6, {       0x23, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_R16S32, 7, { 0x66, 0x23, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_AND_R8S32,  6, {       0x22, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_R32R32, 2, {       0x09, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_OR_R16R16, 3, { 0x66, 0x09, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_OR_R8R8,   2, {       0x08, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_R32I32, 6, {       0x81, 0b11001000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_R16I16, 5, { 0x66, 0x81, 0b11001000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_OR_R8I8,   3, {       0x80, 0b11001000 | instr->operand1.reg, instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_M32R32, 6, {       0x09, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_M16R16, 7, { 0x66, 0x09, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_M8R8,   6, {       0x08, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_M32I32, 10, {       0x81, 0b00001101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_M16I16, 9,  { 0x66, 0x81, 0b00001101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_OR_M8I8,   7,  {       0x80, 0b00001101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_S32I32, 10, {       0x81, 0b10001101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_S32I16, 9,  { 0x66, 0x81, 0b10001101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_OR_S32I8,  7,  {       0x80, 0b10001101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_S32R32, 6, {       0x09, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_S32R16, 7, { 0x66, 0x09, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_S32R8,  6, {       0x08, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_OR_R32S32, 6, {       0x0B, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_R16S32, 7, { 0x66, 0x0B, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_OR_R8S32,  6, {       0x0A, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_R32R32, 2, {       0x31, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R16R16, 3, { 0x66, 0x31, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R8R8,   2, {       0x30, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_R32I32, 6, {       0x81, 0b11110000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R16I16, 5, { 0x66, 0x81, 0b11110000 | instr->operand1.reg, instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R8I8,   3, {       0x80, 0b11110000 | instr->operand1.reg, instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_M32R32, 6, {       0x31, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_M16R16, 7, { 0x66, 0x31, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_M8R8,   6, {       0x30, 0b00000101 | (instr->operand2.reg << 3), instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_M32I32, 10, {       0x81, 0b00110101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_M16I16, 9,  { 0x66, 0x81, 0b00110101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_M8I8,   7,  {       0x80, 0b00110101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32I32, 10, {       0x81, 0b10110101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32I16, 9,  { 0x66, 0x81, 0b10110101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32I8,  7,  {       0x80, 0b10110101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3], instr->operand2.imm.bytes[0] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32R32, 6, {       0x31, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32R16, 7, { 0x66, 0x31, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_S32R8,  6, {       0x30, 0b10000101 | (instr->operand2.reg << 3), instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_XOR_R32S32, 6, {       0x33, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R16S32, 7, { 0x66, 0x33, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_XOR_R8S32,  6, {       0x32, 0b10000101 | (instr->operand1.reg << 3), instr->operand2.imm.bytes[0], instr->operand2.imm.bytes[1], instr->operand2.imm.bytes[2], instr->operand2.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_SBB_R32R32, 2, {       0x19, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SBB_R16R16, 3, { 0x66, 0x19, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_SBB_R8R8,   2, {       0x18, 0b11000000 | (instr->operand2.reg << 3) | instr->operand1.reg });
+
         instr_handle(MICRO_ASM386_INSTR_MUL_R32, 2, {       0xF7, 0b11100000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_MUL_R16, 3, { 0x66, 0xF7, 0b11100000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_MUL_R8,  2, {       0xF6, 0b11100000 | instr->operand1.reg });
@@ -181,6 +269,18 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
         instr_handle(MICRO_ASM386_INSTR_NEG_R32, 2, {       0xF7, 0b11011000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_NEG_R16, 3, { 0x66, 0xF7, 0b11011000 | instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_NEG_R8,  2, {       0xF6, 0b11011000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_NEG_M32, 6, {       0xF7, 0b00011101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NEG_M16, 7, { 0x66, 0xF7, 0b00011101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NEG_M8,  6, {       0xF6, 0b00011101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NEG_S32, 6, {       0xF7, 0b10011101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
+
+        instr_handle(MICRO_ASM386_INSTR_NOT_R32, 2, {       0xF7, 0b11010000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_NOT_R16, 3, { 0x66, 0xF7, 0b11010000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_NOT_R8,  2, {       0xF6, 0b11010000 | instr->operand1.reg });
+        instr_handle(MICRO_ASM386_INSTR_NOT_M32, 6, {       0xF7, 0b00010101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NOT_M16, 7, { 0x66, 0xF7, 0b00010101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NOT_M8,  6, {       0xF6, 0b00010101, instr->operand1.addr.bytes[0], instr->operand1.addr.bytes[1], instr->operand1.addr.bytes[2], instr->operand1.addr.bytes[3] });
+        instr_handle(MICRO_ASM386_INSTR_NOT_S32, 6, {       0xF7, 0b10010101, instr->operand1.imm.bytes[0], instr->operand1.imm.bytes[1], instr->operand1.imm.bytes[2], instr->operand1.imm.bytes[3] });
 
         instr_handle(MICRO_ASM386_INSTR_INC_R32, 1, {       0x40 + instr->operand1.reg });
         instr_handle(MICRO_ASM386_INSTR_INC_R16, 2, { 0x66, 0x40 + instr->operand1.reg });
@@ -216,14 +316,14 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
                                                           instr->operand2.imm.bytes[1],
                                                           instr->operand2.imm.bytes[2],
                                                           instr->operand2.imm.bytes[3] });
-        instr_handle(MICRO_ASM386_INSTR_CMP_M16I16, 8, { 0x66, 0x81, 0b00111101,
+        instr_handle(MICRO_ASM386_INSTR_CMP_M16I16, 9, { 0x66, 0x81, 0b00111101,
                                                          instr->operand1.addr.bytes[0],
                                                          instr->operand1.addr.bytes[1],
                                                          instr->operand1.addr.bytes[2],
                                                          instr->operand1.addr.bytes[3],
                                                          instr->operand2.imm.bytes[0],
                                                          instr->operand2.imm.bytes[1] });
-        instr_handle(MICRO_ASM386_INSTR_CMP_M8I8, 6, { 0x80, 0b00111101,
+        instr_handle(MICRO_ASM386_INSTR_CMP_M8I8, 7, { 0x80, 0b00111101,
                                                        instr->operand1.addr.bytes[0],
                                                        instr->operand1.addr.bytes[1],
                                                        instr->operand1.addr.bytes[2],
@@ -243,14 +343,14 @@ static inline void emit_instr(micro_asm386_instruction_t *instr, sct_vector_t *o
                                                           instr->operand2.imm.bytes[1],
                                                           instr->operand2.imm.bytes[2],
                                                           instr->operand2.imm.bytes[3] });
-        instr_handle(MICRO_ASM386_INSTR_CMP_S32I16, 8, { 0x66, 0x81, 0b10111101,
+        instr_handle(MICRO_ASM386_INSTR_CMP_S32I16, 9, { 0x66, 0x81, 0b10111101,
                                                         instr->operand1.imm.bytes[0],
                                                         instr->operand1.imm.bytes[1],
                                                         instr->operand1.imm.bytes[2],
                                                         instr->operand1.imm.bytes[3],
                                                         instr->operand2.imm.bytes[0],
                                                         instr->operand2.imm.bytes[1] });
-        instr_handle(MICRO_ASM386_INSTR_CMP_S32I8, 6, { 0x80, 0b10111101,
+        instr_handle(MICRO_ASM386_INSTR_CMP_S32I8, 7, { 0x80, 0b10111101,
                                                        instr->operand1.addr.bytes[0],
                                                        instr->operand1.addr.bytes[1],
                                                        instr->operand1.addr.bytes[2],

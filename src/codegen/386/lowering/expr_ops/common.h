@@ -16,6 +16,80 @@ typedef struct {
     micro_asm386_instruction_type_t opSR_fn;
 } op_tbls_t;
 
+typedef struct {
+    micro_asm386_instruction_type_t R_tbl[3];
+    micro_asm386_instruction_type_t M_tbl[3];
+    micro_asm386_instruction_type_t S_fn;
+} unary_op_tbls_t;
+
+static void op_unary_to_dst(micro_codegen_t *codegen, const unary_op_tbls_t *op_tbls, micro_codegen386_storage_t dst)
+{
+    switch (dst.type) {
+        case MICRO_STORAGE_DATASEC:
+            push_asm_instr(op_tbls->M_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_none());
+            return;
+
+        case MICRO_STORAGE_STACK:
+            push_asm_instr(op_tbls->S_fn, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_none());
+            return;
+
+        case MICRO_STORAGE_REG:
+            push_asm_instr(op_tbls->R_tbl[dst.reg.size], operand_reg(dst.reg.size, dst.reg.reg), operand_none());
+            return;
+    }
+}
+
+static expr_info_t op_unary_operand(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_expr_tok_t *start)
+{
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    micro_expr_tok_t *operand = start + 1;
+
+    if (operand->type == MICRO_EXPR_TOK_IDENT) {
+        micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, operand->val);
+        if (!ident) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_UNDEFINED_IDENT,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
+        if (ident->type != MICRO_IDENT_VREG) {
+            micro_push_err((micro_error_t){
+                .err = MICRO_ERROR_IDENT_NOT_VREG,
+                .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+            });
+            return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        }
+
+        expr_info_t expr_info = expr_vreg_parse(codegen, dst, &ident->vreg);
+        if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        return (expr_info_t){ 2, expr_info.type };
+    }
+
+    if (_micro_expr_is_lit(operand->type)) {
+        char *end;
+        errno = 0;
+        i32 lit = strtol(operand->val, &end, 10);
+
+        expr_info_t expr_info = expr_lit_parse(codegen, dst, lit);
+        if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        return (expr_info_t){ 2, expr_info.type };
+    }
+
+    if (_micro_expr_is_op(operand->type)) {
+        expr_info_t expr_info = expr_parse(codegen, dst, operand);
+        if (!expr_info.size) return (expr_info_t){ 0, MICRO_TYPE_NULL };
+        return (expr_info_t){ 1 + expr_info.size, expr_info.type };
+    }
+
+    micro_push_err((micro_error_t){
+        .err = MICRO_ERROR_EXPR_PARSE,
+        .instr = ((micro_instruction_t*)sct_vector_get(codegen->instrs, codegen->pos))->type,
+    });
+    return (expr_info_t){ 0, MICRO_TYPE_NULL };
+}
+
 static void op_lit_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, i32 lit)
 {
     switch (dst.type) {
@@ -44,6 +118,7 @@ static expr_info_t op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_
         expr_dst.type = MICRO_STORAGE_STACK;
         expr_dst.stack.ebp_offset = free_space;
         ext->max_stack_offset -= 4;
+        ext->ebp_top_offset -= 4;
     } else {
         expr_dst.type = MICRO_STORAGE_REG;
         expr_dst.reg.reg = free_space;
@@ -87,7 +162,7 @@ static expr_info_t op_expr_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_
                     push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(ext->ebp_top_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
                     ext->max_stack_offset -= 4;
                 }
-                push_asm_instr(op_tbls->opRS_tbl[MICRO_SIZE_32], operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(free_space)));
+                push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(expr_dst.stack.ebp_offset)));
                 push_asm_instr(op_tbls->opSR_fn, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
                 if (ext->used_regs[0]) {
                     push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(ext->ebp_top_offset)));
@@ -162,6 +237,96 @@ static void op_vreg_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, m
             };
             break;
     };
+}
+
+static void op_bool_to_dst(micro_codegen_t *codegen, micro_codegen386_storage_t dst, micro_size_t size)
+{
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (dst.type == MICRO_STORAGE_REG) {
+        if (size != MICRO_SIZE_32) {
+            push_asm_instr(MICRO_ASM386_INSTR_AND_R32I32, operand_reg(MICRO_SIZE_32, dst.reg.reg), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(size == MICRO_SIZE_8 ? 0xFF : 0xFFFF)));
+        }
+        push_asm_instr(MICRO_ASM386_INSTR_NEG_R32, operand_reg(MICRO_SIZE_32, dst.reg.reg), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_SBB_R32R32, operand_reg(MICRO_SIZE_32, dst.reg.reg), operand_reg(MICRO_SIZE_32, dst.reg.reg));
+        push_asm_instr(MICRO_ASM386_INSTR_AND_R32I32, operand_reg(MICRO_SIZE_32, dst.reg.reg), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(1)));
+        return;
+    }
+
+    int need_pop_eax = 0;
+    if (ext->used_regs[MICRO_ASM386_REG32_EAX]) {
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
+        need_pop_eax = 1;
+    }
+
+    if (dst.type == MICRO_STORAGE_DATASEC) {
+        push_asm_instr(((micro_asm386_instruction_type_t[]){
+            [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_M8I8,
+            [MICRO_SIZE_16] = MICRO_ASM386_INSTR_CMP_M16I16,
+            [MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_M32I32,
+        })[size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(0)));
+        push_asm_instr(MICRO_ASM386_INSTR_SETNZ_R8, operand_reg(MICRO_SIZE_8, MICRO_ASM386_REG32_EAX), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_MOVZX_R32R8, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_reg(MICRO_SIZE_8, MICRO_ASM386_REG32_EAX));
+        push_asm_instr(movMR_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
+    } else {
+        push_asm_instr(((micro_asm386_instruction_type_t[]){
+            [MICRO_SIZE_8]  = MICRO_ASM386_INSTR_CMP_S32I8,
+            [MICRO_SIZE_16] = MICRO_ASM386_INSTR_CMP_S32I16,
+            [MICRO_SIZE_32] = MICRO_ASM386_INSTR_CMP_S32I32,
+        })[size], operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(0)));
+        push_asm_instr(MICRO_ASM386_INSTR_SETNZ_R8, operand_reg(MICRO_SIZE_8, MICRO_ASM386_REG32_EAX), operand_none());
+        push_asm_instr(MICRO_ASM386_INSTR_MOVZX_R32R8, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_reg(MICRO_SIZE_8, MICRO_ASM386_REG32_EAX));
+        push_asm_instr(MICRO_ASM386_INSTR_MOV_S32R32, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
+    }
+
+    if (need_pop_eax) {
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
+    }
+}
+
+static void op_tmp_to_dst(micro_codegen_t *codegen, const op_tbls_t *op_tbls, micro_codegen386_storage_t dst, micro_codegen386_storage_t src)
+{
+    micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
+
+    if (src.type == MICRO_STORAGE_REG) {
+        switch (dst.type) {
+            case MICRO_STORAGE_DATASEC:
+                push_asm_instr(op_tbls->opMR_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_reg(MICRO_SIZE_32, src.reg.reg));
+                break;
+
+            case MICRO_STORAGE_STACK:
+                push_asm_instr(op_tbls->opSR_fn, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, src.reg.reg));
+                break;
+
+            case MICRO_STORAGE_REG:
+                push_asm_instr(op_tbls->opRR_tbl[dst.reg.size], operand_reg(dst.reg.size, dst.reg.reg), operand_reg(MICRO_SIZE_32, src.reg.reg));
+                break;
+        }
+        return;
+    }
+
+    if (dst.type == MICRO_STORAGE_REG) {
+        push_asm_instr(op_tbls->opRS_tbl[dst.reg.size], operand_reg(dst.reg.size, dst.reg.reg), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(src.stack.ebp_offset)));
+        return;
+    }
+
+    int need_pop_eax = 0;
+    if (ext->used_regs[MICRO_ASM386_REG32_EAX]) {
+        push_asm_instr(MICRO_ASM386_INSTR_PUSH_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
+        need_pop_eax = 1;
+    }
+
+    push_asm_instr(MICRO_ASM386_INSTR_MOV_R32S32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_imm(MICRO_SIZE_32, micro_imm_le_gen(src.stack.ebp_offset)));
+
+    if (dst.type == MICRO_STORAGE_DATASEC) {
+        push_asm_instr(op_tbls->opMR_tbl[dst.datasec.size], operand_addr(micro_imm_le_gen(dst.datasec.address)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
+    } else {
+        push_asm_instr(op_tbls->opSR_fn, operand_imm(MICRO_SIZE_32, micro_imm_le_gen(dst.stack.ebp_offset)), operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX));
+    }
+
+    if (need_pop_eax) {
+        push_asm_instr(MICRO_ASM386_INSTR_POP_R32, operand_reg(MICRO_SIZE_32, MICRO_ASM386_REG32_EAX), operand_none());
+    }
 }
 
 typedef struct {

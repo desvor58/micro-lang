@@ -16,6 +16,11 @@ static size_t expr_arity(micro_expr_tok_type_t type)
         case MICRO_EXPR_TOK_LESS_OR_EQ:
             return 2;
         case MICRO_EXPR_TOK_AMPERSAND:
+        case MICRO_EXPR_TOK_PIPE:
+        case MICRO_EXPR_TOK_CARET:
+        case MICRO_EXPR_TOK_ANDAND:
+        case MICRO_EXPR_TOK_OROR:
+            return 2;
         case MICRO_EXPR_TOK_DOLLAR:
         case MICRO_EXPR_TOK_HASH:
         case MICRO_EXPR_TOK_APOSTROPHE:

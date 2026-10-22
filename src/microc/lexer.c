@@ -13,6 +13,10 @@ char *mc_token_type2str[] = {
     [MC_TOK_LBRACE]      = "lbrace",
     [MC_TOK_RBRACE]      = "rbrace",
     [MC_TOK_AMPERSAND]   = "ampersand",
+    [MC_TOK_PIPE]        = "pipe",
+    [MC_TOK_CARET]       = "caret",
+    [MC_TOK_ANDAND]      = "and and",
+    [MC_TOK_OROR]        = "or or",
     [MC_TOK_DOLLAR]      = "dollar",
     [MC_TOK_HASH]        = "hash",
     [MC_TOK_APOSTROPHE]  = "apostrophe",
@@ -34,14 +38,25 @@ char *mc_token_type2str[] = {
     [MC_TOK_KW_TRAMP]    = "tramp",
     [MC_TOK_KW_SET]      = "set",
     [MC_TOK_KW_IF]       = "if",
-    [MC_TOK_KW_ELSE]     = "else",
-    [MC_TOK_KW_WHILE]    = "while",
     [MC_TOK_KW_START]    = "start",
     [MC_TOK_KW_END]      = "end",
     [MC_TOK_KW_RET]      = "ret",
     [MC_TOK_KW_CALL]     = "call",
     [MC_TOK_KW_GOTO]     = "goto",
 };
+
+static int mc_tok_val_set(mc_token_t *tok, const char *buf, micro_error_type_t err)
+{
+    if (unlikely(strlen(buf) >= sizeof(tok->val))) {
+        micro_push_err((micro_error_t){
+            .err = err,
+        });
+        return 0;
+    }
+
+    strcpy(tok->val, buf);
+    return 1;
+}
 
 void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
 {
@@ -76,6 +91,13 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             size_t tok_start_chpos = chpos;
             size_t i = 0;
             while ((isalnum(text[pos]) || text[pos] == '_') && pos < text_size) {
+                if (unlikely(i >= MICRO_MAX_SYMBOL_SIZE - 1)) {
+                    micro_push_err((micro_error_t){
+                        .err = MICRO_ERROR_IDENT_NAME_TOO_LONG,
+                    });
+                    goto err_exit;
+                }
+
                 buf[i++] = text[pos++];
                 chpos++;
             }
@@ -108,22 +130,6 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             if (!strcmp(buf, "if")) {
                 sct_vector_push(toks, &(mc_token_t){
                     .type = MC_TOK_KW_IF,
-                    .val = 0,
-                    .line_ref = line,
-                    .chpos_ref = tok_start_chpos
-                });
-            } else
-            if (!strcmp(buf, "else")) {
-                sct_vector_push(toks, &(mc_token_t){
-                    .type = MC_TOK_KW_ELSE,
-                    .val = 0,
-                    .line_ref = line,
-                    .chpos_ref = tok_start_chpos
-                });
-            } else
-            if (!strcmp(buf, "while")) {
-                sct_vector_push(toks, &(mc_token_t){
-                    .type = MC_TOK_KW_WHILE,
                     .val = 0,
                     .line_ref = line,
                     .chpos_ref = tok_start_chpos
@@ -182,7 +188,9 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                     .line_ref = line,
                     .chpos_ref = tok_start_chpos
                 };
-                strcpy(tok.val, buf);
+                if (unlikely(!mc_tok_val_set(&tok, buf, MICRO_ERROR_IDENT_NAME_TOO_LONG))) {
+                    goto err_exit;
+                }
                 sct_vector_push(toks, &tok);
             } else {
                 mc_token_t tok = {
@@ -190,7 +198,9 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                     .line_ref = line,
                     .chpos_ref = tok_start_chpos
                 };
-                strcpy(tok.val, buf);
+                if (unlikely(!mc_tok_val_set(&tok, buf, MICRO_ERROR_IDENT_NAME_TOO_LONG))) {
+                    goto err_exit;
+                }
                 sct_vector_push(toks, &tok);
             }
             pos--;
@@ -201,9 +211,23 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             mc_token_type_t type = MC_TOK_LIT_INT;
             size_t i = 0;
             do {
+                if (unlikely(i >= MICRO_MAX_SYMBOL_SIZE - 1)) {
+                    micro_push_err((micro_error_t){
+                        .err = MICRO_ERROR_DIGIT_TOO_LONG,
+                    });
+                    goto err_exit;
+                }
+
                 buf[i++] = text[pos++];
                 chpos++;
                 if (text[pos] == '.') {
+                    if (unlikely(i >= MICRO_MAX_SYMBOL_SIZE - 1)) {
+                        micro_push_err((micro_error_t){
+                            .err = MICRO_ERROR_DIGIT_TOO_LONG,
+                        });
+                        goto err_exit;
+                    }
+
                     buf[i++] = text[pos++];
                     chpos++;
                     type = MC_TOK_LIT_FLOAT;
@@ -216,7 +240,9 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 .line_ref = line,
                 .chpos_ref = tok_start_chpos
             };
-            strcpy(tok.val, buf);
+            if (unlikely(!mc_tok_val_set(&tok, buf, MICRO_ERROR_DIGIT_TOO_LONG))) {
+                goto err_exit;
+            }
             sct_vector_push(toks, &tok);
             pos--;
             chpos--;
@@ -226,6 +252,13 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
             pos++;
             size_t i = 0;
             while (text[pos] != '"') {
+                if (unlikely(i >= MICRO_MAX_SYMBOL_SIZE - 1)) {
+                    micro_push_err((micro_error_t){
+                        .err = MICRO_ERROR_STR_LIT_TOO_LONG,
+                    });
+                    goto err_exit;
+                }
+
                 buf[i++] = text[pos++];
                 chpos++;
                 
@@ -243,8 +276,30 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
                 .line_ref = line,
                 .chpos_ref = tok_start_chpos
             };
-            strcpy(tok.val, buf);
+            if (unlikely(!mc_tok_val_set(&tok, buf, MICRO_ERROR_STR_LIT_TOO_LONG))) {
+                goto err_exit;
+            }
             sct_vector_push(toks, &tok);
+        } else
+        if (text[pos] == '&' && text[pos + 1] == '&') {
+            sct_vector_push(toks, &(mc_token_t){
+                .type = MC_TOK_ANDAND,
+                .line_ref = line,
+                .chpos_ref = chpos,
+            });
+            pos += 2;
+            chpos += 2;
+            continue;
+        } else
+        if (text[pos] == '|' && text[pos + 1] == '|') {
+            sct_vector_push(toks, &(mc_token_t){
+                .type = MC_TOK_OROR,
+                .line_ref = line,
+                .chpos_ref = chpos,
+            });
+            pos += 2;
+            chpos += 2;
+            continue;
         } else
         _mc_single_chlex('+', MC_TOK_PLUS)        else
         _mc_single_chlex('-', MC_TOK_MINUS)       else
@@ -257,6 +312,8 @@ void mc_tokenize(const char *text, size_t text_size, sct_vector_t *toks)
         _mc_single_chlex('{', MC_TOK_LBRACE)      else
         _mc_single_chlex('}', MC_TOK_RBRACE)      else
         _mc_single_chlex('&', MC_TOK_AMPERSAND)   else
+        _mc_single_chlex('|', MC_TOK_PIPE)        else
+        _mc_single_chlex('^', MC_TOK_CARET)       else
         _mc_single_chlex('$', MC_TOK_DOLLAR)      else
         _mc_single_chlex('#', MC_TOK_HASH)        else
         _mc_single_chlex('`', MC_TOK_APOSTROPHE)  else

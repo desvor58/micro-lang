@@ -82,6 +82,7 @@ typedef struct {
     struct {
         u32 in_function : 1;
         u32 use_callee_save_regs : 1;
+        u32 regs_to_free : 8;
     };
     ptrdiff_t     ebp_top_offset;
     ptrdiff_t     max_stack_offset;

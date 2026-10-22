@@ -71,8 +71,8 @@ MunitResult test_lexer_keywords(const MunitParameter params[], void *data)
     lexer_assert_tok(&toks, 0, MC_TOK_KW_FUN, "", 1, 1);
     lexer_assert_tok(&toks, 1, MC_TOK_KW_SET, "", 1, 5);
     lexer_assert_tok(&toks, 2, MC_TOK_KW_IF, "", 1, 9);
-    lexer_assert_tok(&toks, 3, MC_TOK_KW_ELSE, "", 1, 12);
-    lexer_assert_tok(&toks, 4, MC_TOK_KW_WHILE, "", 1, 17);
+    lexer_assert_tok(&toks, 3, MC_TOK_IDENT, "else", 1, 12);
+    lexer_assert_tok(&toks, 4, MC_TOK_IDENT, "while", 1, 17);
     lexer_assert_tok(&toks, 5, MC_TOK_KW_START, "", 1, 23);
     lexer_assert_tok(&toks, 6, MC_TOK_KW_END, "", 1, 29);
     lexer_assert_tok(&toks, 7, MC_TOK_KW_RET, "", 1, 33);
@@ -308,11 +308,6 @@ MunitResult test_lexer_operators_great_or_eq_less_or_eq(const MunitParameter par
     return MUNIT_OK;
 }
 
-/* The reference (docs/micro-language-ref.md) declares a full operator set
- * that includes bitwise or '|', bitwise xor '^' and the logical and/or
- * '&&'/'||'. These are not lexed yet, so these tests are marked TODO: they
- * document the intended behaviour and start passing as soon as the lexer
- * recognizes each operator as a single token. */
 MunitResult test_lexer_op_pipe(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -320,9 +315,16 @@ MunitResult test_lexer_op_pipe(const MunitParameter params[], void *data)
     sct_vector_t toks;
     sct_vector_init(&toks, sizeof(mc_token_t));
 
-    const char *text = "|";
+    const char *text = "& | ^ && ||";
     mc_tokenize(text, strlen(text), &toks);
-    munit_assert_size(toks.size, ==, 1);
+    munit_assert_size(toks.size, ==, 5);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    lexer_assert_tok(&toks, 0, MC_TOK_AMPERSAND, "", 1, 1);
+    lexer_assert_tok(&toks, 1, MC_TOK_PIPE,      "", 1, 3);
+    lexer_assert_tok(&toks, 2, MC_TOK_CARET,     "", 1, 5);
+    lexer_assert_tok(&toks, 3, MC_TOK_ANDAND,    "", 1, 7);
+    lexer_assert_tok(&toks, 4, MC_TOK_OROR,      "", 1, 10);
 
     sct_vector_deinit(&toks);
 
@@ -342,6 +344,8 @@ MunitResult test_lexer_op_caret(const MunitParameter params[], void *data)
     mc_tokenize(text, strlen(text), &toks);
     munit_assert_size(toks.size, ==, 1);
 
+    lexer_assert_tok(&toks, 0, MC_TOK_CARET, "", 1, 1);
+
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -360,6 +364,8 @@ MunitResult test_lexer_op_logic_and(const MunitParameter params[], void *data)
     mc_tokenize(text, strlen(text), &toks);
     munit_assert_size(toks.size, ==, 1);
 
+    lexer_assert_tok(&toks, 0, MC_TOK_ANDAND, "", 1, 1);
+
     sct_vector_deinit(&toks);
 
     micro_deinit();
@@ -377,6 +383,8 @@ MunitResult test_lexer_op_logic_or(const MunitParameter params[], void *data)
     const char *text = "||";
     mc_tokenize(text, strlen(text), &toks);
     munit_assert_size(toks.size, ==, 1);
+
+    lexer_assert_tok(&toks, 0, MC_TOK_OROR, "", 1, 1);
 
     sct_vector_deinit(&toks);
 
@@ -494,6 +502,106 @@ MunitResult test_lexer_err_unclosed_string(const MunitParameter params[], void *
     munit_assert_size(toks.size, ==, 0);
     munit_assert_size(micro_err_stk_size, ==, 1);
     munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_STRING_CLOSE);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_ident_max_len(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    char text[MICRO_MAX_SYMBOL_SIZE];
+    memset(text, 'a', MICRO_MAX_SYMBOL_SIZE - 1);
+    text[MICRO_MAX_SYMBOL_SIZE - 1] = '\0';
+
+    mc_tokenize(text, strlen(text), &toks);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_size(toks.size, ==, 1);
+
+    mc_token_t *tok = sct_vector_get(&toks, 0);
+    munit_assert_int((int)tok->type, ==, (int)MC_TOK_IDENT);
+    munit_assert_size(strlen(tok->val), ==, MICRO_MAX_SYMBOL_SIZE - 1);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_err_ident_too_long(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    char text[MICRO_MAX_SYMBOL_SIZE + 8];
+    memset(text, 'a', sizeof(text) - 1);
+    text[sizeof(text) - 1] = '\0';
+
+    mc_tokenize(text, strlen(text), &toks);
+    test_put_errors("lexer");
+    munit_assert_size(toks.size, ==, 0);
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_IDENT_NAME_TOO_LONG);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_err_digit_too_long(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    char text[MICRO_MAX_SYMBOL_SIZE + 8];
+    memset(text, '7', sizeof(text) - 1);
+    text[sizeof(text) - 1] = '\0';
+
+    mc_tokenize(text, strlen(text), &toks);
+    test_put_errors("lexer");
+    munit_assert_size(toks.size, ==, 0);
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_DIGIT_TOO_LONG);
+
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_lexer_err_str_lit_too_long(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    sct_vector_init(&toks, sizeof(mc_token_t));
+
+    char text[MICRO_MAX_SYMBOL_SIZE + 10];
+    text[0] = '"';
+    memset(text + 1, 'x', MICRO_MAX_SYMBOL_SIZE);
+    text[MICRO_MAX_SYMBOL_SIZE + 1] = '"';
+    text[MICRO_MAX_SYMBOL_SIZE + 2] = '\0';
+
+    mc_tokenize(text, strlen(text), &toks);
+    test_put_errors("lexer");
+    munit_assert_size(toks.size, ==, 0);
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_STR_LIT_TOO_LONG);
 
     sct_vector_deinit(&toks);
 
@@ -625,15 +733,19 @@ static MunitTest lexer_tests[] = {
     { "/operators_single", test_lexer_operators_single, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/operators_great_less", test_lexer_operators_great_less, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/operators_great_or_eq_less_or_eq", test_lexer_operators_great_or_eq_less_or_eq, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
-    { "/op_pipe", test_lexer_op_pipe, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
-    { "/op_caret", test_lexer_op_caret, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
-    { "/op_logic_and", test_lexer_op_logic_and, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
-    { "/op_logic_or", test_lexer_op_logic_or, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
+    { "/op_pipe", test_lexer_op_pipe, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/op_caret", test_lexer_op_caret, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/op_logic_and", test_lexer_op_logic_and, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/op_logic_or", test_lexer_op_logic_or, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/line_chpos", test_lexer_line_chpos, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/comment_single", test_lexer_comment_single, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/comment_multiline", test_lexer_comment_multiline, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_unclosed_comment", test_lexer_err_unclosed_comment, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_unclosed_string", test_lexer_err_unclosed_string, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/ident_max_len", test_lexer_ident_max_len, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_ident_too_long", test_lexer_err_ident_too_long, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_digit_too_long", test_lexer_err_digit_too_long, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_str_lit_too_long", test_lexer_err_str_lit_too_long, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/base1", test_lexer_base1, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };
