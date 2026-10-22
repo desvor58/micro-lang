@@ -2,6 +2,7 @@
 #define TESTS_IROPTER_H
 
 #include "../include/munit.h"
+#include "codegen386.h"
 #include "errors.h"
 #include <micro/micro.h>
 #include <micro/asm/asm386.h>
@@ -118,6 +119,58 @@ MunitResult test_iropter_inline_leaf(const MunitParameter params[], void *data)
     munit_assert_true(iropter_has_name(caller, "r"));
     munit_assert_false(iropter_has_name(caller, "a"));
 
+    iropter_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_iropter_inline_bitwise(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    iropter_ctx_t ctx;
+    iropter_gen(&ctx, "fun leaf\n"
+                      "    i32 a\n"
+                      "    ret i32\n"
+                      "start\n"
+                      "    ret | & a 6 ^ a || 3 && a 1;\n"
+                      "end\n"
+                      "\n"
+                      "fun caller\n"
+                      "    ret i32\n"
+                      "start\n"
+                      "    set i32 r;\n"
+                      "    call r leaf 10;\n"
+                      "    ret r;\n"
+                      "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+    munit_assert_int(ctx.inlined, ==, 1);
+
+    sct_vector_t *caller = iropter_body(&ctx.ig.instructions, "caller");
+    munit_assert_ptr_not_null(caller);
+    munit_assert_size(iropter_calls_num(caller), ==, 0);
+    munit_assert_true(iropter_has_name(caller, "r"));
+    munit_assert_false(iropter_has_name(caller, "a"));
+
+    cg_ctx_t cg;
+    cg_gen_instrs(&cg, &ctx.ig.instructions, NULL);
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    int found_and_6 = 0;
+    int found_bool = 0;
+    for (size_t i = 0; i < cg_asm_size(&cg); i++) {
+        micro_asm386_instruction_t *instr = cg_asm(&cg, i);
+        if (!instr) continue;
+        if (instr->opcode == MICRO_ASM386_INSTR_AND_R32I32 && instr->operand2.imm.val == 6) found_and_6 = 1;
+        if (instr->opcode == MICRO_ASM386_INSTR_SBB_R32R32) found_bool = 1;
+    }
+    munit_assert_int(found_and_6, ==, 1);
+    munit_assert_int(found_bool, ==, 1);
+
+    cg_cleanup(&cg);
     iropter_cleanup(&ctx);
 
     micro_deinit();
@@ -309,6 +362,7 @@ MunitResult test_iropter_growth_budget(const MunitParameter params[], void *data
 
 static MunitTest iropter_tests[] = {
     { "/inline_leaf", test_iropter_inline_leaf, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/inline_bitwise", test_iropter_inline_bitwise, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/inline_rescans_chunk", test_iropter_inline_rescans_chunk, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/skips_recursion", test_iropter_skips_recursion, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/inline_control_flow", test_iropter_inline_control_flow, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

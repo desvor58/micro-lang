@@ -26,6 +26,10 @@ int lowering_ret(micro_codegen_t *codegen, micro_instruction_t *instr)
 
             micro_codegen386_storage_t *storage = &ident->vreg.storage;
             if (free_space < 0) {
+                free_space = ext->ebp_top_offset;
+                ext->max_stack_offset -= 4;
+                ext->ebp_top_offset -= 4;
+
                 storage->type = MICRO_STORAGE_STACK;
                 storage->stack.ebp_offset = free_space;
 

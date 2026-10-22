@@ -25,6 +25,13 @@ int lowering_lbl(micro_codegen_t *codegen, micro_instruction_t *instr)
         .type = MICRO_IDENT_LBL,
         .lifetime = instr->hints.lifetime,
     };
+    if (unlikely(strlen(lbl_name) >= sizeof(ident.lbl.name))) {
+        micro_push_err((micro_error_t){
+            .err = MICRO_ERROR_IDENT_NAME_TOO_LONG,
+            .instr = MICRO_INSTR_LBL
+        });
+        return 1;
+    }
     strcpy(ident.lbl.name, lbl_name);
 
     sct_hashmap_add(&ext->idents, instr_lbl.name, &ident);

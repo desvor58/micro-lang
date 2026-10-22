@@ -961,9 +961,7 @@ MunitResult test_instrgen_call_arg_expr(const MunitParameter params[], void *dat
     return MUNIT_OK;
 }
 
-/* docs describe '&' as a binary bitwise-and operator (& <o1> <o2>), but the
- * instrgen currently parses '&' as unary. Marked TODO: passes once '&'
- * arity matches the docs. */
+/* docs/micro-language-ref.md: & <o1> <o2> is a binary bitwise-and operator */
 MunitResult test_instrgen_set_bitand(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -981,6 +979,66 @@ MunitResult test_instrgen_set_bitand(const MunitParameter params[], void *data)
     munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
     munit_assert_ptr_not_null(set->set.val_expr);
     munit_assert_int((int)set->set.val_expr->type, ==, (int)MICRO_EXPR_TOK_AMPERSAND);
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_set_bitwise_logical(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 a | 3 1;\n"
+           "    set i32 b ^ 3 1;\n"
+           "    set i32 c && 3 1;\n"
+           "    set i32 d || 3 1;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    const micro_expr_tok_type_t expected[] = {
+        MICRO_EXPR_TOK_PIPE,
+        MICRO_EXPR_TOK_CARET,
+        MICRO_EXPR_TOK_ANDAND,
+        MICRO_EXPR_TOK_OROR,
+    };
+
+    for (size_t i = 0; i < sizeof(expected) / sizeof(*expected); i++) {
+        micro_instruction_t *set = ig_body_instr(ig_instr(&ig, 0), i);
+        munit_assert_int((int)set->type, ==, (int)MICRO_INSTR_SET);
+        munit_assert_ptr_not_null(set->set.val_expr);
+        munit_assert_int((int)set->set.val_expr->type, ==, (int)expected[i]);
+    }
+
+    mc_instrgen_deinit(&ig);
+    sct_vector_deinit(&toks);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
+MunitResult test_instrgen_err_missing_operand(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    sct_vector_t toks;
+    mc_instrgen_t ig;
+    ig_gen("fun f\n"
+           "start\n"
+           "    set i32 a && 1;\n"
+           "end\n", &toks, &ig);
+
+    munit_assert_size(micro_err_stk_size, ==, 1);
+    munit_assert_int((int)micro_err_stk[0].err, ==, (int)MICRO_ERROR_EXPECTED_EXPRESSION);
 
     mc_instrgen_deinit(&ig);
     sct_vector_deinit(&toks);
@@ -1826,7 +1884,9 @@ static MunitTest instrgen_tests[] = {
     { "/if_less", test_instrgen_if_less, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/if_great_or_eq", test_instrgen_if_great_or_eq, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/call_arg_expr", test_instrgen_call_arg_expr, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
-    { "/set_bitand", test_instrgen_set_bitand, NULL, NULL, MUNIT_TEST_OPTION_TODO, NULL },
+    { "/set_bitand", test_instrgen_set_bitand, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/set_bitwise_logical", test_instrgen_set_bitwise_logical, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/err_missing_operand", test_instrgen_err_missing_operand, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_expected_expression", test_instrgen_err_if_expected_expression, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_expected_colon", test_instrgen_err_if_expected_colon, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/err_if_expected_label_name", test_instrgen_err_if_expected_label_name, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

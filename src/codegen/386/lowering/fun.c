@@ -28,6 +28,7 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
     ext->max_stack_offset = 0;
     ext->in_function = 1;
     ext->use_callee_save_regs = 0;
+    ext->narrow_locked = 0;
     for (int i = 0; i < 8; i++) {
         ext->used_regs[i] = 0;
     }
@@ -52,6 +53,10 @@ int lowering_fun(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     for (size_t i = 0; i < instr_fun.args.size; i++) {
         micro_instruction_fun_arg_t *arg = sct_vector_get(&instr_fun.args, i);
+
+        if (micro_type_is_byte(arg->type)) {
+            ext->narrow_locked = 1;
+        }
         
         micro_codegen386_ident_t ident = {
             .type = MICRO_IDENT_VREG,

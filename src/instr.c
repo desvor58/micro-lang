@@ -102,11 +102,27 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
             sct_vector_push(expr_dst, &tok);
             expected_toks_num--;
         } else
+        if (c == '&' && str_expr[pos + 1] == '&') {
+            sct_vector_push(expr_dst, &(micro_expr_tok_t){
+                .type = MICRO_EXPR_TOK_ANDAND,
+            });
+            expected_toks_num++;
+            pos += 2;
+        } else
+        if (c == '|' && str_expr[pos + 1] == '|') {
+            sct_vector_push(expr_dst, &(micro_expr_tok_t){
+                .type = MICRO_EXPR_TOK_OROR,
+            });
+            expected_toks_num++;
+            pos += 2;
+        } else
         parse_opch('+', MICRO_EXPR_TOK_PLUS, 1)         else
         parse_opch('-', MICRO_EXPR_TOK_MINUS, 1)        else
         parse_opch('/', MICRO_EXPR_TOK_SLASH, 1)        else
         parse_opch('*', MICRO_EXPR_TOK_STAR, 1)         else
-        parse_opch('&', MICRO_EXPR_TOK_AMPERSAND, 0)    else
+        parse_opch('&', MICRO_EXPR_TOK_AMPERSAND, 1)    else
+        parse_opch('|', MICRO_EXPR_TOK_PIPE, 1)         else
+        parse_opch('^', MICRO_EXPR_TOK_CARET, 1)        else
         parse_opch('$', MICRO_EXPR_TOK_DOLLAR, 0)       else
         parse_opch('#', MICRO_EXPR_TOK_HASH, 0)         else
         parse_opch('`', MICRO_EXPR_TOK_APOSTROPHE, 0)   else
@@ -138,7 +154,7 @@ size_t micro_make_expr(sct_vector_t *expr_dst, const char *str_expr)
             pos++;
         } else if (!(isalnum((unsigned char)str_expr[pos]) || str_expr[pos] == '_' ||
                      str_expr[pos] == '"' ||
-                     strchr("+-/*&$#`~=!<>", str_expr[pos]))) {
+                     strchr("+-/*&|^$#`~=!<>", str_expr[pos]))) {
             pos++;
         }
     }

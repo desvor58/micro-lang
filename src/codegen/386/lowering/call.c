@@ -50,6 +50,16 @@ int lowering_call(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     size_t stack_cleanup_offset = 0;
 
+    if (micro_type_is_byte(callee_ret)) {
+        ext->narrow_locked = 1;
+    }
+    for (size_t i = 0; i < callee_args->size; i++) {
+        micro_instruction_fun_arg_t *arg = sct_vector_get(callee_args, i);
+        if (micro_type_is_byte(arg->type)) {
+            ext->narrow_locked = 1;
+        }
+    }
+
     int free_space = get_last_free_space(codegen);
     micro_codegen386_storage_t arg_dst = {
         .type = MICRO_STORAGE_REG

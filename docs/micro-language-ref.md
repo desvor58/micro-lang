@@ -1,6 +1,6 @@
 # Micro Language Reference
 
-Version: **dev-1.0.0** (unstable MVP)
+Version: **dev-1.0.0-1** (unstable MVP)
 
 ## Contents
 1. [Introduction](#introduction)
@@ -30,7 +30,7 @@ exactly what should happen, step by step.
 A program is a set of functions. Each function has a name, a list of
 arguments, an optional return type, and a body.
 
-The dev-1.0.0 backend generates raw 32 bit x86 code.
+The dev-1.0.0-1 backend generates raw 32 bit x86 code.
 
 ---
 
@@ -46,6 +46,10 @@ backslashes is ignored.
 ```
 
 Comments can be placed between instructions and on their own lines.
+
+Names, numbers and string literals are limited to 63 characters. A longer
+one stops the lexer with an `Identifier name is too long`, a `Number is too
+long` or a `String literal is too long` error.
 
 ---
 
@@ -109,6 +113,14 @@ takes its operands in prefix form.
 | - <o1> <o2>   | <o1> - <o2>  | subtracts o2 from o1                         |
 | * <o1> <o2>   | <o1> * <o2>  | multiplies o1 and o2                         |
 | / <o1> <o2>   | <o1> / <o2>  | divides o1 by o2                             |
+| & <o1> <o2>   | <o1> & <o2>  | bitwise and of o1 and o2                     |
+| \| <o1> <o2>  | <o1> \| <o2> | bitwise or of o1 and o2                      |
+| ^ <o1> <o2>   | <o1> ^ <o2>  | bitwise xor of o1 and o2                     |
+| && <o1> <o2>  | <o1> && <o2> | 1 if both o1 and o2 are nonzero, else 0      |
+| \|\| <o1> <o2>| <o1> \|\| <o2>| 1 if o1 or o2 is nonzero, else 0            |
+| `` ` `` <o1>  | ~<o1>        | bitwise not of o1                            |
+| ~ <o1>        | -<o1>        | negates o1                                   |
+| # <i>         | &<i>         | address of i (see note 2)                    |
 | $ <p>         | *<p>         | value at address p (see note 1)              |
 | = <o1> <o2>   | <o1> == <o2> | 1 if o1 equals o2, otherwise 0               |
 | < <o1> <o2>   | <o1> < <o2>  | 1 if o1 is less than o2, otherwise 0         |
@@ -130,10 +142,42 @@ start
 end
 ```
 
-The symbols `&`, `#`, `` ` `` and `~` are reserved: the lexer knows them,
-but there is no code behind them yet. Using one gives an
-`Expression parse error`. `!` is not an expression operator either, it
-negates an `if` jump, see [conditional jumps](#conditional-jumps).
+2. `#` takes the address of a virtual register. A register that lives in a
+   CPU register is copied to the stack first, so the address stays valid
+   after the register is reused.
+
+```
+fun f
+    ret i32
+start
+    set i32 flags 6;
+    set i32 mask & flags 3;   \ 2 \
+    set i32 inverted ` mask;  \ -3 \
+    set i32 negated ~ flags;  \ -6 \
+    set ptr where #mask;      \ address of mask \
+    set i32 copy $where;      \ 2 \
+end
+```
+
+Bitwise or and bitwise xor work the same way as bitwise and. The logical
+`&&` and `||` operators treat any nonzero value as true, always evaluate
+both operands, and produce exactly 1 or 0:
+
+```
+fun f
+    ret i32
+start
+    set i32 a 12;
+    set i32 b 10;
+    set i32 bits | a b;       \ 14 \
+    set i32 diff ^ a b;       \ 6 \
+    set i32 both && a b;      \ 1 \
+    set i32 either || a 0;    \ 1 \
+end
+```
+
+`!` is not an expression operator, it negates an `if` jump, see
+[conditional jumps](#conditional-jumps).
 
 Expressions can be nested without limit, as long as each operator receives
 the right number of operands.

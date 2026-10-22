@@ -31,6 +31,12 @@ static inline int sib_scale_valid(i32 scale)
     return scale == 1 || scale == 2 || scale == 4 || scale == 8;
 }
 
+// esi/edi have no 8-bit encodings, their byte codes are dh/bh
+static inline int micro_type_is_byte(micro_type_t type)
+{
+    return type == MICRO_TYPE_I8 || type == MICRO_TYPE_U8;
+}
+
 #define push_asm_instr_with_sib(instr, op1, op2, S, I, B) do {                                                   \
     micro_asm386_instruction_t tmp;                                                                              \
     tmp.opcode   = (instr);                                                                                      \

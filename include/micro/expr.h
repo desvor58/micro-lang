@@ -13,6 +13,10 @@ typedef enum {
     MICRO_EXPR_TOK_STAR,
     MICRO_EXPR_TOK_SLASH,
     MICRO_EXPR_TOK_AMPERSAND,
+    MICRO_EXPR_TOK_PIPE,
+    MICRO_EXPR_TOK_CARET,
+    MICRO_EXPR_TOK_ANDAND,
+    MICRO_EXPR_TOK_OROR,
     MICRO_EXPR_TOK_DOLLAR,
     MICRO_EXPR_TOK_HASH,
     MICRO_EXPR_TOK_APOSTROPHE,
@@ -42,6 +46,10 @@ typedef struct {
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_STAR ||  \
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_SLASH ||  \
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_AMPERSAND ||  \
+                                     (int)(tok_type) == (int)MICRO_EXPR_TOK_PIPE ||  \
+                                     (int)(tok_type) == (int)MICRO_EXPR_TOK_CARET ||  \
+                                     (int)(tok_type) == (int)MICRO_EXPR_TOK_ANDAND ||  \
+                                     (int)(tok_type) == (int)MICRO_EXPR_TOK_OROR ||  \
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_DOLLAR ||  \
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_HASH ||  \
                                      (int)(tok_type) == (int)MICRO_EXPR_TOK_APOSTROPHE ||  \

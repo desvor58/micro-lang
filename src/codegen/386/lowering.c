@@ -49,6 +49,13 @@ int lowering(micro_codegen_t *codegen)
             sct_hashmap_remove(&ext->idents, *(const char**)sct_vector_get(&ext->dead_idents, i));
         }
 
+        for (int i = 0; i < 8; i++) {
+            if (ext->regs_to_free & (1u << i)) {
+                ext->used_regs[i] = 0;
+            }
+        }
+        ext->regs_to_free = 0;
+
         codegen->pos++;
     }
     return res;
