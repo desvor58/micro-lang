@@ -1,6 +1,6 @@
 # Compiler Description
 
-Version: **dev-1.0.0** (unstable MVP)
+Version: **dev-1.0.0-1** (unstable MVP)
 
 # Usage
 
@@ -212,7 +212,9 @@ The code generator lowers every instruction into 32 bit x86 instructions.
 Its model is small and predictable:
 
 - Six machine registers are allocatable: `eax`, `ecx`, `edx`, `ebx`, `esi`,
-  `edi`. `esp` and `ebp` are reserved for the frame.
+  `edi`. `esp` and `ebp` are reserved for the frame. A function that uses 8
+  bit values leaves `esi` and `edi` out as well: i386 has no 8 bit encodings
+  for them, their byte codes stand for `dh` and `bh`.
 - A virtual register gets a machine register while it is alive, and the
   stack when the registers run out. Its machine register is released when
   its lifetime hint expires.

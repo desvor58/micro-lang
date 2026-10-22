@@ -80,7 +80,7 @@ def check_listing(listing):
         ("counter is one inc", "incR32" in loop),
         ("multiply is one imul", "imulR32" in loop),
         ("no division", not re.search(r"\b(idiv|div)", listing)),
-        ("return value is one slot", len(re.findall(r"-4\b", done)) == 2),
+        ("return value needs no slot", not re.search(r"movS32R32|movR32S32", done)),
     )
     for name, ok in checks:
         print(f"  [{'ok' if ok else 'FAIL'}] {name}")

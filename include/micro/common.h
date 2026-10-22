@@ -9,6 +9,8 @@
 
 #include <SCT/common.h>
 
+#define MICRO_VERSION "dev-1.0.0-1"
+
 #if defined(__GNUC__) || defined(__clang__)
 # define MICRO_ATTRIBUTE_CONST __attribute__((const))
 # define likely(x)   __builtin_expect(!!(x), 1)

@@ -1,6 +1,6 @@
 # Micro Language Reference
 
-Version: **dev-1.0.0** (unstable MVP)
+Version: **dev-1.0.0-1** (unstable MVP)
 
 ## Contents
 1. [Introduction](#introduction)
@@ -30,7 +30,7 @@ exactly what should happen, step by step.
 A program is a set of functions. Each function has a name, a list of
 arguments, an optional return type, and a body.
 
-The dev-1.0.0 backend generates raw 32 bit x86 code.
+The dev-1.0.0-1 backend generates raw 32 bit x86 code.
 
 ---
 

@@ -1,7 +1,6 @@
 /*************************************************
  *               micro-lang compiler
  *                   by Desvor
- *               Version: dev-1.0.0
  * 
  * Compiler crated as util for
  * compiling ir-language of micro
@@ -33,16 +32,22 @@ typedef struct {
     micro_codegen_flags_t codegen_flags;
 } mc_args_t;
 
+static void print_version(void)
+{
+    printf("micro-lang " MICRO_VERSION "\n");
+}
+
 static void print_usage(void)
 {
+    print_version();
     printf(
-        "micro-lang dev-1.0.0\n"
         "dev: Desvor\n"
         "usage:\n"
         "    microc [flags] <input file>\n"
         "flags:\n"
         "    --help (-h)           - put this menu\n"
         "    --output (-o) <file>  - set output file (default: a.out)\n"
+        "    --version (-v)        - print version\n"
         "    -P                    - put some info\n"
         "      t                   - put tokens\n"
         "      i                   - put instructions\n"
@@ -67,6 +72,10 @@ static mc_args_t mc_args_parse(int argc, char **argv)
 
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
+            if (argv[i][1] == 'v' || !strcmp(argv[i], "--version")) {
+                print_version();
+                exit(0);
+            }
             if (argv[i][1] == 'h' || !strcmp(argv[i], "--help")) {
                 print_usage();
                 exit(0);

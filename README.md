@@ -6,9 +6,9 @@ Project page: **[desvor58.github.io](https://desvor58.github.io/)**
 
 **micro** it's an experiment in the shape of IR code. Linear code, spiritually referencing C.
 
-Current version: **dev-1.0.0**. It is an unstable MVP: the whole pipeline
-works and is tested, but the language and the code generator are still
-moving. See [status](#status) for what to expect.
+It is an unstable MVP: the whole pipeline works and is tested, but the
+language and the code generator are still moving. See [status](#status) for
+what to expect and [CHANGELOG.md](CHANGELOG.md) for changes between versions.
 
 ### ✨ Core philosophy
 - **Flat**: Code is a linear list of instructions, which grouped to functions.
@@ -27,7 +27,7 @@ moving. See [status](#status) for what to expect.
 | instruction builder | done                                                        |
 | i386 code generator | done, one `lea` based code selection pass and a peephole     |
 | ir optimizer        | one pass done: inlining of small calls, `-Oi` to enable it  |
-| tests               | 221 unit tests over the lexer, instructions and the backend  |
+| tests               | 222 unit tests over the lexer, instructions and the backend  |
 | library API         | done, the compiler itself is built on it                     |
 | trampolines         | done, `tramp` in source and host handlers through an API map  |
 | object file output  | not implemented, the output is a raw binary                  |

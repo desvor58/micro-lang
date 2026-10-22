@@ -1101,6 +1101,34 @@ MunitResult test_codegen_logical_if(const MunitParameter params[], void *data)
     return MUNIT_OK;
 }
 
+MunitResult test_codegen_narrow_no_high_regs(const MunitParameter params[], void *data)
+{
+    micro_init();
+
+    cg_ctx_t ctx;
+    // a narrow value in esi/edi is encoded as dh/bh and clobbers the high half of edx/ebx
+    cg_gen(&ctx, "fun f\n"
+                 "    ret i32\n"
+                 "start\n"
+                 "    set i32 v1 1;\n"
+                 "    set i32 v2 2;\n"
+                 "    set i32 x 1000;\n"
+                 "    set i32 v4 4;\n"
+                 "    set u8 e 5;\n"
+                 "    ret x;\n"
+                 "end\n");
+
+    munit_assert_size(micro_err_stk_size, ==, 0);
+
+    munit_assert_int(cg_run0(&ctx), ==, 1000);
+
+    cg_cleanup(&ctx);
+
+    micro_deinit();
+
+    return MUNIT_OK;
+}
+
 MunitResult test_codegen_logical_nested(const MunitParameter params[], void *data)
 {
     micro_init();
@@ -3643,6 +3671,7 @@ static MunitTest codegen386_tests[] = {
     { "/logical_and", test_codegen_logical_and, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/logical_or", test_codegen_logical_or, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/logical_if", test_codegen_logical_if, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
+    { "/narrow_no_high_regs", test_codegen_narrow_no_high_regs, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/logical_nested", test_codegen_logical_nested, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/logical_narrow", test_codegen_logical_narrow, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },
     { "/negate_vreg", test_codegen_negate_vreg, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL },

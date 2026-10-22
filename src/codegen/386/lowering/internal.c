@@ -212,8 +212,8 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
 {
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
-    u8 used_regs_save[8];
-    memcpy(used_regs_save, ext->used_regs, sizeof(u8)*8);
+    int used_regs_save[8];
+    memcpy(used_regs_save, ext->used_regs, sizeof(used_regs_save));
 
     expr_info_t res = { 0, MICRO_TYPE_NULL };
 
@@ -296,7 +296,7 @@ expr_info_t expr_parse(micro_codegen_t *codegen, micro_codegen386_storage_t dst,
     }
 
 exit:
-    memcpy(ext->used_regs, used_regs_save, sizeof(u8)*8);
+    memcpy(ext->used_regs, used_regs_save, sizeof(used_regs_save));
     return res;
 }
 
@@ -305,6 +305,12 @@ int get_last_free_space(micro_codegen_t *codegen)
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     for (int i = 0; i < 8; i++) {
+        if (i == MICRO_ASM386_REG32_ESP || i == MICRO_ASM386_REG32_EBP) {
+            continue;
+        }
+        if (ext->narrow_locked && i > MICRO_ASM386_REG32_EBX) {
+            continue;
+        }
         if (!ext->used_regs[i]) {
             if (i > 2) {
                 ext->use_callee_save_regs = 1;
@@ -337,6 +343,7 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
     micro_codegen386_ext_t *ext = _micro_codegen386_ext(codegen);
 
     expr_info_t res = (expr_info_t){ 0, MICRO_TYPE_NULL };
+    int dst_reg = -1;
     
     if (start->type == MICRO_EXPR_TOK_LIT_INT) {
 
@@ -374,6 +381,8 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
             dst.type = MICRO_STORAGE_REG;
             dst.reg.reg = free_space;
             dst.reg.size = MICRO_SIZE_32;
+            dst_reg = free_space;
+            ext->used_regs[dst_reg] = 1;
         }
         res = op_info.handler(codegen, dst, start);
         if (!op_info.is_cond) {
@@ -388,5 +397,8 @@ expr_info_t cond_expr_parse(micro_codegen_t *codegen, micro_expr_tok_t *start)
     }
 
 exit:
+    if (dst_reg >= 0) {
+        ext->used_regs[dst_reg] = 0;
+    }
     return res;
 }

@@ -13,6 +13,10 @@ int lowering_set(micro_codegen_t *codegen, micro_instruction_t *instr)
     }
 
     micro_instruction_set_t instr_set = instr->set;
+
+    if (micro_type_is_byte(instr_set.type)) {
+        ext->narrow_locked = 1;
+    }
     
     micro_codegen386_ident_t *ident = sct_hashmap_get(&ext->idents, instr_set.reg_name);
 

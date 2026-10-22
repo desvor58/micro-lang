@@ -14,6 +14,10 @@ int lowering_drset(micro_codegen_t *codegen, micro_instruction_t *instr)
 
     micro_instruction_drset_t instr_drset = instr->drset;
 
+    if (micro_type_is_byte(instr_drset.type)) {
+        ext->narrow_locked = 1;
+    }
+
     micro_codegen386_ident_t *ptr_ident = sct_hashmap_get(&ext->idents, instr_drset.reg_name);
     if (!ptr_ident || ptr_ident->type != MICRO_IDENT_VREG) {
         micro_push_err((micro_error_t){
